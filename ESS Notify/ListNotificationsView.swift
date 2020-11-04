@@ -49,7 +49,7 @@ struct ListNotificationsView: View {
                         }
                     }.listRowBackground(Color(hex: noteList[i].Color))
                     if i<noteList.count-1 {
-                        Divider().listRowBackground(bgColor)
+                        Divider().listRowBackground(bgColor).deleteDisabled(true)
                     }
                 }.onDelete{ indexSet in DispatchQueue.main.asyncAfter(deadline: .now()) {
                     deleteNotifications(offsets: indexSet)
