@@ -205,22 +205,28 @@ def newpush_handler(pushData: dict):
         return "Error sending message"
 
 
-@app.get("/usersfeeds/{user}/services.json")
-def services_for_user(user: str):
-    return_services = []
-    for service in services["services"]:
-        return_service = {}
-        return_service["id"] = service["id"]
-        return_service["Category"] = service["Category"]
-        return_service["Color"] = service["Color"]
-        if user in service["Subscribers"]:
-            return_service["Subscribed"] = True
-        else:
-            return_service["Subscribed"] = False
-        return_services.append(return_service)
-    return {"services": return_services}
+@app.get("/push/usersfeeds/{user}/{token}/services.json")
+def services_for_user(user: str, token: str):
+    if user in users and users[user]["ESSToken"] == token:
+        return_services = []
+        for service in services["services"]:
+            return_service = {}
+            return_service["id"] = service["id"]
+            return_service["Category"] = service["Category"]
+            return_service["Color"] = service["Color"]
+            if user in service["Subscribers"]:
+                return_service["Subscribed"] = True
+            else:
+                return_service["Subscribed"] = False
+            return_services.append(return_service)
+        return {"services": return_services}
+    else:
+        return {"services": []}
 
 
-@app.get("/usersfeeds/{user}/notifications.json")
-def notifications_for_user(user: str):
-    return {user: users[user]["Notifications"]}
+@app.get("/push/usersfeeds/{user}/{token}/notifications.json")
+def notifications_for_user(user: str, token: str):
+    if user in users and users[user]["ESSToken"] == token:
+        return {user: users[user]["Notifications"]}
+    else:
+        return {user: []}

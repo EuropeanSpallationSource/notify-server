@@ -22,7 +22,7 @@ func getServicesList() {
     services = [ServiceData]()
     
     let rnd = Int.random(in: 1..<1000000)
-    let server = notificationsBaseServer+"/"+userData.ESSUser+"/services.json?\(rnd)"
+    let server = notificationsBaseServer+"/"+userData.ESSUser+"/"+userData.ESSToken+"/services.json?\(rnd)"
     guard let url = URL(string: server) else {
             return
         }
