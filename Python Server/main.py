@@ -40,6 +40,13 @@ else:
     users = {}
 
 
+if os.path.isfile(servicesFile):
+    services = loadObj(servicesFile)
+else:
+    print("Missing services file")
+    quit()
+
+
 def sendPushToDevice(apn, message):
     token = jwt.encode(
         {"iss": TEAM_ID, "iat": time.time()},
@@ -53,12 +60,10 @@ def sendPushToDevice(apn, message):
         "apns-topic": BUNDLE_ID,
         "authorization": "bearer {0}".format(token.decode("ascii")),
     }
-    for server in APPLE_SERVER:
-        path = "/3/device/{0}".format(apn)
-        with httpx.Client(http2=True) as client:
-            client.post(
-                "https://" + server + path, data=message, headers=request_headers
-            )
+    with httpx.Client(http2=True) as client:
+        for server in APPLE_SERVER:
+            url = f"https://{server}/3/device/{apn}"
+            client.post(url, data=message, headers=request_headers)
 
 
 def addUser(userData):
@@ -66,63 +71,12 @@ def addUser(userData):
         users[userData["ESSUser"]] = {}
     if "APNToken" not in users[userData["ESSUser"]]:
         users[userData["ESSUser"]]["APNToken"] = []
+    if "Notifications" not in users[userData["ESSUser"]]:
+        users[userData["ESSUser"]]["Notifications"] = []
     users[userData["ESSUser"]]["ESSToken"] = userData["ESSToken"]
     if userData["APNToken"] not in users[userData["ESSUser"]]["APNToken"]:
         users[userData["ESSUser"]]["APNToken"].append(userData["APNToken"])
     saveObj(users, usersFile)
-    createUserFolder(userData)
-
-
-def createUserFolder(userData):
-    if not os.path.isdir(userBaseDir):
-        os.mkdir(userBaseDir)
-    if not os.path.isdir(userBaseDir + "/" + userData["ESSUser"]):
-        os.mkdir(userBaseDir + "/" + userData["ESSUser"])
-    if not os.path.isfile(
-        userBaseDir + "/" + userData["ESSUser"] + "/notifications.json"
-    ):
-        emptydata = {userData["ESSUser"]: []}
-        saveObj(
-            emptydata, f"{userBaseDir}/{userData['ESSUser']}/notifications.json",
-        )
-    if not os.path.isfile(userBaseDir + "/" + userData["ESSUser"] + "/services.json"):
-        services = loadObj(servicesFile)
-        emptydata = {"services": []}
-        for service in services["services"]:
-            emptydata["services"].append(
-                {
-                    "id": service["id"],
-                    "Category": service["Category"],
-                    "Color": service["Color"],
-                    "Subscribed": False,
-                }
-            )
-        saveObj(emptydata, f"{userBaseDir}/{userData['ESSUser']}/services.json")
-
-
-def regenerateServicesFiles():
-    userData = loadObj(usersFile)
-    servicesData = loadObj(servicesFile)
-    if not os.path.isdir(userBaseDir):
-        os.mkdir(userBaseDir)
-    for user in userData:
-        if not os.path.isdir(userBaseDir + "/" + user):
-            os.mkdir(userBaseDir + "/" + user)
-        emptydata = {"services": []}
-        for service in servicesData["services"]:
-            emptydata["services"].append(
-                {
-                    "id": service["id"],
-                    "Category": service["Category"],
-                    "Color": service["Color"],
-                    "Subscribed": user in service["Subscribers"],
-                }
-            )
-
-        saveObj(emptydata, userBaseDir + "/" + user + "/services.json")
-
-
-regenerateServicesFiles()
 
 
 @app.post("/auth")
@@ -159,29 +113,24 @@ def auth_handler(userData: dict):
 
 @app.post("/services")
 def services_handler(serversData: dict):
-    serviceslist = loadObj(servicesFile)
     userservices = {"services": []}
     for service in serversData["services"]:
         userservices["services"].append(service)
         if service["Subscribed"] and (
             serversData["user"]
-            not in serviceslist["services"][service["id"]]["Subscribers"]
+            not in services["services"][service["id"]]["Subscribers"]
         ):
-            serviceslist["services"][service["id"]]["Subscribers"].append(
+            services["services"][service["id"]]["Subscribers"].append(
                 serversData["user"]
             )
         if not service["Subscribed"] and (
-            serversData["user"]
-            in serviceslist["services"][service["id"]]["Subscribers"]
+            serversData["user"] in services["services"][service["id"]]["Subscribers"]
         ):
-            serviceslist["services"][service["id"]]["Subscribers"].remove(
+            services["services"][service["id"]]["Subscribers"].remove(
                 serversData["user"]
             )
 
-    saveObj(
-        userservices, userBaseDir + "/" + serversData["user"] + "/services.json",
-    )
-    saveObj(serviceslist, servicesFile)
+    saveObj(services, servicesFile)
     return {}
 
 
@@ -189,37 +138,35 @@ def services_handler(serversData: dict):
 def updateNotifications_handler(updateNotificationsData: dict):
     for i in range(len(updateNotificationsData["notifications"])):
         updateNotificationsData["notifications"][i]["id"] = i
-    saveObj(
-        {updateNotificationsData["user"]: updateNotificationsData["notifications"]},
-        userBaseDir + "/" + updateNotificationsData["user"] + "/notifications.json",
-    )
+
+    users[updateNotificationsData["user"]]["Notifications"] = updateNotificationsData[
+        "notifications"
+    ]
+    saveObj(users, usersFile)
     return {}
 
 
 @app.post("/newpush")
 def newpush_handler(pushData: dict):
-    usersData = loadObj(usersFile)
-    services = loadObj(servicesFile)["services"]
-
     token = list(pushData.keys())[0]
     receivers = []
     usersrecv = []
-    for service in services:
+    for service in services["services"]:
         if service["token"] == token:
             color = service["Color"]
             for receiver in service["Subscribers"]:
                 usersrecv.append(receiver)
-                for APN in usersData[receiver]["APNToken"]:
+                for APN in users[receiver]["APNToken"]:
                     receivers.append(APN)
 
     try:
         for user in usersrecv:
-            notifications = loadObj(userBaseDir + "/" + user + "/notifications.json")
-            if len(notifications[user]) == 0:
+            notifications = users[user]["Notifications"]
+            if len(notifications) == 0:
                 msgid = 0
             else:
-                msgid = notifications[user][-1]["id"] + 1
-            notifications[user].append(
+                msgid = notifications[-1]["id"] + 1
+            notifications.append(
                 {
                     "id": msgid,
                     "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -230,13 +177,14 @@ def newpush_handler(pushData: dict):
                     "Read": False,
                 }
             )
-            saveObj(notifications, userBaseDir + "/" + user + "/notifications.json")
+            users[user]["Notifications"] = notifications
+            saveObj(users, usersFile)
     except Exception:
         return "Malformed Data"
 
     current_badge = 0
     try:
-        for i in notifications[user]:
+        for i in notifications:
             if not i["Read"]:
                 current_badge += 1
         payload_data = {
@@ -255,3 +203,24 @@ def newpush_handler(pushData: dict):
         return "Message Delivered"
     except Exception:
         return "Error sending message"
+
+
+@app.get("/usersfeeds/{user}/services.json")
+def services_for_user(user: str):
+    return_services = []
+    for service in services["services"]:
+        return_service = {}
+        return_service["id"] = service["id"]
+        return_service["Category"] = service["Category"]
+        return_service["Color"] = service["Color"]
+        if user in service["Subscribers"]:
+            return_service["Subscribed"] = True
+        else:
+            return_service["Subscribed"] = False
+        return_services.append(return_service)
+    return {"services": return_services}
+
+
+@app.get("/usersfeeds/{user}/notifications.json")
+def notifications_for_user(user: str):
+    return {user: users[user]["Notifications"]}
