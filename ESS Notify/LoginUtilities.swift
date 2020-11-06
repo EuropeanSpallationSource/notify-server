@@ -84,6 +84,7 @@ func saveCredentials() {
 func verifyCredentials(username: String, password: String) -> Bool {
     userData.ESSUser = username
     userData.ESSToken = password
+    print(username, password)
     let isValid = sendAuthToServer(server: authServer)
     if isValid {
         saveCredentials()

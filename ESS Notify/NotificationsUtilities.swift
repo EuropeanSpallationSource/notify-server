@@ -28,6 +28,9 @@ func getNotificationsList() {
         UIApplication.shared.applicationIconBadgeNumber = 0
     }
     let rnd = Int.random(in: 1..<1000000)
+    if userData.ESSUser == "" || userData.ESSToken == "" {
+        return
+    }
     let server = notificationsBaseServer+"/"+userData.ESSUser+"/"+userData.ESSToken+"/notifications.json?\(rnd)"
     guard let url = URL(string: server) else {
             return
