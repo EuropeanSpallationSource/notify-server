@@ -5,7 +5,8 @@ import secrets
 import os
 import time
 import httpx
-from fastapi import FastAPI
+from typing import Optional
+from fastapi import FastAPI, Header
 
 LDAPServerName = os.environ.get("LDAP_SERVER")
 LDAPServer = ldap3.Server(LDAPServerName, use_ssl=True)
