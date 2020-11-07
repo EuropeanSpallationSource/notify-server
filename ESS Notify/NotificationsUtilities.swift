@@ -158,11 +158,9 @@ func deleteBulkNotifications(color: String) {
 
 func setCurrentColors() {
     var tmp_colors = [String: String]()
+    notificationsColors = [String: String]()
     if services.count == 0 {
         getServicesList()
-    }
-    if notifications.count == 0 {
-        getNotificationsList()
     }
     for i in 0..<services.count {
         tmp_colors[services[i].Color]=services[i].Category

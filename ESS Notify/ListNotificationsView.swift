@@ -64,12 +64,14 @@ struct ListNotificationsView: View {
                     }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         getNotificationsList()
+                        setCurrentColors()
                     }
                 }
             }.environment(\.defaultMinListRowHeight, 20)
             .pullToRefresh(isShowing: $isShowing) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     getNotificationsList()
+                    setCurrentColors()
                     noteList=notifications
                     isShowing = false
                     if noteList.count == 0 {
@@ -146,6 +148,7 @@ struct ListNotificationsView: View {
                 getNotificationsList()
                 setCurrentColors()
             }
+            setCurrentColors()
             noteList=notifications
             currentTime = newTime
         }
