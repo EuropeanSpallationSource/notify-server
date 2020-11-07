@@ -21,6 +21,7 @@ struct NotificationData: Identifiable, Codable {
 var notificationData = NotificationData(id: 0, Timestamp: "", Color: "", Title: "", Subtitle: "", URL: "", Read: false)
 
 var notifications = [NotificationData]()
+var notificationsColors = [String: String]()
 
 func getNotificationsList() {
     notifications = [NotificationData]()
@@ -31,12 +32,13 @@ func getNotificationsList() {
     if userData.ESSUser == "" || userData.ESSToken == "" {
         return
     }
-    let server = notificationsBaseServer+"/"+userData.ESSUser+"/"+userData.ESSToken+"/notifications.json?\(rnd)"
+    let server = notificationsBaseServer+"/"+userData.ESSUser+"/notifications.json?\(rnd)"
     guard let url = URL(string: server) else {
             return
         }
     let semaphore = DispatchSemaphore(value: 0)
-    let request = URLRequest(url: url)
+    var request = URLRequest(url: url)
+    request.addValue(userData.ESSToken, forHTTPHeaderField: "token")
     let task = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) -> Void in
         if let error = error {
             print(error)
@@ -110,4 +112,62 @@ func sendNotificationsToServer()
         task.resume()
     }
     catch {}
+}
+
+func readBulkNotifications(color: String) {
+var badgeCounter = 0
+    if color == "any" {
+        for i in 0 ..< notifications.count {
+            notifications[i].Read = true
+        }
+    }
+    else {
+        for i in 0 ..< notifications.count {
+            if notifications[i].Color == color {
+                notifications[i].Read = true
+            }
+            if !notifications[i].Read {
+                badgeCounter += 1
+            }
+        }
+    }
+    sendNotificationsToServer()
+    DispatchQueue.main.async {
+        UIApplication.shared.applicationIconBadgeNumber = badgeCounter
+    }
+}
+func deleteBulkNotifications(color: String) {
+    var badgeCounter = 0
+    var tmp_notifications: [NotificationData] = []
+    if color != "any" {
+        for i in 0 ..< notifications.count  {
+            if notifications[i].Color != color {
+                tmp_notifications.append(notifications[i])
+                if !notifications[i].Read {
+                    badgeCounter += 1
+                }
+            }
+        }
+    }
+    notifications=tmp_notifications
+    sendNotificationsToServer()
+    DispatchQueue.main.async {
+        UIApplication.shared.applicationIconBadgeNumber = badgeCounter
+    }
+}
+
+func setCurrentColors() {
+    var tmp_colors = [String: String]()
+    if services.count == 0 {
+        getServicesList()
+    }
+    if notifications.count == 0 {
+        getNotificationsList()
+    }
+    for i in 0..<services.count {
+        tmp_colors[services[i].Color]=services[i].Category
+    }
+    for i in 0..<notifications.count {
+        notificationsColors[notifications[i].Color] = tmp_colors[notifications[i].Color]
+    }
 }

@@ -22,12 +22,13 @@ func getServicesList() {
     services = [ServiceData]()
     
     let rnd = Int.random(in: 1..<1000000)
-    let server = notificationsBaseServer+"/"+userData.ESSUser+"/"+userData.ESSToken+"/services.json?\(rnd)"
+    let server = notificationsBaseServer+"/"+userData.ESSUser+"/services.json?\(rnd)"
     guard let url = URL(string: server) else {
             return
         }
     let semaphore = DispatchSemaphore(value: 0)
-    let request = URLRequest(url: url)
+    var request = URLRequest(url: url)
+    request.addValue(userData.ESSToken, forHTTPHeaderField: "token")
     let task = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) -> Void in
         if let error = error {
             print(error)

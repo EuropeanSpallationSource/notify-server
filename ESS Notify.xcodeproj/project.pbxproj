@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -19,6 +19,7 @@
 		85A4EC442544C47D00982E9A /* LoginUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85A4EC432544C47D00982E9A /* LoginUtilities.swift */; };
 		85A4EC482544C49800982E9A /* PushUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85A4EC472544C49800982E9A /* PushUtilities.swift */; };
 		85A4EC4B2544C4AB00982E9A /* NotificationsUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85A4EC4A2544C4AB00982E9A /* NotificationsUtilities.swift */; };
+		85B066722555D43B001F35C9 /* SwiftUIRefresh in Frameworks */ = {isa = PBXBuildFile; productRef = 85B066712555D43B001F35C9 /* SwiftUIRefresh */; };
 		85B7C0DB2546D53B00E08BB5 /* ServicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B7C0DA2546D53B00E08BB5 /* ServicesView.swift */; };
 		85B7C0DF2546DA8C00E08BB5 /* ServicesUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B7C0DE2546DA8C00E08BB5 /* ServicesUtilities.swift */; };
 		85E2697E2545BCE90019D75A /* SingleNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85E2697D2545BCE90019D75A /* SingleNotificationView.swift */; };
@@ -50,6 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85B066722555D43B001F35C9 /* SwiftUIRefresh in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -121,6 +123,7 @@
 			);
 			name = "ESS Notify";
 			packageProductDependencies = (
+				85B066712555D43B001F35C9 /* SwiftUIRefresh */,
 			);
 			productName = "ESS Notify";
 			productReference = 851BCA4425409BAE00174642 /* ESS Notify.app */;
@@ -150,6 +153,7 @@
 			);
 			mainGroup = 851BCA3B25409BAE00174642;
 			packageReferences = (
+				85B066702555D43B001F35C9 /* XCRemoteSwiftPackageReference "SwiftUIRefresh" */,
 			);
 			productRefGroup = 851BCA4525409BAE00174642 /* Products */;
 			projectDirPath = "";
@@ -328,7 +332,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "eu.ess.ESS-Notify";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -352,7 +356,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "eu.ess.ESS-Notify";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -382,6 +386,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		85B066702555D43B001F35C9 /* XCRemoteSwiftPackageReference "SwiftUIRefresh" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/timbersoftware/SwiftUIRefresh.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.0.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		85B066712555D43B001F35C9 /* SwiftUIRefresh */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 85B066702555D43B001F35C9 /* XCRemoteSwiftPackageReference "SwiftUIRefresh" */;
+			productName = SwiftUIRefresh;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 851BCA3C25409BAE00174642 /* Project object */;
 }
