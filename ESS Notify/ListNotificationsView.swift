@@ -123,6 +123,7 @@ struct ListNotificationsView: View {
                     .alert(isPresented: $deleteAll) { () -> Alert in
                         let readAllButton = Alert.Button.default(Text("Delete All")) {
                             deleteBulkNotifications(color: currentColor)
+                            setCurrentColors()
                             noteList=notifications
                             deleteAll = false
                         }

@@ -26,7 +26,15 @@ struct SingleNotificationView: View {
             .foregroundColor(Color.white)
             .font(.footnote)
             Spacer()
-            WebView(request: URLRequest(url: URL(string: noteURL) ?? URL(string: "http://www.blank.com/")!))
+            if noteURL == "" {
+                Image("ess-logo").opacity(0.5)
+                Spacer()
+                Text("No URL available in the message")
+                Spacer()
+            }
+            else {
+                WebView(request: URLRequest(url: URL(string: noteURL) ?? URL(string: "http://www.blank.com/")!))
+            }
         }
     }
 }

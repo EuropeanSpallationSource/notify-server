@@ -50,7 +50,7 @@ func handlePush (pushData: UNNotification) {
     getNotificationsList()
 //    UIApplication.shared.applicationIconBadgeNumber = 15
 //    print(pushData.request.content)
-    print(pushData.request.content.title)
+//    print(pushData.request.content.title)
 //    print(pushData.request.content.subtitle)
 //    print(pushData.request.content.body)
 //    print(pushData.request.content.badge)
