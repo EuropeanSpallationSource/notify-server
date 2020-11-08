@@ -1,1 +1,46 @@
-{"services": [{"id": 0, "Category": "Service 1", "Color": "6A6A6A", "Subscribers": [], "token": "73eac01a94c55b1af899f2b8493fff1cc22f75ac4ca5b55a84454f716cf7b9d6"}, {"id": 1, "Category": "Service 2", "Color": "232652", "Subscribers": [], "token": "845400121be8631b1de707a350055789307ada38ef1cebfcf1344f282f027c40"}, {"id": 2, "Category": "Service 3", "Color": "5B7B98", "Subscribers": [], "token": "3ed72f4fefd087853cd2768c3386c6eca097ef1d01ea65efacb3e4b0c3cf0221"}, {"id": 3, "Category": "Service 4", "Color": "A17E50", "Subscribers": [], "token": "29107dd3d1c79adf911fefaed349c7b0955d63b774b14213f35d9817e2e1855f"}, {"id": 4, "Category": "Service 5", "Color": "459480", "Subscribers": [], "token": "8c7bbf76df8035ea37eda66476dce9dd824635c7eb78383386161f3a33a18c38"}, {"id": 5, "Category": "Service 6", "Color": "5385EC", "Subscribers": [], "token": "7b055fe6a0f96fc4fdd6c94f993355d9c991e2bd04fba5ec07ae2d11cefc8fbe"}, {"id": 6, "Category": "Service 7", "Color": "F1BE42", "Subscribers": [], "token": "2950e7ab91e8b48615c9a371ead50d3d36537ed67999b446b9ed5a69071e0ae6"}, {"id": 7, "Category": "Service 8", "Color": "410D05", "Subscribers": [], "token": "3276c0551dc1793ad82d61e6eb299dc3bf9508987a3b1512d147aac3ad1b58f9"}, {"id": 8, "Category": "Service 9", "Color": "D356A2", "Subscribers": [], "token": "ee68282e74eb5b2005b7cbef57def7559288a8fc7638f00e54f20f646df73039"}, {"id": 9, "Category": "Service 10", "Color": "000000", "Subscribers": [], "token": "0c195ebce118e6be0d6b78037d688cca22afad19e6784f8863ee11c4f2a8f529"}]}
+{
+  "services" : [
+    {
+      "id" : 0,
+      "Category" : "Logbook OP",
+      "Color" : "6A6A6A",
+      "Subscribers" : [],
+      "token" : "73eac01a94c55b1af899f2b8493fff1cc22f75ac4ca5b55a84454f716cf7b9d6"
+    },
+    {
+      "id" : 1,
+      "Category" : "Logbook TS2",
+      "Color" : "232652",
+      "Subscribers" : [],
+      "token" : "845400121be8631b1de707a350055789307ada38ef1cebfcf1344f282f027c40"
+    },
+    {
+      "id" : 2,
+      "Category" : "Alarms OP",
+      "Color" : "5B7B98",
+      "Subscribers" : [],
+      "token" : "3ed72f4fefd087853cd2768c3386c6eca097ef1d01ea65efacb3e4b0c3cf0221"
+    },
+    {
+      "id" : 3,
+      "Category" : "TS2 Cryo Alarms",
+      "Color" : "A17E50",
+      "Subscribers" : [],
+      "token" : "29107dd3d1c79adf911fefaed349c7b0955d63b774b14213f35d9817e2e1855f"
+    },
+    {
+      "id" : 4,
+      "Category" : "OpenXAL",
+      "Color" : "459480",
+      "Subscribers" : [],
+      "token" : "8c7bbf76df8035ea37eda66476dce9dd824635c7eb78383386161f3a33a18c38"
+    },
+    {
+      "id" : 5,
+      "Category" : "Test",
+      "Color" : "000000",
+      "Subscribers" : [],
+      "token" : "8c7bbf76df8035ea37eda66476dce9dd824635c7eb78383386161f3a33a18c38"
+    }
+  ]
+}
