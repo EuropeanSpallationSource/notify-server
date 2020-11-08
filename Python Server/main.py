@@ -4,15 +4,18 @@ import ldap3
 import secrets
 import os
 import time
+import socket
+import struct
 import httpx
 from typing import Optional
-from fastapi import FastAPI, Header
+from fastapi import FastAPI, Header, Request
 
 LDAPServerName = os.environ.get("LDAP_SERVER")
 LDAPServer = ldap3.Server(LDAPServerName, use_ssl=True)
 
 usersFile = "./users.json"
 servicesFile = "./services.json"
+accessListFile = "./access-list"
 userBaseDir = os.environ.get("USER_BASE_DIR")
 
 ALGORITHM = "ES256"
@@ -33,6 +36,22 @@ def saveObj(obj, filename):
 def loadObj(filename):
     with open(filename, "r") as f:
         return json.load(f)
+
+
+def checkIP(ip):
+    allowed_net = []
+    with open(accessListFile, "r") as f:
+        allowed_net = f.readlines()
+    intip = struct.unpack("!I", socket.inet_aton(ip))[0]
+
+    for net in allowed_net:
+        netaddr, bits = net.split("/")
+        bits = int(bits)
+        intnetaddr = struct.unpack("!I", socket.inet_aton(netaddr))[0]
+        netmask = int("1" * bits + (32 - bits) * "0", 2)
+        if intip & netmask == intnetaddr:
+            return True
+    return False
 
 
 if os.path.isfile(usersFile):
@@ -148,7 +167,9 @@ def updateNotifications_handler(updateNotificationsData: dict):
 
 
 @app.post("/newpush")
-def newpush_handler(pushData: dict):
+def newpush_handler(pushData: dict, request: Request):
+    if not checkIP(request.client.host):
+        return "IP Address not allowed"
     token = list(pushData.keys())[0]
     receivers = []
     usersrecv = []
