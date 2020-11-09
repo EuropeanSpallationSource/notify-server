@@ -1,0 +1,15 @@
+*.swp
+.DS_Store
+__pycache__
+*.pyc
+.cache
+.coverage
+.scannerwork
+coverage.xml
+junit.xml
+.pytest_cache
+.mypy_cache
+.venv
+.vscode
+.env
+sql_app.db

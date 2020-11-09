@@ -1,0 +1,8 @@
+fastapi
+python-multipart
+httpx
+jwt
+ldap3
+sqlalchemy
+uvicorn[standard]
+gunicorn
