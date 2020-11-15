@@ -127,9 +127,11 @@ def test_user_notifications(db, user, service, notification_factory):
     # The notification is added to the service but NOT to the subscribed user by default
     assert service.notifications == [notification1]
     assert user.notifications == []
+    assert notification1.users_notification == []
     # Notification needs to be explicitely added to the user
     user.notifications.append(notification1)
     assert user.notifications == [notification1]
+    assert notification1.users_notification == [user.user_notifications[0]]
 
 
 def test_user_notifications_read(db, user_factory, notification):
@@ -145,6 +147,7 @@ def test_user_notifications_read(db, user_factory, notification):
     assert not user2_notification.is_read
     assert user1_notification.notification == notification
     assert user2_notification.notification == notification
+    assert notification.users_notification == [user1_notification, user2_notification]
 
 
 def test_notification_to_user_notification(db, user, notification_factory):

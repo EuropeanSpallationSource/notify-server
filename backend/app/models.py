@@ -149,7 +149,7 @@ class UserNotification(Base):
         User, backref=backref("user_notifications", cascade="all, delete-orphan")
     )
     # reference to the "Notification" object
-    notification = relationship("Notification")
+    notification = relationship("Notification", backref="users_notification")
 
     def __init__(self, notification=None, user=None, is_read=False):
         # Note that notification must be the first argument of the __init__ method

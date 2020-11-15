@@ -104,6 +104,7 @@ def test_create_service_notification(db, user_factory, service):
     assert service.notifications == [notification]
     assert user1.notifications == [notification]
     assert user2.notifications == []
+    assert notification.users_notification == [user1.user_notifications[0]]
 
 
 def test_get_user_notifications(db, user, service):
