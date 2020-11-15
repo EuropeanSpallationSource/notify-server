@@ -1,5 +1,5 @@
 import ldap3
-from .settings import (
+from ..settings import (
     LDAP_HOST,
     LDAP_PORT,
     LDAP_USE_SSL,
