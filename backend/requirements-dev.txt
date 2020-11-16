@@ -1,3 +1,6 @@
 pytest
 requests
 pytest-factoryboy
+pytest-asyncio
+pytest-mock
+respx

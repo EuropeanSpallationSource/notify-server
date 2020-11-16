@@ -16,9 +16,9 @@ SQLALCHEMY_DATABASE_URL = config(
 )
 ALGORITHM = "ES256"
 APNS_KEY_ID = config("APNS_KEY_ID", cast=Secret, default="key-id")
-APNS_AUTH_KEY = config("APNS_AUTH_KEY", cast=Secret, default="key")
+APNS_AUTH_KEY = config("APNS_AUTH_KEY", cast=Secret, default="dummy-key")
 TEAM_ID = config("TEAM_ID", cast=Secret, default="team")
 APPLE_SERVER = config(
-    "APPLE_SERVER", cast=str, default="api.development.push.apple.com:443"
+    "APPLE_SERVER", cast=str, default="api.development.push.apple.com"
 )
 BUNDLE_ID = "eu.ess.ESS-Notify"

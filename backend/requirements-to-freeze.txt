@@ -1,7 +1,7 @@
 fastapi
 python-multipart
-httpx
-jwt
+httpx[http2]
+pyjwt
 ldap3
 sqlalchemy
 uvicorn[standard]

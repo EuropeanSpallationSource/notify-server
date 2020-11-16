@@ -79,3 +79,18 @@ class NotificationStatus(str, Enum):
 class UserUpdateNotification(BaseModel):
     id: int
     status: NotificationStatus
+
+
+class Alert(BaseModel):
+    title: str
+    subtitle: str
+
+
+class Aps(BaseModel):
+    alert: Alert
+    badge: int
+    sound: str = "default"
+
+
+class ApnPayload(BaseModel):
+    aps: Aps

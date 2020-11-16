@@ -10,9 +10,16 @@ from typing import Generator
 # It will raise an error otherwise.
 environ["SQLALCHEMY_DATABASE_URL"] = "sqlite://"
 environ["LDAP_SERVER"] = "ldap.example.org"
-environ["APNS_KEY_ID"] = "keyid"
-environ["APNS_AUTH_KEY"] = "mykey"
-environ["TEAM_ID"] = "myteam"
+environ["APNS_KEY_ID"] = "UB40ZXKCDZ"
+environ[
+    "APNS_AUTH_KEY"
+] = """-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgtAParbMemenK/+8T
+JYWanX1jzKaFcgmupVALPHyaKKKhRANCAARVmMAXI+WPS/vjIsFBHb3B5dQKqgT8
+ytZPnlbWNLGGR7tKdB1eLzyBlIVFe9El4Wlvs19ACPRMtE7l75IlbOT+
+-----END PRIVATE KEY-----
+"""
+environ["TEAM_ID"] = "6F44JJ9SDF"
 environ["ADMIN_USERS"] = "admin1,admin2"
 
 from app.main import app  # noqa E402

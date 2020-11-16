@@ -76,6 +76,17 @@ class User(Base):
     # to "notification" attribute
     notifications = association_proxy("user_notifications", "notification",)
 
+    def unread_notifications(self) -> List[schemas.UserNotification]:
+        return [
+            user_notification.to_user_notification()
+            for user_notification in self.user_notifications
+            if not user_notification.is_read
+        ]
+
+    @property
+    def nb_unread_notifications(self) -> int:
+        return len(self.unread_notifications())
+
     @property
     def apn_tokens(self):
         if not self._apn_tokens:
@@ -137,6 +148,9 @@ class Notification(Base):
     url = Column(String)
     service_id = Column(GUID, ForeignKey("services.id"), nullable=False)
 
+    def to_alert(self) -> schemas.Alert:
+        return schemas.Alert(title=self.title, subtitle=self.subtitle)
+
 
 class UserNotification(Base):
     __tablename__ = "users_notifications"
@@ -163,3 +177,9 @@ class UserNotification(Base):
             **schemas.Notification.from_orm(self.notification).dict(),
             is_read=self.is_read,
         )
+
+    def to_apn_payload(self) -> schemas.ApnPayload:
+        aps = schemas.Aps(
+            alert=self.notification.to_alert(), badge=self.user.nb_unread_notifications
+        )
+        return schemas.ApnPayload(aps=aps)
