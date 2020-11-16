@@ -74,7 +74,10 @@ class User(Base):
     )
     # association proxy of "user_notifications" collection
     # to "notification" attribute
-    notifications = association_proxy("user_notifications", "notification",)
+    notifications = association_proxy(
+        "user_notifications",
+        "notification",
+    )
 
     def unread_notifications(self) -> List[schemas.UserNotification]:
         return [

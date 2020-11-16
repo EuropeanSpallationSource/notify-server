@@ -11,7 +11,9 @@ async def test_send_push_to_ios():
         alert=schemas.Alert(title="New alert", subtitle="This is a test"), badge=3
     )
     payload = schemas.ApnPayload(aps=aps)
-    request = respx.post(f"https://api.development.push.apple.com/3/device/{apn}",)
+    request = respx.post(
+        f"https://api.development.push.apple.com/3/device/{apn}",
+    )
     await tasks.send_push_to_ios(apn, payload)
     assert request.called
     req, _ = respx.calls[0]
