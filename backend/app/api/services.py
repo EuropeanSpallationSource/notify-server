@@ -29,6 +29,21 @@ def create_service(
     return db_service
 
 
+@router.get("/{service_id}/notifications", response_model=List[schemas.Notification])
+def read_service_notifications(
+    service_id: uuid.UUID,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_admin_user),
+):
+    """Read the service notifications"""
+    db_service = crud.get_service(db, service_id)
+    if db_service is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Service not found"
+        )
+    return db_service.notifications
+
+
 @router.post("/{service_id}/notifications", response_model=schemas.Notification)
 def create_notification_for_service(
     service_id: uuid.UUID,
