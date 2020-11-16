@@ -97,18 +97,6 @@ def get_user_notifications(user: models.User) -> List[schemas.UserNotification]:
     return [un.to_user_notification() for un in user.user_notifications]
 
 
-def get_user_unread_notifications(user: models.User) -> List[schemas.UserNotification]:
-    return [
-        user_notification
-        for user_notification in get_user_notifications(user)
-        if not user_notification.is_read
-    ]
-
-
-def get_user_nb_unread_notifications(user: models.User) -> int:
-    return len(get_user_nb_unread_notifications(user))
-
-
 def update_user_notifications(
     db: Session,
     updated_notifications: List[schemas.UserUpdateNotification],
