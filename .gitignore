@@ -13,4 +13,5 @@ junit.xml
 .vscode
 .env
 sql_app.db
+data
 ess_notify.egg-info

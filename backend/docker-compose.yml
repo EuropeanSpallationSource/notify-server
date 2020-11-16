@@ -1,0 +1,34 @@
+version: "3"
+services:
+  web:
+    image: registry.esss.lu.se/ics-software/ess-notify:master
+    container_name: ess-notify
+    build:
+      context: "."
+    environment:
+      LDAP_HOST: ${LDAP_HOST}
+      LDAP_USER_DN: ${LDAP_USER_DN}
+      ADMIN_USERS: ${ADMIN_USERS}
+      SQLALCHEMY_DATABASE_URL: postgresql://csi:csi@localhost/ess-notify
+      APNS_KEY_ID: ${APNS_KEY_ID}
+      APNS_AUTH_KEY: ${APNS_AUTH_KEY}
+      TEAM_ID: ${TEAM_ID}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ".:/app"
+      - "./data:/data"
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:13
+    container_name: ess-notify-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: csi
+      POSTGRES_PASSWORD: csi
+      POSTGRES_DB: ess-notify
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data:/var/lib/postgresql/data/pgdata

@@ -1,0 +1,7 @@
+**/*.swp
+**/__pycache__
+data
+docker-compose.yml
+.cache
+.coverage
+.pytest_cache
