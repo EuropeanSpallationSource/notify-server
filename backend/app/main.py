@@ -1,11 +1,5 @@
 from fastapi import FastAPI
-from . import models
 from .api import login, users, services
-from .database import engine
-
-# TODO: tables shouldn't be created automatically
-# -> use alembic
-models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 

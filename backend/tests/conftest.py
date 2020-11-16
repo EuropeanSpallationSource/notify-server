@@ -23,7 +23,7 @@ environ["TEAM_ID"] = "6F44JJ9SDF"
 environ["ADMIN_USERS"] = "admin1,admin2"
 
 from app.main import app  # noqa E402
-from app.database import engine  # noqa E402
+from app.database import Base, engine  # noqa E402
 from . import factories  # noqa E402
 
 Session = sessionmaker()
@@ -34,6 +34,7 @@ register(factories.NotificationFactory)
 
 @pytest.fixture(scope="session")
 def connection():
+    Base.metadata.create_all(bind=engine)
     connection = engine.connect()
     yield connection
     connection.close()

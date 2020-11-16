@@ -1,3 +1,4 @@
+alembic
 fastapi
 python-multipart
 httpx[http2]

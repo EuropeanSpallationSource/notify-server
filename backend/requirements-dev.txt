@@ -3,4 +3,5 @@ requests
 pytest-factoryboy
 pytest-asyncio
 pytest-mock
+pytest-cov
 respx
