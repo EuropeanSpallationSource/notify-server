@@ -1,9 +1,9 @@
 import uuid
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, status
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from typing import List
 from . import deps
-from .. import crud, models, schemas, tasks
+from .. import crud, models, schemas, utils
 
 router = APIRouter()
 
@@ -46,12 +46,17 @@ def read_service_notifications(
 
 @router.post("/{service_id}/notifications", response_model=schemas.Notification)
 def create_notification_for_service(
+    request: Request,
     service_id: uuid.UUID,
     notification: schemas.NotificationCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(deps.get_db),
 ):
     """Create a notification for the given service"""
+    if not utils.is_ip_allowed(request.client.host):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="IP address not allowed"
+        )
     db_service = crud.get_service(db, service_id)
     if db_service is None:
         raise HTTPException(
@@ -61,5 +66,5 @@ def create_notification_for_service(
         db=db, notification=notification, service=db_service
     )
     # Send notification using background task
-    background_tasks.add_task(tasks.send_notification, db_notification)
+    background_tasks.add_task(utils.send_notification, db_notification)
     return db_notification

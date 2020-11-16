@@ -22,3 +22,4 @@ APPLE_SERVER = config(
     "APPLE_SERVER", cast=str, default="api.development.push.apple.com"
 )
 BUNDLE_ID = "eu.ess.ESS-Notify"
+ALLOWED_NETWORKS = config("ALLOWED_NETWORKS", cast=CommaSeparatedStrings, default="")

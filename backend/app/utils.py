@@ -1,6 +1,8 @@
 import httpx
+import ipaddress
 import jwt
 from datetime import datetime
+from typing import List
 from . import models, schemas
 from .settings import (
     ALGORITHM,
@@ -9,7 +11,26 @@ from .settings import (
     TEAM_ID,
     BUNDLE_ID,
     APPLE_SERVER,
+    ALLOWED_NETWORKS,
 )
+
+
+def is_ip_allowed(ip: str, allowed_networks: List[str] = ALLOWED_NETWORKS) -> bool:
+    """Return True if the ip is in the list of allowed networks
+
+    Any IP is allowed if the list is empty
+    """
+    if not allowed_networks:
+        return True
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        # Invalid IP
+        return False
+    for allowed_network in allowed_networks:
+        if addr in ipaddress.ip_network(allowed_network):
+            return True
+    return False
 
 
 async def send_push_to_ios(apn: str, payload: schemas.ApnPayload) -> None:

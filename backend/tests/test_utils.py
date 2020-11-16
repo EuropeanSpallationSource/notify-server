@@ -1,6 +1,18 @@
 import pytest
 import respx
-from app import schemas, tasks
+from app import schemas, utils
+
+
+@pytest.mark.parametrize(
+    "ip,allowed_networks,expected",
+    [
+        ("192.168.1.2", [], True),
+        ("192.168.1.2", ["192.168.1.0/24"], True),
+        ("192.168.1.4", ["192.168.2.0/24", "192.168.3.0/24"], False),
+    ],
+)
+def test_is_ip_allowed(ip, allowed_networks, expected):
+    assert utils.is_ip_allowed(ip, allowed_networks) is expected
 
 
 @respx.mock
@@ -14,7 +26,7 @@ async def test_send_push_to_ios():
     request = respx.post(
         f"https://api.development.push.apple.com/3/device/{apn}",
     )
-    await tasks.send_push_to_ios(apn, payload)
+    await utils.send_push_to_ios(apn, payload)
     assert request.called
     req, _ = respx.calls[0]
     assert req.headers["apns-expiration"] == "0"
