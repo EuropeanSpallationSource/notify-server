@@ -1,5 +1,11 @@
 # ESS Notify Server
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![sonarqube](https://sonarqube.esss.lu.se/api/project_badges/measure?project=ess-notify-server&metric=alert_status)](https://sonarqube.esss.lu.se/dashboard?id=ess-notify-server)
+[![pipeline](https://gitlab.esss.lu.se/ics-software/ess-notify-server/badges/master/pipeline.svg)](https://gitlab.esss.lu.se/ics-software/ess-notify-server/pipelines)
+[![coverage](https://gitlab.esss.lu.se/ics-software/ess-notify-server/badges/master/coverage.svg)](https://gitlab.esss.lu.se/ics-software/ess-notify-server/pipelines)
+
 Python web server to send notifications.
 
 ess-notify is built with [FastAPI].
