@@ -28,10 +28,10 @@ tests_requires = [
 
 setuptools.setup(
     name="ess-notify",
-    description="ESS notification backend server",
+    description="ESS notification server",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://gitlab.esss.lu.se/ics-software/ess-notify",
+    url="https://gitlab.esss.lu.se/ics-software/ess-notify-server",
     license="BSD-2 license",
     setup_requires=["setuptools_scm"],
     install_requires=requirements,

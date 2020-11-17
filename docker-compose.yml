@@ -1,7 +1,7 @@
 version: "3"
 services:
   web:
-    image: registry.esss.lu.se/ics-software/ess-notify:master
+    image: registry.esss.lu.se/ics-software/ess-notify-server:master
     container_name: ess-notify
     build:
       context: "."
@@ -9,7 +9,7 @@ services:
       LDAP_HOST: ${LDAP_HOST}
       LDAP_USER_DN: ${LDAP_USER_DN}
       ADMIN_USERS: ${ADMIN_USERS}
-      SQLALCHEMY_DATABASE_URL: postgresql://csi:csi@localhost/ess-notify
+      SQLALCHEMY_DATABASE_URL: postgresql://csi:csi@ess-notify-postgres/ess-notify
       APNS_KEY_ID: ${APNS_KEY_ID}
       APNS_AUTH_KEY: ${APNS_AUTH_KEY}
       TEAM_ID: ${TEAM_ID}

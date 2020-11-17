@@ -1,11 +1,32 @@
-# ESS Notify
+# ESS Notify Server
 
-ESS Notification application.
+Python web server to send notifications.
 
-This repository includes:
+ess-notify is built with [FastAPI].
 
-- the iOS client application to receive notifications
-- the backend web server that forwards notifications from different services to all subscribers
+## Quick start
 
-The services definition is handled by the backend.
-Clients can subscribe via the iOS application.
+Create a virtual environment and install the requirements:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install -e .
+```
+
+Run the database migrations:
+
+```bash
+alembic upgrade head
+```
+
+Run the application:
+
+```bash
+uvicorn --reload app.main:app
+```
+
+Go to <http://127.0.0.1:8000/docs> to browse the API.
+
+[fastapi]: https://fastapi.tiangolo.com
