@@ -1,8 +1,9 @@
 from fastapi import APIRouter
+from fastapi.responses import PlainTextResponse
 
 router = APIRouter()
 
 
 @router.get("/health")
 def health_check():
-    return "OK"
+    return PlainTextResponse("OK")
