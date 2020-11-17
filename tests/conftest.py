@@ -24,6 +24,7 @@ environ["ADMIN_USERS"] = "admin1,admin2"
 
 from app.main import app  # noqa E402
 from app.database import Base, engine  # noqa E402
+from app.api import deps  # noqa E402
 from . import factories  # noqa E402
 
 Session = sessionmaker()
@@ -47,6 +48,7 @@ def db(connection) -> Generator:
     factories.UserFactory._meta.sqlalchemy_session = session
     factories.ServiceFactory._meta.sqlalchemy_session = session
     factories.NotificationFactory._meta.sqlalchemy_session = session
+    app.dependency_overrides[deps.get_db] = lambda: session
     yield session
     session.close()
     transaction.rollback()
