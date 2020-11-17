@@ -23,3 +23,7 @@ APPLE_SERVER = config(
 )
 BUNDLE_ID = "eu.ess.ESS-Notify"
 ALLOWED_NETWORKS = config("ALLOWED_NETWORKS", cast=CommaSeparatedStrings, default="")
+
+# Sentry Data Source Name
+# Leave it empty to disable it
+SENTRY_DSN = config("SENTRY_DSN", cast=str, default="")

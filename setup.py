@@ -16,6 +16,7 @@ requirements = [
     "sqlalchemy",
     "uvicorn[standard]",
     "gunicorn",
+    "sentry-sdk",
 ]
 tests_requires = [
     "pytest",
