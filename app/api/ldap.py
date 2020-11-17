@@ -17,7 +17,6 @@ def authenticate_user(username: str, password: str) -> bool:
     else:
         user_search_dn = LDAP_BASE_DN
     bind_user = f"{LDAP_USER_RDN_ATTR}={username},{user_search_dn}"
-    print(bind_user)
     connection = ldap3.Connection(
         server=server,
         user=bind_user,
@@ -27,6 +26,5 @@ def authenticate_user(username: str, password: str) -> bool:
         raise_exceptions=False,
     )
     result = connection.bind()
-    print(f"bind result: {result}")
     connection.unbind()
     return result
