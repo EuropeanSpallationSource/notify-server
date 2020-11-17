@@ -11,6 +11,7 @@ requirements = [
     "python-multipart",
     "httpx[http2]",
     "pyjwt",
+    "cryptography",
     "ldap3",
     "sqlalchemy",
     "uvicorn[standard]",
