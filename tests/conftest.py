@@ -54,7 +54,7 @@ def db(connection) -> Generator:
     transaction.rollback()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def client() -> Generator:
     with TestClient(app) as c:
         yield c
