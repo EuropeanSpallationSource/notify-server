@@ -58,3 +58,14 @@ def db(connection) -> Generator:
 def client() -> Generator:
     with TestClient(app) as c:
         yield c
+
+
+@pytest.fixture
+def user_token_headers(user):
+    return {"Authorization": f"Bearer {user.token}"}
+
+
+@pytest.fixture
+def admin_token_headers(user_factory):
+    admin = user_factory(is_admin=True)
+    return {"Authorization": f"Bearer {admin.token}"}

@@ -18,7 +18,7 @@ def read_services(
     return db_services
 
 
-@router.post("/", response_model=schemas.Service)
+@router.post("/", response_model=schemas.Service, status_code=status.HTTP_201_CREATED)
 def create_service(
     service: schemas.ServiceCreate,
     db: Session = Depends(deps.get_db),
@@ -44,7 +44,11 @@ def read_service_notifications(
     return db_service.notifications
 
 
-@router.post("/{service_id}/notifications", response_model=schemas.Notification)
+@router.post(
+    "/{service_id}/notifications",
+    response_model=schemas.Notification,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_notification_for_service(
     request: Request,
     service_id: uuid.UUID,

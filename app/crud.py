@@ -1,5 +1,4 @@
 import uuid
-from operator import attrgetter
 from sqlalchemy.orm import Session
 from typing import List
 from . import models, schemas
@@ -41,7 +40,7 @@ def get_service(db: Session, service_id: uuid.UUID):
 
 
 def get_services(db: Session):
-    return db.query(models.Service).all()
+    return db.query(models.Service).order_by(models.Service.category).all()
 
 
 def create_service(db: Session, service: schemas.ServiceCreate):
@@ -54,11 +53,8 @@ def create_service(db: Session, service: schemas.ServiceCreate):
 
 def get_user_services(db: Session, user: models.User) -> List[schemas.UserService]:
     """Return all services for the user sorted by category"""
-    services = db.query(models.Service).all()
-    return sorted(
-        [service.to_user_service(user) for service in services],
-        key=attrgetter("category"),
-    )
+    services = get_services(db)
+    return [service.to_user_service(user) for service in services]
 
 
 def update_user_services(
@@ -66,7 +62,7 @@ def update_user_services(
 ) -> None:
     # Get all services in one query and build a dict to efficiently
     # retrieve each service by id in the loop
-    services = db.query(models.Service).all()
+    services = get_services(db)
     services_dict = {service.id: service for service in services}
     for updated_service in updated_services:
         try:
