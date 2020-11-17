@@ -59,10 +59,10 @@ WORKDIR /app
 
 ENV PATH /venv/bin:$PATH
 
+USER 1000
+
 # Install the app so it can be found by alembic
 RUN pip install --no-cache-dir .
-
-USER 1000
 
 # Running uvicorn is for testing
 # For production, run using Gunicorn using the uvicorn worker class

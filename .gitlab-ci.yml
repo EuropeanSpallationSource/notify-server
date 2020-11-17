@@ -24,6 +24,6 @@ test-docker-image:
   stage: test
   image: "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME"
   before_script:
-    - pip install -e .[tests]
+    - pip install --no-cache-dir .[tests]
   script:
     - pytest -v
