@@ -2,3 +2,28 @@
 include:
   - remote: 'https://gitlab.esss.lu.se/ics-infrastructure/gitlab-ci-yml/raw/master/PreCommit.gitlab-ci.yml'
   - remote: 'https://gitlab.esss.lu.se/ics-infrastructure/gitlab-ci-yml/raw/master/SonarScanner.gitlab-ci.yml'
+  - remote: 'https://gitlab.esss.lu.se/ics-infrastructure/gitlab-ci-yml/raw/master/Docker.gitlab-ci.yml'
+
+
+test-python38:
+  stage: test
+  image: python:3.8
+  before_script:
+    - pip install -e .[tests]
+  script:
+    - pytest --junitxml=junit.xml --cov-report=xml:coverage.xml --cov-report=term --cov=app -v
+  artifacts:
+    paths:
+      - junit.xml
+      - coverage.xml
+    reports:
+      junit: junit.xml
+    expire_in: 1 hour
+
+test-docker-image:
+  stage: test
+  image: "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME"
+  before_script:
+    - pip install -e .[tests]
+  script:
+    - pytest -v
