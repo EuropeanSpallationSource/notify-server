@@ -7,11 +7,6 @@ from .. import crud
 router = APIRouter()
 
 
-@router.get("/health")
-def health_check():
-    return "OK"
-
-
 @router.post("/login")
 def login(
     db: Session = Depends(deps.get_db),
