@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from app import schemas, models
 
 
-def test_read_current_user_profile(client: TestClient, db, user):
+def test_read_current_user_profile(client: TestClient, user):
     response = client.get(
         "/api/v1/users/user/profile", headers={"Authorization": f"Bearer {user.token}"}
     )
@@ -10,7 +10,7 @@ def test_read_current_user_profile(client: TestClient, db, user):
     assert response.json() == schemas.User.from_orm(user).dict()
 
 
-def test_create_current_user_apn_token_no_token(client: TestClient, user):
+def test_create_current_user_apn_token_no_token(client: TestClient, db, user):
     assert user.apn_tokens == []
     apn_token = "my-token"
     response = client.post(

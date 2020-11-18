@@ -41,7 +41,7 @@ def connection():
     connection.close()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(autouse=True, scope="function")
 def db(connection) -> Generator:
     transaction = connection.begin()
     session = Session(bind=connection)
