@@ -40,7 +40,7 @@ def read_current_user_services(
     return crud.get_user_services(db, current_user)
 
 
-@router.patch("/user/services")
+@router.patch("/user/services", status_code=status.HTTP_204_NO_CONTENT)
 def update_current_user_services(
     updated_services: List[schemas.UserUpdateService],
     db: Session = Depends(deps.get_db),
@@ -59,7 +59,7 @@ def read_current_user_notifications(
     return crud.get_user_notifications(current_user)
 
 
-@router.patch("/user/notifications")
+@router.patch("/user/notifications", status_code=status.HTTP_204_NO_CONTENT)
 def update_current_user_notifications(
     updated_notifications: List[schemas.UserUpdateNotification],
     db: Session = Depends(deps.get_db),
