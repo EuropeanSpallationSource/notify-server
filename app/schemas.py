@@ -2,7 +2,7 @@ from __future__ import annotations
 import datetime
 import uuid
 from enum import Enum
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 
 
@@ -19,6 +19,12 @@ class User(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class UserUpdate(BaseModel):
+    token: Optional[str]
+    is_active: Optional[bool]
+    is_admin: Optional[bool]
 
 
 class ServiceBase(BaseModel):

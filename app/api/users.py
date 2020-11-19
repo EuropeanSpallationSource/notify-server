@@ -1,10 +1,37 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from . import deps
 from .. import crud, models, schemas
 
 router = APIRouter()
+
+
+@router.get("/", response_model=List[schemas.User])
+def read_users(
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_admin_user),
+):
+    """Return all users - admin only"""
+    users = crud.get_users(db)
+    return users
+
+
+@router.patch("/{user_id}", response_model=schemas.User)
+def update_user(
+    user_id: int,
+    updated_info: schemas.UserUpdate,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_admin_user),
+):
+    """Update the given user - admin only"""
+    user = crud.get_user(db, user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    updated_user = crud.update_user(db, user, updated_info)
+    return updated_user
 
 
 @router.get("/user/profile", response_model=schemas.User)

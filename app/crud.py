@@ -5,8 +5,12 @@ from . import models, schemas
 from .settings import ADMIN_USERS
 
 
+def get_users(db: Session):
+    return db.query(models.User).order_by(models.User.username).all()
+
+
 def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first()
+    return db.query(models.User).get(user_id)
 
 
 def get_user_by_token(db: Session, token: str):
@@ -30,6 +34,17 @@ def create_user_apn_token(
     db: Session, apn_token: str, user: models.User
 ) -> models.User:
     user.add_apn_token(apn_token)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_user(
+    db: Session, user: models.User, updated_info: schemas.UserUpdate
+) -> models.User:
+    for key, value in updated_info.dict().items():
+        if value is not None:
+            setattr(user, key, value)
     db.commit()
     db.refresh(user)
     return user

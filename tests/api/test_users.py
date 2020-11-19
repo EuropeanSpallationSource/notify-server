@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 from app import schemas, models
 
@@ -182,3 +183,71 @@ def test_update_current_user_notifications(
     assert db_user.nb_unread_notifications == 1
     assert db_user.user_notifications[0].is_read
     assert not db_user.user_notifications[1].is_read
+
+
+def test_read_users(client: TestClient, user_factory):
+    user1 = user_factory()
+    user2 = user_factory()
+    user3 = user_factory()
+    admin = user_factory(is_admin=True)
+    response = client.get(
+        "/api/v1/users/", headers={"Authorization": f"Bearer {admin.token}"}
+    )
+    assert response.status_code == 200
+    users = [
+        {
+            "id": user.id,
+            "username": user.username,
+            "apn_tokens": user.apn_tokens,
+            "is_admin": user.is_admin,
+            "is_active": user.is_active,
+        }
+        for user in (user1, user2, user3, admin)
+    ]
+    assert response.json() == sorted(users, key=lambda u: u["username"])
+
+
+@pytest.mark.parametrize(
+    "updated_info,expected_active,expected_admin,expected_token",
+    [
+        ({}, True, False, "secret-token"),
+        ({"is_admin": True}, True, True, "secret-token"),
+        ({"is_active": False}, False, False, "secret-token"),
+        ({"token": ""}, True, False, ""),
+    ],
+)
+def test_update_user(
+    client: TestClient,
+    user_factory,
+    updated_info,
+    expected_active,
+    expected_admin,
+    expected_token,
+):
+    user1 = user_factory(token="secret-token")
+    admin = user_factory(is_admin=True)
+    assert not user1.is_admin
+    response = client.patch(
+        f"/api/v1/users/{user1.id}",
+        headers={"Authorization": f"Bearer {admin.token}"},
+        json=updated_info,
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": user1.id,
+        "username": user1.username,
+        "apn_tokens": user1.apn_tokens,
+        "is_admin": expected_admin,
+        "is_active": expected_active,
+    }
+    assert user1.token == expected_token
+
+
+def test_update_user_invalid_id(client: TestClient, admin_token_headers):
+    response = client.patch(
+        "/api/v1/users/1234",
+        headers=admin_token_headers,
+        json={},
+    )
+    assert response.status_code == 404
+    assert response.json() == {"detail": "User not found"}
