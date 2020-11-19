@@ -24,7 +24,7 @@ def create_service(
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_admin_user),
 ):
-    """Create a new service"""
+    """Create a new service - admin only"""
     db_service = crud.create_service(db, service=service)
     return db_service
 
@@ -35,7 +35,7 @@ def read_service_notifications(
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_admin_user),
 ):
-    """Read the service notifications"""
+    """Read the service notifications - admin only"""
     db_service = crud.get_service(db, service_id)
     if db_service is None:
         raise HTTPException(
