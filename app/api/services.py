@@ -1,5 +1,6 @@
 import uuid
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request, status
+from fastapi.logger import logger
 from sqlalchemy.orm import Session
 from typing import List
 from . import deps
@@ -57,7 +58,9 @@ def create_notification_for_service(
     db: Session = Depends(deps.get_db),
 ):
     """Create a notification for the given service"""
-    if not utils.is_ip_allowed(request.client.host):
+    ip = request.client.host
+    if not utils.is_ip_allowed(ip):
+        logger.warning(f"IP {ip} not allowed to create a notification!")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="IP address not allowed"
         )

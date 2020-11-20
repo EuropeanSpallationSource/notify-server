@@ -1,9 +1,19 @@
+import logging
 import sentry_sdk
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from fastapi import FastAPI
+from fastapi.logger import logger
 from . import monitoring
 from .api import login, users, services
 from .settings import SENTRY_DSN
+
+
+# The following logging setup assumes the app is run with gunicorn
+gunicorn_error_logger = logging.getLogger("gunicorn.error")
+uvicorn_access_logger = logging.getLogger("uvicorn.access")
+uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
+logger.handlers = gunicorn_error_logger.handlers
+logger.setLevel(gunicorn_error_logger.level)
 
 app = FastAPI()
 

@@ -1,4 +1,5 @@
 import uuid
+from fastapi.logger import logger
 from sqlalchemy.orm import Session
 from typing import List
 from . import models, schemas
@@ -27,6 +28,7 @@ def create_user(db: Session, username: str):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    logger.info(f"New user created: {schemas.User.from_orm(db_user).json()}")
     return db_user
 
 
@@ -44,6 +46,7 @@ def update_user(
 ) -> models.User:
     for key, value in updated_info.dict().items():
         if value is not None:
+            logger.info(f"Update {key} to {value} for user {user.username}")
             setattr(user, key, value)
     db.commit()
     db.refresh(user)
@@ -63,6 +66,7 @@ def create_service(db: Session, service: schemas.ServiceCreate):
     db.add(db_service)
     db.commit()
     db.refresh(db_service)
+    logger.info(f"New service created: {schemas.Service.from_orm(db_service).json()}")
     return db_service
 
 
@@ -87,8 +91,10 @@ def update_user_services(
             continue
         if updated_service.is_subscribed:
             user.subscribe(service)
+            logger.info(f"User {user.username} subscribed to '{service.category}'")
         else:
             user.unsubscribe(service)
+            logger.info(f"User {user.username} unsubscribed from '{service.category}'")
     db.commit()
 
 
@@ -101,6 +107,9 @@ def create_service_notification(
         user.notifications.append(db_notification)
     db.commit()
     db.refresh(db_notification)
+    logger.info(
+        f"New notification created for '{service.category}': {schemas.Notification.from_orm(db_notification).json()}"
+    )
     return db_notification
 
 
