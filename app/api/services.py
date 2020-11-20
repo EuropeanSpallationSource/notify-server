@@ -58,6 +58,7 @@ def create_notification_for_service(
     db: Session = Depends(deps.get_db),
 ):
     """Create a notification for the given service"""
+    logger.info(f"Received headers: {request.headers}")
     ip = request.client.host
     if not utils.is_ip_allowed(ip):
         logger.warning(f"IP {ip} not allowed to create a notification!")
