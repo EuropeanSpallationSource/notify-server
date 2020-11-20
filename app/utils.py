@@ -1,9 +1,12 @@
+import asyncio
 import httpx
 import ipaddress
 import jwt
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict
-from . import models, schemas
+from sqlalchemy.orm import Session
+from fastapi.logger import logger
+from . import models, schemas, crud
 from .settings import (
     APNS_ALGORITHM,
     APNS_AUTH_KEY,
@@ -15,6 +18,7 @@ from .settings import (
     SECRET_KEY,
     JWT_ALGORITHM,
     ACCESS_TOKEN_EXPIRE_MINUTES,
+    NB_PARALLEL_PUSH,
 )
 
 
@@ -65,26 +69,80 @@ def is_ip_allowed(ip: str, allowed_networks: List[str]) -> bool:
     return False
 
 
-async def send_push_to_ios(apn: str, payload: schemas.ApnPayload) -> None:
+async def gather_with_concurrency(n: int, *tasks, return_exceptions=True):
+    """Gather all the tasks with a maximum of n in parallel"""
+    semaphore = asyncio.Semaphore(n)
+
+    async def sem_task(task):
+        async with semaphore:
+            return await task
+
+    return await asyncio.gather(
+        *(sem_task(task) for task in tasks), return_exceptions=return_exceptions
+    )
+
+
+async def send_push_to_ios(
+    client: httpx.AsyncClient,
+    apn: str,
+    payload: schemas.ApnPayload,
+    db: Session,
+    user: models.User,
+) -> bool:
+    """Send a push notification to iOS
+
+    Return True in case of success
+    """
+    try:
+        response = await client.post(
+            f"https://{APPLE_SERVER}/3/device/{apn}", json=payload.dict()
+        )
+        response.raise_for_status()
+    except httpx.RequestError as exc:
+        logger.error(f"HTTP Exception for {exc.request.url} - {exc}")
+        return False
+    except httpx.HTTPStatusError as exc:
+        logger.warning(f"{exc}")
+        if response.status_code == 410:
+            logger.info(
+                f"Device token no longer active. Delete {apn} for user {user.username}"
+            )
+            crud.remove_user_apn_token(db, user, apn)
+        return False
+    logger.info(f"Notification sent to user {user.username}")
+    return True
+
+
+def create_apn_headers(issued_at: datetime) -> Dict[str, str]:
+    """Return the required headers to send an Apple push notification"""
     token = jwt.encode(
-        {"iss": str(TEAM_ID), "iat": datetime.utcnow()},
+        {"iss": str(TEAM_ID), "iat": issued_at},
         str(APNS_AUTH_KEY),
         algorithm=APNS_ALGORITHM,
         headers={"alg": APNS_ALGORITHM, "kid": str(APNS_KEY_ID)},
     )
-    headers = {
+    return {
         "apns-expiration": "0",
         "apns-priority": "10",
         "apns-topic": BUNDLE_ID,
         "authorization": f"Bearer {token.decode('utf-8')}",
     }
-    url = f"https://{APPLE_SERVER}/3/device/{apn}"
-    async with httpx.AsyncClient(http2=True) as client:
-        await client.post(url, json=payload.dict(), headers=headers)
 
 
-async def send_notification(notification: models.Notification) -> None:
-    for user_notification in notification.users_notification:
-        apn_payload = user_notification.to_apn_payload()
-        for apn_token in user_notification.user.apn_tokens:
-            await send_push_to_ios(apn_token, apn_payload)
+async def send_notification(db: Session, notification: models.Notification) -> None:
+    """Send the notification to all subscribers"""
+    headers = create_apn_headers(datetime.utcnow())
+    client = httpx.AsyncClient(http2=True, headers=headers)
+    tasks = [
+        send_push_to_ios(
+            client,
+            apn_token,
+            user_notification.to_apn_payload(),
+            db,
+            user_notification.user,
+        )
+        for user_notification in notification.users_notification
+        for apn_token in user_notification.user.apn_tokens
+    ]
+    await gather_with_concurrency(NB_PARALLEL_PUSH, *tasks, return_exceptions=True)
+    await client.aclose()

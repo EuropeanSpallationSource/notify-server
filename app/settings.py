@@ -36,6 +36,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = config(
     "ACCESS_TOKEN_EXPIRE_MINUTES", cast=int, default=43200
 )
 
+# Number of push notifications sent in parallel
+NB_PARALLEL_PUSH = config("NB_PARALLEL_PUSH", cast=int, default=50)
+
 # Sentry Data Source Name
 # Leave it empty to disable it
 SENTRY_DSN = config("SENTRY_DSN", cast=str, default="")

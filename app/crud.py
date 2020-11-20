@@ -51,6 +51,15 @@ def update_user(
     return user
 
 
+def remove_user_apn_token(
+    db: Session, user: models.User, apn_token: str
+) -> models.User:
+    user.remove_apn_token(apn_token)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def get_service(db: Session, service_id: uuid.UUID):
     return db.query(models.Service).filter(models.Service.id == service_id).first()
 

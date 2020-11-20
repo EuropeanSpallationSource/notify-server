@@ -150,7 +150,7 @@ def test_create_notification_for_service(
     )
     assert response.status_code == 201
     db_notification = db.query(models.Notification).first()
-    mock_send_notification.assert_called_once_with(db_notification)
+    mock_send_notification.assert_called_once_with(db, db_notification)
     assert response.json() == {
         "id": db_notification.id,
         "service_id": str(service.id),

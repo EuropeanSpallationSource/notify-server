@@ -204,3 +204,19 @@ def test_update_user_notifications(db, user, service_factory):
     db_notification2 = db.query(models.Notification).get(notification2.id)
     assert db_notification2 == notification2
     assert db_notification2 in notification2.service.notifications
+
+
+@pytest.mark.parametrize(
+    "initial_tokens, removed, expected",
+    [
+        ([], "foo", []),
+        (["one"], "foo", ["one"]),
+        (["one"], "one", []),
+        (["one", "two"], "one", ["two"]),
+    ],
+)
+def test_remove_user_apn_token(db, user_factory, initial_tokens, removed, expected):
+    user = user_factory(apn_tokens=initial_tokens)
+    assert user.apn_tokens == initial_tokens
+    crud.remove_user_apn_token(db, user, removed)
+    assert user.apn_tokens == expected

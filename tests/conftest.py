@@ -6,7 +6,7 @@ from pytest_factoryboy import register
 from typing import Generator
 
 # Overwrite default settings.
-# Note that those should be set before to import the 'settings` module.
+# Note that those should be set before to import the 'settings' module.
 # It will raise an error otherwise.
 environ["SQLALCHEMY_DATABASE_URL"] = "sqlite://"
 environ["LDAP_SERVER"] = "ldap.example.org"
@@ -21,6 +21,7 @@ ytZPnlbWNLGGR7tKdB1eLzyBlIVFe9El4Wlvs19ACPRMtE7l75IlbOT+
 """
 environ["TEAM_ID"] = "6F44JJ9SDF"
 environ["ADMIN_USERS"] = "admin1,admin2"
+environ["NB_PARALLEL_PUSH"] = "2"
 
 from app.main import app  # noqa E402
 from app.database import Base, engine  # noqa E402

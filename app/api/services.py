@@ -79,5 +79,5 @@ def create_notification_for_service(
         db=db, notification=notification, service=db_service
     )
     # Send notification using background task
-    background_tasks.add_task(utils.send_notification, db_notification)
+    background_tasks.add_task(utils.send_notification, db, db_notification)
     return db_notification
