@@ -2,7 +2,7 @@ import httpx
 import ipaddress
 import jwt
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from . import models, schemas
 from .settings import (
     ALGORITHM,
@@ -15,7 +15,22 @@ from .settings import (
 )
 
 
-def is_ip_allowed(ip: str, allowed_networks: List[str] = ALLOWED_NETWORKS) -> bool:
+def check_ips(
+    ips: Optional[List[str]] = None, allowed_networks: List[str] = ALLOWED_NETWORKS
+) -> bool:
+    """Return True if all ip addresses are in the list of allowed networks
+
+    Any IP is allowed if the list is empty
+    """
+    if not allowed_networks:
+        return True
+    if ips is None or not ips:
+        # No IP to check
+        return False
+    return all([is_ip_allowed(ip, allowed_networks) for ip in ips])
+
+
+def is_ip_allowed(ip: str, allowed_networks: List[str]) -> bool:
     """Return True if the ip is in the list of allowed networks
 
     Any IP is allowed if the list is empty

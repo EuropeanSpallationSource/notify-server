@@ -17,6 +17,27 @@ def test_is_ip_allowed(ip, allowed_networks, expected):
     assert utils.is_ip_allowed(ip, allowed_networks) is expected
 
 
+@pytest.mark.parametrize(
+    "ips,allowed_networks,expected",
+    [
+        (None, [], True),
+        ([], [], True),
+        (["foo"], [], True),
+        (["192.168.0.2"], [], True),
+        (None, ["192.168.1.0/24"], False),
+        ([], ["192.168.1.0/24"], False),
+        (["192.168.1.2"], ["192.168.1.0/24"], True),
+        (["192.168.1.2", "172.30.4.11"], ["192.168.1.0/24", "172.30.4.0/24"], True),
+        (["foo"], ["192.168.1.0/24"], False),
+        ("[192.168.1]", ["192.168.1.0/24"], False),
+        (["192.168.1.2", "172.30.4.11"], ["192.168.1.0/24", "172.30.5.0/24"], False),
+        (["192.168.1.2", "172.30.4.11"], ["172.30.4.0/24"], False),
+    ],
+)
+def test_check_ips(ips, allowed_networks, expected):
+    assert utils.check_ips(ips, allowed_networks) is expected
+
+
 @respx.mock
 @pytest.mark.asyncio
 async def test_send_push_to_ios():

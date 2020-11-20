@@ -114,7 +114,7 @@ def test_read_service_notifications_unknown_service_id(
 def test_create_notification_for_service_ip_not_allowed(
     client: TestClient, service, user_token_headers, sample_notification, mocker
 ):
-    mocker.patch("app.api.services.utils.is_ip_allowed", return_value=False)
+    mocker.patch("app.api.services.utils.check_ips", return_value=False)
     response = client.post(
         f"/api/v1/services/{service.id}/notifications",
         headers=user_token_headers,
@@ -127,7 +127,7 @@ def test_create_notification_for_service_ip_not_allowed(
 def test_create_notification_for_service_unknown_service(
     client: TestClient, user_token_headers, sample_notification, mocker
 ):
-    mocker.patch("app.api.services.utils.is_ip_allowed", return_value=True)
+    mocker.patch("app.api.services.utils.check_ips", return_value=True)
     service_id = uuid.uuid4()
     response = client.post(
         f"/api/v1/services/{service_id}/notifications",
@@ -141,7 +141,7 @@ def test_create_notification_for_service_unknown_service(
 def test_create_notification_for_service(
     client: TestClient, db, service, user_token_headers, sample_notification, mocker
 ):
-    mocker.patch("app.api.services.utils.is_ip_allowed", return_value=True)
+    mocker.patch("app.api.services.utils.check_ips", return_value=True)
     mock_send_notification = mocker.patch("app.api.services.utils.send_notification")
     response = client.post(
         f"/api/v1/services/{service.id}/notifications",
