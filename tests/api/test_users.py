@@ -105,7 +105,7 @@ def test_update_current_user_services(client: TestClient, db, user, service_fact
     user.subscribe(service1)
     user.subscribe(service2)
     db.commit()
-    assert user.services == [service1, service2]
+    assert user.services == sorted([service1, service2], key=lambda s: s.category)
     response = client.patch(
         "/api/v1/users/user/services",
         headers={"Authorization": f"Bearer {user.token}"},
@@ -117,7 +117,7 @@ def test_update_current_user_services(client: TestClient, db, user, service_fact
     )
     assert response.status_code == 204
     db_user = db.query(models.User).get(user.id)
-    assert db_user.services == [service1, service3]
+    assert db_user.services == sorted([service1, service3], key=lambda s: s.category)
 
 
 def test_read_current_user_notifications(

@@ -145,7 +145,7 @@ def test_update_user_services(db, user, service_factory):
     user.subscribe(service1)
     user.subscribe(service2)
     db.commit()
-    assert user.services == [service1, service2]
+    assert user.services == sorted([service1, service2], key=lambda s: s.category)
     updated_services = [
         schemas.UserUpdateService(id=service1.id, is_subscribed=False),
         schemas.UserUpdateService(id=service2.id, is_subscribed=True),
@@ -154,7 +154,7 @@ def test_update_user_services(db, user, service_factory):
     crud.update_user_services(db, updated_services, user)
     # Services are updated
     db.refresh(user)
-    assert user.services == [service2, service3]
+    assert user.services == sorted([service2, service3], key=lambda s: s.category)
 
 
 def test_update_user_services_unknown_id(db, user, service_factory):
@@ -164,7 +164,7 @@ def test_update_user_services_unknown_id(db, user, service_factory):
     user.subscribe(service1)
     user.subscribe(service2)
     db.commit()
-    assert user.services == [service1, service2]
+    assert user.services == sorted([service1, service2], key=lambda s: s.category)
     updated_services = [
         schemas.UserUpdateService(id=uuid.uuid4(), is_subscribed=False),
         schemas.UserUpdateService(id=service2.id, is_subscribed=True),
@@ -174,7 +174,9 @@ def test_update_user_services_unknown_id(db, user, service_factory):
     # Unknown service is ignored
     # Missing service is untouched
     db.refresh(user)
-    assert user.services == [service1, service2, service3]
+    assert user.services == sorted(
+        [service1, service2, service3], key=lambda s: s.category
+    )
 
 
 def test_update_user_notifications(db, user, service_factory):

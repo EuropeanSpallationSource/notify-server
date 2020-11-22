@@ -1,3 +1,4 @@
+from operator import attrgetter
 import uuid
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
@@ -7,6 +8,7 @@ from .settings import ADMIN_USERS
 
 
 def get_users(db: Session):
+    """Return all users sorted by username"""
     return db.query(models.User).order_by(models.User.username).all()
 
 
@@ -58,6 +60,7 @@ def get_service(db: Session, service_id: uuid.UUID):
 
 
 def get_services(db: Session):
+    """Return all services sorted by category"""
     return db.query(models.Service).order_by(models.Service.category).all()
 
 
@@ -114,7 +117,9 @@ def create_service_notification(
 
 
 def get_user_notifications(user: models.User) -> List[schemas.UserNotification]:
-    return [un.to_user_notification() for un in user.user_notifications]
+    """Return all user's notifications sorted by timestamp"""
+    user_notifications = [un.to_user_notification() for un in user.user_notifications]
+    return sorted(user_notifications, key=attrgetter("timestamp"))
 
 
 def update_user_notifications(

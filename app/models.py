@@ -70,7 +70,10 @@ class User(Base):
     is_admin = Column(Boolean, default=False, nullable=False)
 
     services = relationship(
-        "Service", secondary=users_services_table, back_populates="subscribers"
+        "Service",
+        secondary=users_services_table,
+        back_populates="subscribers",
+        order_by="Service.category",
     )
     # association proxy of "user_notifications" collection
     # to "notification" attribute
@@ -129,7 +132,9 @@ class Service(Base):
     color = Column(String)
     owner = Column(String)
 
-    notifications = relationship("Notification", backref="service")
+    notifications = relationship(
+        "Notification", backref="service", order_by="Notification.timestamp"
+    )
     subscribers = relationship(
         "User", secondary=users_services_table, back_populates="services"
     )
