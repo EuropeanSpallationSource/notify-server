@@ -68,5 +68,5 @@ RUN pip install --no-cache-dir .
 # For production, run using Gunicorn using the uvicorn worker class
 # Use one or two workers per-CPU core
 # For example:
-# gunicorn -w 4 -k uvicorn.workers.UvicornWorker --log-level warning main:app
+# gunicorn -b 0.0.0.0:8000 -w 4 -k uvicorn.workers.UvicornWorker --log-level info app.main:app
 CMD ["uvicorn", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000", "app.main:app"]

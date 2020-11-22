@@ -5,6 +5,7 @@ services:
     container_name: ess-notify
     build:
       context: "."
+    command: gunicorn -b 0.0.0.0:8000 -w 2 -k uvicorn.workers.UvicornWorker --log-level info app.main:app
     environment:
       LDAP_HOST: ${LDAP_HOST}
       LDAP_USER_DN: ${LDAP_USER_DN}
