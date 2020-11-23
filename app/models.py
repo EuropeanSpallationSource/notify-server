@@ -1,5 +1,4 @@
 from __future__ import annotations
-import secrets
 import uuid
 from typing import List
 from sqlalchemy import Table, Boolean, Column, ForeignKey, Integer, String, DateTime
@@ -63,7 +62,6 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    token = Column(String, nullable=False, default=lambda: secrets.token_hex(32))
     # Store list of APN tokens as semi-colon separated string
     _apn_tokens = Column(String, default="")
     is_active = Column(Boolean, default=True, nullable=False)

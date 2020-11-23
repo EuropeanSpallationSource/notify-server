@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from app import models
+from app import models, utils
 
 
 def test_login_invalid_credentials(client: TestClient, mocker):
@@ -32,7 +32,9 @@ def test_login_new_user(client: TestClient, db, mocker):
     assert response.status_code == 201
     db_user = db.query(models.User).filter(models.User.username == username).first()
     assert db_user.username == username
-    assert response.json() == {"access_token": db_user.token, "token_type": "bearer"}
+    assert response.json()["token_type"] == "bearer"
+    token = response.json()["access_token"]
+    assert utils.decode_access_token(token)["sub"] == username
 
 
 def test_login_existing_user(client: TestClient, db, mocker, user):
@@ -49,4 +51,6 @@ def test_login_existing_user(client: TestClient, db, mocker, user):
     )
     mock_authenticate_user.assert_called_once_with(user.username, password)
     assert response.status_code == 200
-    assert response.json() == {"access_token": user.token, "token_type": "bearer"}
+    assert response.json()["token_type"] == "bearer"
+    token = response.json()["access_token"]
+    assert utils.decode_access_token(token)["sub"] == user.username

@@ -22,7 +22,6 @@ class User(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    token: Optional[str]
     is_active: Optional[bool]
     is_admin: Optional[bool]
 

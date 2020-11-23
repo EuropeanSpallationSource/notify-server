@@ -25,6 +25,7 @@ environ["ADMIN_USERS"] = "admin1,admin2"
 from app.main import app  # noqa E402
 from app.database import Base, engine  # noqa E402
 from app.api import deps  # noqa E402
+from app.utils import create_access_token  # noqa E402
 from . import factories  # noqa E402
 
 Session = sessionmaker()
@@ -62,10 +63,12 @@ def client() -> Generator:
 
 @pytest.fixture
 def user_token_headers(user):
-    return {"Authorization": f"Bearer {user.token}"}
+    token = create_access_token(user.username)
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
 def admin_token_headers(user_factory):
     admin = user_factory(is_admin=True)
-    return {"Authorization": f"Bearer {admin.token}"}
+    token = create_access_token(admin.username)
+    return {"Authorization": f"Bearer {token}"}

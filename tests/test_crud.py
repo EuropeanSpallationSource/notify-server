@@ -7,7 +7,6 @@ def test_create_user(db):
     username = "johndoe"
     user = crud.create_user(db, username=username)
     assert user.username == username
-    assert hasattr(user, "token")
     assert user.is_active
     assert not user.is_admin
 
@@ -26,13 +25,6 @@ def test_get_user_by_username(db, user):
     retrieved_user = crud.get_user_by_username(db, user.username)
     assert retrieved_user == user
     retrieved_user = crud.get_user_by_username(db, "foo")
-    assert retrieved_user is None
-
-
-def test_get_user_by_token(db, user):
-    retrieved_user = crud.get_user_by_token(db, user.token)
-    assert retrieved_user == user
-    retrieved_user = crud.get_user_by_token(db, "xxx")
     assert retrieved_user is None
 
 

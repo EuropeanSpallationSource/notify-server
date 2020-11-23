@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
 from . import deps, ldap
-from .. import crud
+from .. import crud, utils
 
 router = APIRouter()
 
@@ -25,4 +25,5 @@ def login(
     if db_user is None:
         db_user = crud.create_user(db, form_data.username)
         response.status_code = status.HTTP_201_CREATED
-    return {"access_token": db_user.token, "token_type": "bearer"}
+    access_token = utils.create_access_token(db_user.username)
+    return {"access_token": access_token, "token_type": "bearer"}

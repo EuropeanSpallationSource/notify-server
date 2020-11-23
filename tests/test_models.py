@@ -9,8 +9,7 @@ def test_user(db: Session, user_factory) -> None:
     assert user.username == username
     assert user.is_active
     assert not user.is_admin
-    assert hasattr(user, "token")
-    assert len(user.token) == 64
+    assert not hasattr(user, "token")
     assert user.apn_tokens == []
     assert user._apn_tokens == ""
 

@@ -14,7 +14,7 @@ ADMIN_USERS = config("ADMIN_USERS", cast=CommaSeparatedStrings, default="")
 SQLALCHEMY_DATABASE_URL = config(
     "SQLALCHEMY_DATABASE_URL", cast=str, default="sqlite:///./sql_app.db"
 )
-ALGORITHM = "ES256"
+APNS_ALGORITHM = "ES256"
 APNS_KEY_ID = config("APNS_KEY_ID", cast=Secret, default="key-id")
 APNS_AUTH_KEY = config("APNS_AUTH_KEY", cast=Secret, default="dummy-key")
 TEAM_ID = config("TEAM_ID", cast=Secret, default="team")
@@ -23,6 +23,18 @@ APPLE_SERVER = config(
 )
 BUNDLE_ID = "eu.ess.ESS-Notify"
 ALLOWED_NETWORKS = config("ALLOWED_NETWORKS", cast=CommaSeparatedStrings, default="")
+
+# Secret key to generate jwt. To change in production!
+SECRET_KEY = config(
+    "SECRET_KEY",
+    cast=Secret,
+    default="3d90a5301ef713659cc1a0e33cbc87d6af55e4159d2548bae7b68c70ed133da0",
+)
+JWT_ALGORITHM = "HS256"
+# Default token expiration time: 30 days (24 * 60 * 30 = 43200)
+ACCESS_TOKEN_EXPIRE_MINUTES = config(
+    "ACCESS_TOKEN_EXPIRE_MINUTES", cast=int, default=43200
+)
 
 # Sentry Data Source Name
 # Leave it empty to disable it
