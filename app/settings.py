@@ -27,3 +27,7 @@ ALLOWED_NETWORKS = config("ALLOWED_NETWORKS", cast=CommaSeparatedStrings, defaul
 # Sentry Data Source Name
 # Leave it empty to disable it
 SENTRY_DSN = config("SENTRY_DSN", cast=str, default="")
+# Environment for Sentry staging|production
+ESS_NOTIFY_SERVER_ENVIRONMENT = config(
+    "ESS_NOTIFY_SERVER_ENVIRONMENT", cast=str, default="staging"
+)

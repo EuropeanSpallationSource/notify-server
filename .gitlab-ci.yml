@@ -28,6 +28,23 @@ test-docker-image:
   script:
     - pytest -v
 
+deploy-staging:
+  stage: deploy
+  image: registry.esss.lu.se/ics-docker/awxkit
+  dependencies: []
+  script:
+    - >
+      awx job_templates launch deploy-ess-notify-server
+      --extra_vars "ess_notify_server_tag: $CI_COMMIT_REF_NAME"
+      --limit notify-test.esss.lu.se
+      --monitor
+  environment:
+    name: staging
+    url: https://notify-test.esss.lu.se/docs
+  only:
+    - master
+    - tags
+
 deploy-production:
   stage: deploy
   image: registry.esss.lu.se/ics-docker/awxkit
@@ -36,10 +53,11 @@ deploy-production:
     - >
       awx job_templates launch deploy-ess-notify-server
       --extra_vars "ess_notify_server_tag: $CI_COMMIT_TAG"
+      --limit notify.esss.lu.se
       --monitor
   environment:
     name: production
-    url: https://notify.esss.lu.se
+    url: https://notify.esss.lu.se/docs
   only:
     - tags
   when: manual

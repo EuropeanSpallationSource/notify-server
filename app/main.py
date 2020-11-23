@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.logger import logger
 from . import monitoring
 from .api import login, users, services
-from .settings import SENTRY_DSN
+from .settings import SENTRY_DSN, ESS_NOTIFY_SERVER_ENVIRONMENT
 
 
 # The following logging setup assumes the app is run with gunicorn
@@ -28,5 +28,5 @@ app.include_router(
 )
 
 if SENTRY_DSN:
-    sentry_sdk.init(dsn=SENTRY_DSN)
+    sentry_sdk.init(dsn=SENTRY_DSN, environment=ESS_NOTIFY_SERVER_ENVIRONMENT)
     app = SentryAsgiMiddleware(app)
