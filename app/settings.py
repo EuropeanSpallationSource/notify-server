@@ -1,6 +1,13 @@
 from starlette.config import Config
 from starlette.datastructures import Secret, CommaSeparatedStrings
 
+DUMMY_PRIVATE_KEY = """-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgtAParbMemenK/+8T
+JYWanX1jzKaFcgmupVALPHyaKKKhRANCAARVmMAXI+WPS/vjIsFBHb3B5dQKqgT8
+ytZPnlbWNLGGR7tKdB1eLzyBlIVFe9El4Wlvs19ACPRMtE7l75IlbOT+
+-----END PRIVATE KEY-----
+"""
+
 # Config will be read from environment variables and/or ".env" files.
 config = Config(".env")
 
@@ -16,7 +23,7 @@ SQLALCHEMY_DATABASE_URL = config(
 )
 APNS_ALGORITHM = "ES256"
 APNS_KEY_ID = config("APNS_KEY_ID", cast=Secret, default="key-id")
-APNS_AUTH_KEY = config("APNS_AUTH_KEY", cast=Secret, default="dummy-key")
+APNS_AUTH_KEY = config("APNS_AUTH_KEY", cast=Secret, default=DUMMY_PRIVATE_KEY)
 TEAM_ID = config("TEAM_ID", cast=Secret, default="team")
 APPLE_SERVER = config(
     "APPLE_SERVER", cast=str, default="api.development.push.apple.com"
