@@ -78,6 +78,18 @@ def create_service(db: Session, service: schemas.ServiceCreate):
     return db_service
 
 
+def update_service(
+    db: Session, service: models.Service, updated_info: schemas.ServiceUpdate
+) -> models.Service:
+    for key, value in updated_info.dict().items():
+        if value is not None:
+            logger.info(f"Update {key} to {value} for service {service.id}")
+            setattr(service, key, value)
+    db.commit()
+    db.refresh(service)
+    return service
+
+
 def get_user_services(db: Session, user: models.User) -> List[schemas.UserService]:
     """Return all services for the user sorted by category"""
     services = get_services(db)

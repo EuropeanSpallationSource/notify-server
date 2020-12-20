@@ -43,6 +43,12 @@ class Service(ServiceBase):
         orm_mode = True
 
 
+class ServiceUpdate(BaseModel):
+    category: Optional[str]
+    color: Optional[str]
+    owner: Optional[str]
+
+
 class UserService(Service):
     is_subscribed: bool
 

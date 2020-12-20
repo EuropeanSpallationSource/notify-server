@@ -37,6 +37,23 @@ def create_service(
     return db_service
 
 
+@router.patch("/{service_id}", response_model=schemas.Service)
+def update_service(
+    service_id: uuid.UUID,
+    updated_info: schemas.ServiceUpdate,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_admin_user),
+):
+    """Update the given service - admin only"""
+    service = crud.get_service(db, service_id)
+    if service is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Service not found"
+        )
+    updated_service = crud.update_service(db, service, updated_info)
+    return updated_service
+
+
 @router.get("/{service_id}/notifications", response_model=List[schemas.Notification])
 def read_service_notifications(
     service_id: uuid.UUID,
