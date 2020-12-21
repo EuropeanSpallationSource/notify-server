@@ -51,6 +51,11 @@ def update_user(
     return user
 
 
+def delete_user(db: Session, user: models.User):
+    db.delete(user)
+    db.commit()
+
+
 def remove_user_apn_token(
     db: Session, user: models.User, apn_token: str
 ) -> models.User:

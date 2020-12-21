@@ -34,6 +34,21 @@ def update_user(
     return updated_user
 
 
+@router.delete("/{user_id}", response_model=schemas.User)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_admin_user),
+):
+    """Update the given user - admin only"""
+    user = crud.get_user(db, user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    crud.delete_user(db, user)
+
+
 @router.get("/user/profile", response_model=schemas.User)
 def read_current_user_profile(
     current_user: models.User = Depends(deps.get_current_user),
