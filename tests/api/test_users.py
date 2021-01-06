@@ -182,15 +182,6 @@ def test_read_current_user_notifications(
     assert response.status_code == 200
     assert response.json() == [
         {
-            "id": notification1.id,
-            "is_read": False,
-            "service_id": str(notification1.service_id),
-            "subtitle": notification1.subtitle,
-            "timestamp": notification1.timestamp.isoformat(),
-            "title": notification1.title,
-            "url": notification1.url,
-        },
-        {
             "id": notification2.id,
             "is_read": False,
             "service_id": str(notification2.service_id),
@@ -198,6 +189,15 @@ def test_read_current_user_notifications(
             "timestamp": notification2.timestamp.isoformat(),
             "title": notification2.title,
             "url": notification2.url,
+        },
+        {
+            "id": notification1.id,
+            "is_read": False,
+            "service_id": str(notification1.service_id),
+            "subtitle": notification1.subtitle,
+            "timestamp": notification1.timestamp.isoformat(),
+            "title": notification1.title,
+            "url": notification1.url,
         },
     ]
 
