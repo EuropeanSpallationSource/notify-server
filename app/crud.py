@@ -139,9 +139,9 @@ def create_service_notification(
 
 
 def get_user_notifications(user: models.User) -> List[schemas.UserNotification]:
-    """Return all user's notifications sorted by reverse timestamp"""
+    """Return all user's notifications sorted by timestamp"""
     user_notifications = [un.to_user_notification() for un in user.user_notifications]
-    return sorted(user_notifications, key=attrgetter("timestamp"), reverse=True)
+    return sorted(user_notifications, key=attrgetter("timestamp"))
 
 
 def update_user_notifications(
