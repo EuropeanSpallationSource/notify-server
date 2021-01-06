@@ -6,17 +6,17 @@ with open("README.md", "r") as f:
 
 postgres_requires = ["psycopg2"]
 requirements = [
-    "alembic",
-    "fastapi",
-    "python-multipart",
+    "alembic==1.4.3",
+    "fastapi==0.61.2",
+    "python-multipart==0.0.5",
     "httpx[http2]",
-    "pyjwt",
-    "cryptography",
-    "ldap3",
-    "sqlalchemy",
+    "PyJWT==1.7.1",
+    "cryptography==3.2.1",
+    "ldap3==2.8.1",
+    "SQLAlchemy==1.3.20",
     "uvicorn[standard]",
-    "gunicorn",
-    "sentry-sdk",
+    "gunicorn==20.0.4",
+    "sentry-sdk==0.19.3",
 ]
 tests_requires = [
     "pytest",
