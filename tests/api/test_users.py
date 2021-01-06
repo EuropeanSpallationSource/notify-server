@@ -224,7 +224,7 @@ def test_update_current_user_notifications(
     )
     assert response.status_code == 204
     db_user = db.query(models.User).get(user.id)
-    assert db_user.notifications == [notification3, notification1]
+    assert db_user.notifications == [notification1, notification3]
     assert db_user.nb_unread_notifications == 1
     assert db_user.user_notifications[0].is_read
     assert not db_user.user_notifications[1].is_read

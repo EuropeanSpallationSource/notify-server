@@ -115,7 +115,7 @@ def test_service_to_user_service(db, user_factory, service):
 def test_service_notifications(db, service, notification_factory):
     notification1 = notification_factory(service=service)
     notification2 = notification_factory(service=service)
-    assert service.notifications == [notification2, notification1]
+    assert service.notifications == [notification1, notification2]
 
 
 def test_user_notifications(db, user, service, notification_factory):
@@ -158,8 +158,8 @@ def test_notification_to_user_notification(db, user, notification_factory):
     db_user_notification1.is_read = True
     db_user_notification2 = user.user_notifications[1]
     db.commit()
-    assert user.notifications == [notification2, notification1]
-    assert user.user_notifications == [db_user_notification2, db_user_notification1]
+    assert user.notifications == [notification1, notification2]
+    assert user.user_notifications == [db_user_notification1, db_user_notification2]
     user_notification1 = db_user_notification1.to_user_notification()
     user_notification2 = db_user_notification2.to_user_notification()
     assert user_notification1 == schemas.UserNotification(
