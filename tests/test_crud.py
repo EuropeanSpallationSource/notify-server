@@ -127,7 +127,7 @@ def test_get_user_notifications(db, user, service):
         service_id=service.id,
         is_read=False,
     )
-    assert user_notifications == [user_notification1, user_notification2]
+    assert user_notifications == [user_notification2, user_notification1]
 
 
 def test_update_user_services(db, user, service_factory):
@@ -186,7 +186,7 @@ def test_update_user_notifications(db, user, service_factory):
     notification3 = crud.create_service_notification(
         db, schemas.NotificationCreate(title="Second message"), service2
     )
-    assert user.notifications == [notification1, notification2, notification3]
+    assert user.notifications == [notification3, notification2, notification1]
     unknown_id = max(notification1.id, notification2.id, notification3.id) + 1
     updated_notifications = [
         schemas.UserUpdateNotification(id=notification1.id, status="read"),
@@ -198,7 +198,7 @@ def test_update_user_notifications(db, user, service_factory):
     #  Notifications are updated
     # Unknown notification is ignored
     db.refresh(user)
-    assert user.notifications == [notification1, notification3]
+    assert user.notifications == [notification3, notification1]
     # notification2 is still in the service notifications
     # it was only deleted from the user notifications
     db_notification2 = db.query(models.Notification).get(notification2.id)
