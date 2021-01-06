@@ -127,7 +127,7 @@ def test_get_user_notifications(db, user, service):
         service_id=service.id,
         is_read=False,
     )
-    assert user_notifications == [user_notification1, user_notification2]
+    assert user_notifications == [user_notification2, user_notification1]
 
 
 def test_update_user_services(db, user, service_factory):
