@@ -9,8 +9,13 @@ requirements = [
     "alembic==1.4.3",
     "fastapi==0.61.2",
     "python-multipart==0.0.5",
+    "h11==0.11.0",
     "h2==4.0.0",
+    "hpack==4.0.0",
+    "httpcore==0.12.1",
+    "httptools==0.1.1",
     "httpx==0.16.1",
+    "hyperframe==6.0.0",
     "PyJWT==2.0.0",
     "cryptography==3.2.1",
     "ldap3==2.8.1",
@@ -18,6 +23,7 @@ requirements = [
     "uvicorn[standard]",
     "gunicorn==20.0.4",
     "sentry-sdk==0.19.3",
+    "Faker==5.4.0",
 ]
 tests_requires = [
     "pytest",
