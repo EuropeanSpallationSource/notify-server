@@ -29,7 +29,7 @@ def create_access_token(
     expire = datetime.utcnow() + timedelta(minutes=expires_delta_minutes)
     to_encode = {"sub": username, "exp": expire}
     encoded_jwt = jwt.encode(to_encode, str(SECRET_KEY), algorithm=JWT_ALGORITHM)
-    return encoded_jwt.decode("utf-8")
+    return encoded_jwt
 
 
 def decode_access_token(encoded_token: str) -> Dict:
@@ -125,7 +125,7 @@ def create_apn_headers(issued_at: datetime) -> Dict[str, str]:
         "apns-expiration": "0",
         "apns-priority": "10",
         "apns-topic": BUNDLE_ID,
-        "authorization": f"Bearer {token.decode('utf-8')}",
+        "authorization": "Bearer " + token,
     }
 
 
