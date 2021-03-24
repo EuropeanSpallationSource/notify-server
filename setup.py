@@ -24,7 +24,6 @@ requirements = [
     "uvicorn[standard]",
     "gunicorn==20.0.4",
     "sentry-sdk==0.19.3",
-    "Faker==5.4.0",
 ]
 tests_requires = [
     "pytest",
@@ -34,6 +33,7 @@ tests_requires = [
     "pytest-factoryboy",
     "requests",
     "respx",
+    "Faker",
 ]
 
 setuptools.setup(
