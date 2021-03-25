@@ -16,3 +16,4 @@ sql_app.db
 data
 ess_notify.egg-info
 .*key
+ess-ics-software.json

@@ -1,3 +1,4 @@
+import secrets
 import pytest
 from fastapi.testclient import TestClient
 from starlette.config import environ
@@ -22,6 +23,8 @@ ytZPnlbWNLGGR7tKdB1eLzyBlIVFe9El4Wlvs19ACPRMtE7l75IlbOT+
 environ["TEAM_ID"] = "6F44JJ9SDF"
 environ["ADMIN_USERS"] = "admin1,admin2"
 environ["NB_PARALLEL_PUSH"] = "2"
+environ["FIREBASE_PROJECT_ID"] = "my-project"
+environ["GOOGLE_APPLICATION_CREDENTIALS"] = "test-key.json"
 
 from app.main import original_app, app  # noqa E402
 from app.database import Base, engine  # noqa E402
@@ -78,3 +81,11 @@ def admin_token_headers(user_factory):
 @pytest.fixture(params=["v1", "v2"])
 def api_version(request):
     return request.param
+
+
+@pytest.fixture
+def make_device_token():
+    def _make_device_token(length):
+        return secrets.token_hex(int(length / 2))
+
+    return _make_device_token

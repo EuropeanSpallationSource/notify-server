@@ -9,6 +9,8 @@ requirements = [
     "alembic==1.5.7",
     "fastapi==0.61.2",
     "fastapi-versioning",
+    "google-auth",
+    "requests",
     "python-multipart==0.0.5",
     "h11==0.11.0",
     "h2==4.0.0",

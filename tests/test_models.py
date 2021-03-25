@@ -37,6 +37,16 @@ def test_user_remove_device_token(db: Session, user_factory) -> None:
     assert user.device_tokens == ["second-token"]
 
 
+def test_user_tokens(db: Session, user_factory, make_device_token) -> None:
+    token1 = make_device_token(64)
+    token2 = make_device_token(140)
+    token3 = make_device_token(64)
+    token4 = make_device_token(80)
+    user = user_factory(device_tokens=[token1, token2, token3, token4])
+    assert user.ios_tokens == [token1, token3]
+    assert user.android_tokens == [token2, token4]
+
+
 def test_user_subscribe_service(db: Session, user, service_factory):
     service1 = service_factory()
     service2 = service_factory()

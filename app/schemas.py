@@ -109,6 +109,25 @@ class Alert(BaseModel):
     subtitle: str
 
 
+class AndroidNotification(BaseModel):
+    title: str
+    body: str
+
+
+class AndroidData(BaseModel):
+    url: str
+
+
+class AndroidMessage(BaseModel):
+    token: str
+    notification: AndroidNotification
+    data: AndroidData
+
+
+class AndroidPayload(BaseModel):
+    message: AndroidMessage
+
+
 class Aps(BaseModel):
     alert: Alert
     badge: int
