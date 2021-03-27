@@ -215,8 +215,8 @@ def test_update_user_notifications(db, user, service_factory):
         (["one", "two"], "one", ["two"]),
     ],
 )
-def test_remove_user_apn_token(db, user_factory, initial_tokens, removed, expected):
-    user = user_factory(apn_tokens=initial_tokens)
-    assert user.apn_tokens == initial_tokens
-    crud.remove_user_apn_token(db, user, removed)
-    assert user.apn_tokens == expected
+def test_remove_user_device_token(db, user_factory, initial_tokens, removed, expected):
+    user = user_factory(device_tokens=initial_tokens)
+    assert user.device_tokens == initial_tokens
+    crud.remove_user_device_token(db, user, removed)
+    assert user.device_tokens == expected

@@ -10,10 +10,22 @@ class ApnToken(BaseModel):
     apn_token: str
 
 
-class User(BaseModel):
+class DeviceToken(BaseModel):
+    device_token: str
+
+
+class UserV1(BaseModel):
     id: int
     username: str
     apn_tokens: List[str]
+    is_active: bool
+    is_admin: bool
+
+
+class User(BaseModel):
+    id: int
+    username: str
+    device_tokens: List[str]
     is_active: bool
     is_admin: bool
 

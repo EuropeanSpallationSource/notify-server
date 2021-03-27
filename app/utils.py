@@ -107,7 +107,7 @@ async def send_push_to_ios(
             logger.info(
                 f"Device token no longer active. Delete {apn} for user {user.username}"
             )
-            crud.remove_user_apn_token(db, user, apn)
+            crud.remove_user_device_token(db, user, apn)
         return False
     logger.info(f"Notification sent to user {user.username}")
     return True
@@ -136,13 +136,13 @@ async def send_notification(db: Session, notification: models.Notification) -> N
     tasks = [
         send_push_to_ios(
             client,
-            apn_token,
+            device_token,
             user_notification.to_apn_payload(),
             db,
             user_notification.user,
         )
         for user_notification in notification.users_notification
-        for apn_token in user_notification.user.apn_tokens
+        for device_token in user_notification.user.device_tokens
     ]
     await gather_with_concurrency(NB_PARALLEL_PUSH, *tasks, return_exceptions=True)
     await client.aclose()
