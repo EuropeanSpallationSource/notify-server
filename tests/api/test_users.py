@@ -293,7 +293,7 @@ def test_read_users(client: TestClient, user_factory):
     user3 = user_factory()
     admin = user_factory(is_admin=True)
     response = client.get(
-        "/api/v1/users/", headers=user_authorization_headers(admin.username)
+        "/api/v2/users/", headers=user_authorization_headers(admin.username)
     )
     assert response.status_code == 200
     users = [
@@ -328,7 +328,7 @@ def test_update_user(
     admin = user_factory(is_admin=True)
     assert not user1.is_admin
     response = client.patch(
-        f"/api/v1/users/{user1.id}",
+        f"/api/v2/users/{user1.id}",
         headers=user_authorization_headers(admin.username),
         json=updated_info,
     )
@@ -344,7 +344,7 @@ def test_update_user(
 
 def test_update_user_invalid_id(client: TestClient, admin_token_headers):
     response = client.patch(
-        "/api/v1/users/1234",
+        "/api/v2/users/1234",
         headers=admin_token_headers,
         json={},
     )

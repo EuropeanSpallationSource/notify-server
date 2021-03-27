@@ -9,6 +9,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[schemas.User])
+@version(2)
 def read_users(
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_admin_user),
@@ -19,6 +20,7 @@ def read_users(
 
 
 @router.patch("/{user_id}", response_model=schemas.User)
+@version(2)
 def update_user(
     user_id: int,
     updated_info: schemas.UserUpdate,
@@ -36,6 +38,7 @@ def update_user(
 
 
 @router.delete("/{user_id}", response_model=schemas.User)
+@version(2)
 def delete_user(
     user_id: int,
     db: Session = Depends(deps.get_db),
