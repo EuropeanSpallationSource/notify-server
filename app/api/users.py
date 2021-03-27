@@ -88,6 +88,15 @@ def create_current_user_apn_token(
     return user.to_v1()
 
 
+@router.post("/user/apn-token", include_in_schema=False)
+@version(2)
+def create_current_user_apn_token_deprecated():
+    """Override v1 endpoint"""
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+    )
+
+
 @router.post(
     "/user/device-token",
     response_model=schemas.User,

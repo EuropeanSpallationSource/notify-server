@@ -77,6 +77,15 @@ def test_read_current_user_profile_inactive(
     assert response.json() == {"detail": "Inactive user"}
 
 
+def test_create_current_user_apn_token_v2_not_found(client: TestClient, db, user):
+    response = client.post(
+        "/api/v2/users/user/apn-token",
+        headers=user_authorization_headers(user.username),
+        json={"apn-token": "foo"},
+    )
+    assert response.status_code == 404
+
+
 @pytest.mark.parametrize(
     "endpoint, token_name",
     [
