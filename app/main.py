@@ -2,6 +2,7 @@ import logging
 import sentry_sdk
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from fastapi import FastAPI
+from fastapi_versioning import VersionedFastAPI
 from fastapi.logger import logger
 from . import monitoring
 from .api import login, users, services
@@ -15,16 +16,22 @@ uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
 logger.handlers = gunicorn_error_logger.handlers
 logger.setLevel(gunicorn_error_logger.level)
 
-app = FastAPI()
+original_app = FastAPI()
 
 
-app.include_router(monitoring.router, prefix="/-", tags=["monitoring"])
-app.include_router(login.router, prefix="/api/v1", tags=["login"])
-app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
-app.include_router(
+original_app.include_router(monitoring.router, prefix="/-", tags=["monitoring"])
+original_app.include_router(login.router, tags=["login"])
+original_app.include_router(users.router, prefix="/users", tags=["users"])
+original_app.include_router(
     services.router,
-    prefix="/api/v1/services",
+    prefix="/services",
     tags=["services"],
+)
+
+app = VersionedFastAPI(
+    original_app,
+    version_format="{major}",
+    prefix_format="/api/v{major}",
 )
 
 if SENTRY_DSN:

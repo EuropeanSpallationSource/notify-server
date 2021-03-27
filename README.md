@@ -64,7 +64,7 @@ Run the application:
 uvicorn --reload app.main:app
 ```
 
-Go to <http://127.0.0.1:8000/docs> to browse the API.
+Go to <http://127.0.0.1:8000/api/v1/docs> to browse the API.
 
 Using `uvicorn` with the `--reload` parameter will automatically restart the application when a file changes.
 Note that the logging configuration assumes that the application is run with gunicorn.
