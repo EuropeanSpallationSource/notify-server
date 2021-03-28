@@ -73,3 +73,8 @@ def admin_token_headers(user_factory):
     admin = user_factory(is_admin=True)
     token = create_access_token(admin.username)
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(params=["v1", "v2"])
+def api_version(request):
+    return request.param

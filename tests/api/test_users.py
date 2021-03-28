@@ -24,7 +24,6 @@ def test_read_current_user_profile(client: TestClient, user):
     assert response.json() == schemas.User.from_orm(user).dict()
 
 
-@pytest.mark.parametrize("api_version", ["v1", "v2"])
 def test_read_current_user_profile_no_authorization_header(
     client: TestClient, api_version
 ):
@@ -33,7 +32,6 @@ def test_read_current_user_profile_no_authorization_header(
     assert response.json() == {"detail": "Not authenticated"}
 
 
-@pytest.mark.parametrize("api_version", ["v1", "v2"])
 def test_read_current_user_profile_invalid_token(client: TestClient, api_version):
     response = client.get(
         f"/api/{api_version}/users/user/profile",
@@ -43,7 +41,6 @@ def test_read_current_user_profile_invalid_token(client: TestClient, api_version
     assert response.json() == {"detail": "Could not validate credentials"}
 
 
-@pytest.mark.parametrize("api_version", ["v1", "v2"])
 def test_read_current_user_profile_invalid_username(client: TestClient, api_version):
     response = client.get(
         f"/api/{api_version}/users/user/profile",
@@ -53,7 +50,6 @@ def test_read_current_user_profile_invalid_username(client: TestClient, api_vers
     assert response.json() == {"detail": "Unknown user foo"}
 
 
-@pytest.mark.parametrize("api_version", ["v1", "v2"])
 def test_read_current_user_profile_expired_token(client: TestClient, user, api_version):
     token = utils.create_access_token(user.username, expires_delta_minutes=-5)
     response = client.get(
@@ -64,7 +60,6 @@ def test_read_current_user_profile_expired_token(client: TestClient, user, api_v
     assert response.json() == {"detail": "Token has expired"}
 
 
-@pytest.mark.parametrize("api_version", ["v1", "v2"])
 def test_read_current_user_profile_inactive(
     client: TestClient, user_factory, api_version
 ):
@@ -168,14 +163,17 @@ def test_create_current_user_device_token_existing_token(
     }
 
 
-def test_read_current_user_services(client: TestClient, db, user, service_factory):
+def test_read_current_user_services(
+    client: TestClient, db, user, service_factory, api_version
+):
     # Create some services and subscribe to one
     service1 = service_factory()
     service2 = service_factory()
     user.subscribe(service1)
     db.commit()
     response = client.get(
-        "/api/v1/users/user/services", headers=user_authorization_headers(user.username)
+        f"/api/{api_version}/users/user/services",
+        headers=user_authorization_headers(user.username),
     )
     assert response.status_code == 200
     assert response.json() == sorted(
@@ -199,7 +197,9 @@ def test_read_current_user_services(client: TestClient, db, user, service_factor
     )
 
 
-def test_update_current_user_services(client: TestClient, db, user, service_factory):
+def test_update_current_user_services(
+    client: TestClient, db, user, service_factory, api_version
+):
     # Create some services and subscribe to one
     service1 = service_factory()
     service2 = service_factory()
@@ -209,7 +209,7 @@ def test_update_current_user_services(client: TestClient, db, user, service_fact
     db.commit()
     assert user.services == sorted([service1, service2], key=lambda s: s.category)
     response = client.patch(
-        "/api/v1/users/user/services",
+        f"/api/{api_version}/users/user/services",
         headers=user_authorization_headers(user.username),
         json=[
             {"id": str(service1.id), "is_subscribed": True},
@@ -223,7 +223,7 @@ def test_update_current_user_services(client: TestClient, db, user, service_fact
 
 
 def test_read_current_user_notifications(
-    client: TestClient, db, user, notification_factory
+    client: TestClient, db, user, notification_factory, api_version
 ):
     notification1 = notification_factory()
     notification2 = notification_factory()
@@ -233,7 +233,7 @@ def test_read_current_user_notifications(
     user.notifications.append(notification2)
     db.commit()
     response = client.get(
-        "/api/v1/users/user/notifications",
+        f"/api/{api_version}/users/user/notifications",
         headers=user_authorization_headers(user.username),
     )
     assert response.status_code == 200
@@ -260,7 +260,7 @@ def test_read_current_user_notifications(
 
 
 def test_update_current_user_notifications(
-    client: TestClient, db, user, notification_factory
+    client: TestClient, db, user, notification_factory, api_version
 ):
     notification1 = notification_factory()
     notification2 = notification_factory()
@@ -271,7 +271,7 @@ def test_update_current_user_notifications(
     assert user.nb_unread_notifications == 3
     db.commit()
     response = client.patch(
-        "/api/v1/users/user/notifications",
+        f"/api/{api_version}/users/user/notifications",
         headers=user_authorization_headers(user.username),
         json=[
             {"id": notification1.id, "status": "read"},
