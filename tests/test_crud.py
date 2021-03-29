@@ -220,3 +220,74 @@ def test_remove_user_device_token(db, user_factory, initial_tokens, removed, exp
     assert user.device_tokens == initial_tokens
     crud.remove_user_device_token(db, user, removed)
     assert user.device_tokens == expected
+
+
+def test_delete_notifications(db, notification_factory, notification_date):
+    notification1 = notification_factory(timestamp=notification_date(60))
+    notification2 = notification_factory(timestamp=notification_date(40))
+    notification3 = notification_factory(timestamp=notification_date(20))
+    notification4 = notification_factory(timestamp=notification_date(1))
+    notification5 = notification_factory()
+    assert db.query(models.Notification).order_by(
+        models.Notification.timestamp
+    ).all() == [
+        notification1,
+        notification2,
+        notification3,
+        notification4,
+        notification5,
+    ]
+    crud.delete_notifications(db, 30)
+    assert db.query(models.Notification).order_by(
+        models.Notification.timestamp
+    ).all() == [
+        notification3,
+        notification4,
+        notification5,
+    ]
+
+
+def test_delete_notifications_with_user(db, user, service_factory, notification_date):
+    service1 = service_factory()
+    service2 = service_factory()
+    user.subscribe(service1)
+    db.commit()
+    notification1 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message1"), service1
+    )
+    notification1.timestamp = notification_date(40)
+    notification2 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message2"), service1
+    )
+    notification2.timestamp = notification_date(40)
+    notification3 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message3"), service2
+    )
+    notification3.timestamp = notification_date(35)
+    notification4 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message4"), service1
+    )
+    notification4.timestamp = notification_date(1)
+    notification5 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message5"), service2
+    )
+    assert user.notifications == [notification1, notification2, notification4]
+    assert db.query(models.Notification).order_by(
+        models.Notification.timestamp
+    ).all() == [
+        notification1,
+        notification2,
+        notification3,
+        notification4,
+        notification5,
+    ]
+    crud.delete_notifications(db, 30)
+    # Check that old notifications have been deleted
+    assert db.query(models.Notification).order_by(
+        models.Notification.timestamp
+    ).all() == [
+        notification4,
+        notification5,
+    ]
+    # Check that old UserNotifications have also been deleted
+    assert user.notifications == [notification4]

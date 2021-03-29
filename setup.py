@@ -26,6 +26,7 @@ requirements = [
     "uvicorn[standard]",
     "gunicorn==20.0.4",
     "sentry-sdk==0.19.3",
+    "typer",
 ]
 tests_requires = [
     "pytest",
@@ -55,6 +56,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.8",
     ],
+    entry_points={"console_scripts": ["notify-server=app.command:cli"]},
     extras_require={"postgres": postgres_requires, "tests": tests_requires},
     python_requires=">=3.8",
 )
