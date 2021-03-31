@@ -6,7 +6,7 @@ from jwt import PyJWTError, ExpiredSignatureError
 from .. import crud, models, utils
 from ..database import SessionLocal
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 def get_db():

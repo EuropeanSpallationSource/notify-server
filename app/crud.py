@@ -30,10 +30,10 @@ def create_user(db: Session, username: str):
     return db_user
 
 
-def create_user_apn_token(
-    db: Session, apn_token: str, user: models.User
+def create_user_device_token(
+    db: Session, device_token: str, user: models.User
 ) -> models.User:
-    user.add_apn_token(apn_token)
+    user.add_device_token(device_token)
     db.commit()
     db.refresh(user)
     return user
@@ -56,10 +56,10 @@ def delete_user(db: Session, user: models.User):
     db.commit()
 
 
-def remove_user_apn_token(
-    db: Session, user: models.User, apn_token: str
+def remove_user_device_token(
+    db: Session, user: models.User, device_token: str
 ) -> models.User:
-    user.remove_apn_token(apn_token)
+    user.remove_device_token(device_token)
     db.commit()
     db.refresh(user)
     return user

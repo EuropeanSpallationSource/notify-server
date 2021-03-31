@@ -23,7 +23,7 @@ environ["TEAM_ID"] = "6F44JJ9SDF"
 environ["ADMIN_USERS"] = "admin1,admin2"
 environ["NB_PARALLEL_PUSH"] = "2"
 
-from app.main import app  # noqa E402
+from app.main import original_app, app  # noqa E402
 from app.database import Base, engine  # noqa E402
 from app.api import deps  # noqa E402
 from app.utils import create_access_token  # noqa E402
@@ -50,7 +50,7 @@ def db(connection) -> Generator:
     factories.UserFactory._meta.sqlalchemy_session = session
     factories.ServiceFactory._meta.sqlalchemy_session = session
     factories.NotificationFactory._meta.sqlalchemy_session = session
-    app.dependency_overrides[deps.get_db] = lambda: session
+    original_app.dependency_overrides[deps.get_db] = lambda: session
     yield session
     session.close()
     transaction.rollback()
@@ -73,3 +73,8 @@ def admin_token_headers(user_factory):
     admin = user_factory(is_admin=True)
     token = create_access_token(admin.username)
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(params=["v1", "v2"])
+def api_version(request):
+    return request.param

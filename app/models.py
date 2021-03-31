@@ -63,7 +63,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     # Store list of APN tokens as semi-colon separated string
-    _apn_tokens = Column(String, default="")
+    _device_tokens = Column(String, default="")
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
 
@@ -92,26 +92,28 @@ class User(Base):
         return len(self.unread_notifications())
 
     @property
-    def apn_tokens(self):
-        if not self._apn_tokens:
+    def device_tokens(self):
+        if not self._device_tokens:
             return []
-        return [token for token in self._apn_tokens.split(";")]
+        return [token for token in self._device_tokens.split(";")]
 
-    @apn_tokens.setter
-    def apn_tokens(self, value: List[str]):
-        self._apn_tokens = ";".join(value)
+    @device_tokens.setter
+    def device_tokens(self, value: List[str]):
+        self._device_tokens = ";".join(value)
 
-    def add_apn_token(self, value: str):
-        if value in self.apn_tokens:
+    def add_device_token(self, value: str):
+        if value in self.device_tokens:
             return
-        if not self._apn_tokens:
-            self._apn_tokens = value
+        if not self._device_tokens:
+            self._device_tokens = value
         else:
-            self._apn_tokens += f";{value}"
+            self._device_tokens += f";{value}"
 
-    def remove_apn_token(self, value: str):
-        if value in self.apn_tokens:
-            self.apn_tokens = [token for token in self.apn_tokens if token != value]
+    def remove_device_token(self, value: str):
+        if value in self.device_tokens:
+            self.device_tokens = [
+                token for token in self.device_tokens if token != value
+            ]
 
     def subscribe(self, service: Service) -> None:
         if service not in self.services:
@@ -120,6 +122,15 @@ class User(Base):
     def unsubscribe(self, service: Service) -> None:
         if service in self.services:
             self.services.remove(service)
+
+    def to_v1(self):
+        return schemas.UserV1(
+            id=self.id,
+            username=self.username,
+            apn_tokens=self.device_tokens,
+            is_active=self.is_active,
+            is_admin=self.is_admin,
+        )
 
 
 class Service(Base):

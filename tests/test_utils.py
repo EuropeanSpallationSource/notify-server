@@ -96,42 +96,42 @@ async def test_send_push_to_ios_success(db, user, apn_payload):
 )
 async def test_send_push_to_ios_error(db, user_factory, apn_payload, side_effect):
     # No exception raised in case of error
-    apn_token = "my-token"
-    user = user_factory(apn_tokens=[apn_token])
-    assert user.apn_tokens == [apn_token]
+    device_token = "my-token"
+    user = user_factory(device_tokens=[device_token])
+    assert user.device_tokens == [device_token]
     request = respx.post(
-        f"https://api.development.push.apple.com/3/device/{apn_token}",
+        f"https://api.development.push.apple.com/3/device/{device_token}",
     )
     request.side_effect = side_effect
     async with httpx.AsyncClient(http2=True) as client:
         notification_sent = await utils.send_push_to_ios(
-            client, apn_token, apn_payload, db, user
+            client, device_token, apn_payload, db, user
         )
     assert request.called
     assert not notification_sent
     db.refresh(user)
-    assert user.apn_tokens == [apn_token]
+    assert user.device_tokens == [device_token]
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_send_push_to_ios_410(db, user_factory, apn_payload):
-    apn_token = "my-token"
-    user = user_factory(apn_tokens=[apn_token])
-    assert user.apn_tokens == [apn_token]
+    device_token = "my-token"
+    user = user_factory(device_tokens=[device_token])
+    assert user.device_tokens == [device_token]
     request = respx.post(
-        f"https://api.development.push.apple.com/3/device/{apn_token}",
+        f"https://api.development.push.apple.com/3/device/{device_token}",
     )
     request.side_effect = httpx.Response(410)
     async with httpx.AsyncClient(http2=True) as client:
         notification_sent = await utils.send_push_to_ios(
-            client, apn_token, apn_payload, db, user
+            client, device_token, apn_payload, db, user
         )
     assert request.called
     assert not notification_sent
     db.refresh(user)
     # No longer active token deleted
-    assert user.apn_tokens == []
+    assert user.device_tokens == []
 
 
 @pytest.mark.asyncio
@@ -139,9 +139,9 @@ async def test_send_notification(db, user_factory, notification_factory, mocker)
     mock_send_push_to_ios = mocker.patch("app.utils.send_push_to_ios")
     notification1 = notification_factory()
     notification2 = notification_factory()
-    user1 = user_factory(apn_tokens=["user1-apn1", "user1-apn2"])
-    user2 = user_factory(apn_tokens=["user2-apn1"])
-    user_factory(apn_tokens=["user3-apn1"])
+    user1 = user_factory(device_tokens=["user1-apn1", "user1-apn2"])
+    user2 = user_factory(device_tokens=["user2-apn1"])
+    user_factory(device_tokens=["user3-apn1"])
     user1.notifications.append(notification1)
     user1.notifications.append(notification2)
     user2.notifications.append(notification1)

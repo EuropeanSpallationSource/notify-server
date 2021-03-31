@@ -8,117 +8,172 @@ def user_authorization_headers(username):
     return {"Authorization": f"Bearer {token}"}
 
 
-def test_read_current_user_profile(client: TestClient, user):
+def test_read_current_user_profile_v1(client: TestClient, user):
     response = client.get(
         "/api/v1/users/user/profile", headers=user_authorization_headers(user.username)
+    )
+    assert response.status_code == 200
+    assert response.json() == user.to_v1().dict()
+
+
+def test_read_current_user_profile(client: TestClient, user):
+    response = client.get(
+        "/api/v2/users/user/profile", headers=user_authorization_headers(user.username)
     )
     assert response.status_code == 200
     assert response.json() == schemas.User.from_orm(user).dict()
 
 
-def test_read_current_user_profile_no_authorization_header(client: TestClient):
-    response = client.get("/api/v1/users/user/profile")
+def test_read_current_user_profile_no_authorization_header(
+    client: TestClient, api_version
+):
+    response = client.get(f"/api/{api_version}/users/user/profile")
     assert response.status_code == 401
     assert response.json() == {"detail": "Not authenticated"}
 
 
-def test_read_current_user_profile_invalid_token(client: TestClient):
+def test_read_current_user_profile_invalid_token(client: TestClient, api_version):
     response = client.get(
-        "/api/v1/users/user/profile", headers={"Authorization": "Bearer xxxxxxx"}
+        f"/api/{api_version}/users/user/profile",
+        headers={"Authorization": "Bearer xxxxxxx"},
     )
     assert response.status_code == 401
     assert response.json() == {"detail": "Could not validate credentials"}
 
 
-def test_read_current_user_profile_invalid_username(client: TestClient):
+def test_read_current_user_profile_invalid_username(client: TestClient, api_version):
     response = client.get(
-        "/api/v1/users/user/profile", headers=user_authorization_headers("foo")
+        f"/api/{api_version}/users/user/profile",
+        headers=user_authorization_headers("foo"),
     )
     assert response.status_code == 401
     assert response.json() == {"detail": "Unknown user foo"}
 
 
-def test_read_current_user_profile_expired_token(client: TestClient, user):
+def test_read_current_user_profile_expired_token(client: TestClient, user, api_version):
     token = utils.create_access_token(user.username, expires_delta_minutes=-5)
     response = client.get(
-        "/api/v1/users/user/profile", headers={"Authorization": f"Bearer {token}"}
+        f"/api/{api_version}/users/user/profile",
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 401
     assert response.json() == {"detail": "Token has expired"}
 
 
-def test_read_current_user_profile_inactive(client: TestClient, user_factory):
+def test_read_current_user_profile_inactive(
+    client: TestClient, user_factory, api_version
+):
     user = user_factory(is_active=False)
     response = client.get(
-        "/api/v1/users/user/profile", headers=user_authorization_headers(user.username)
+        f"/api/{api_version}/users/user/profile",
+        headers=user_authorization_headers(user.username),
     )
     assert response.status_code == 403
     assert response.json() == {"detail": "Inactive user"}
 
 
-def test_create_current_user_apn_token_no_token(client: TestClient, db, user):
-    assert user.apn_tokens == []
-    apn_token = "my-token"
+def test_create_current_user_apn_token_v2_not_found(client: TestClient, db, user):
     response = client.post(
-        "/api/v1/users/user/apn-token",
+        "/api/v2/users/user/apn-token",
         headers=user_authorization_headers(user.username),
-        json={"apn_token": apn_token},
+        json={"apn-token": "foo"},
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "endpoint, token_name",
+    [
+        ("/api/v1/users/user/apn-token", "apn_token"),
+        ("/api/v2/users/user/device-token", "device_token"),
+    ],
+)
+def test_create_current_user_device_token_no_token(
+    client: TestClient, db, user, endpoint, token_name
+):
+    assert user.device_tokens == []
+    device_token = "my-token"
+    response = client.post(
+        endpoint,
+        headers=user_authorization_headers(user.username),
+        json={token_name: device_token},
     )
     assert response.status_code == 201
     assert response.json() == {
         "id": user.id,
         "username": user.username,
-        "apn_tokens": [apn_token],
+        f"{token_name}s": [device_token],
         "is_active": True,
         "is_admin": False,
     }
 
 
-def test_create_current_user_apn_token_new_token(client: TestClient, user_factory):
-    user = user_factory(apn_tokens=["first-token"])
-    assert user.apn_tokens == ["first-token"]
-    apn_token = "second-token"
+@pytest.mark.parametrize(
+    "endpoint, token_name",
+    [
+        ("/api/v1/users/user/apn-token", "apn_token"),
+        ("/api/v2/users/user/device-token", "device_token"),
+    ],
+)
+def test_create_current_user_device_token_new_token(
+    client: TestClient, user_factory, endpoint, token_name
+):
+    user = user_factory(device_tokens=["first-token"])
+    assert user.device_tokens == ["first-token"]
+    device_token = "second-token"
     response = client.post(
-        "/api/v1/users/user/apn-token",
+        endpoint,
         headers=user_authorization_headers(user.username),
-        json={"apn_token": apn_token},
+        json={token_name: device_token},
     )
     assert response.status_code == 201
     assert response.json() == {
         "id": user.id,
         "username": user.username,
-        "apn_tokens": ["first-token", apn_token],
+        f"{token_name}s": ["first-token", device_token],
         "is_active": True,
         "is_admin": False,
     }
 
 
-def test_create_current_user_apn_token_existing_token(client: TestClient, user_factory):
-    apn_token = "my-token"
-    user = user_factory(apn_tokens=[apn_token])
+@pytest.mark.parametrize(
+    "endpoint, token_name",
+    [
+        ("/api/v1/users/user/apn-token", "apn_token"),
+        ("/api/v2/users/user/device-token", "device_token"),
+    ],
+)
+def test_create_current_user_device_token_existing_token(
+    client: TestClient, user_factory, endpoint, token_name
+):
+    device_token = "my-token"
+    user = user_factory(device_tokens=[device_token])
     response = client.post(
-        "/api/v1/users/user/apn-token",
+        endpoint,
         headers=user_authorization_headers(user.username),
-        json={"apn_token": apn_token},
+        json={token_name: device_token},
     )
     assert response.status_code == 200
     assert response.json() == {
         "id": user.id,
         "username": user.username,
-        "apn_tokens": [apn_token],
+        f"{token_name}s": [device_token],
         "is_active": True,
         "is_admin": False,
     }
 
 
-def test_read_current_user_services(client: TestClient, db, user, service_factory):
+def test_read_current_user_services(
+    client: TestClient, db, user, service_factory, api_version
+):
     # Create some services and subscribe to one
     service1 = service_factory()
     service2 = service_factory()
     user.subscribe(service1)
     db.commit()
     response = client.get(
-        "/api/v1/users/user/services", headers=user_authorization_headers(user.username)
+        f"/api/{api_version}/users/user/services",
+        headers=user_authorization_headers(user.username),
     )
     assert response.status_code == 200
     assert response.json() == sorted(
@@ -142,7 +197,9 @@ def test_read_current_user_services(client: TestClient, db, user, service_factor
     )
 
 
-def test_update_current_user_services(client: TestClient, db, user, service_factory):
+def test_update_current_user_services(
+    client: TestClient, db, user, service_factory, api_version
+):
     # Create some services and subscribe to one
     service1 = service_factory()
     service2 = service_factory()
@@ -152,7 +209,7 @@ def test_update_current_user_services(client: TestClient, db, user, service_fact
     db.commit()
     assert user.services == sorted([service1, service2], key=lambda s: s.category)
     response = client.patch(
-        "/api/v1/users/user/services",
+        f"/api/{api_version}/users/user/services",
         headers=user_authorization_headers(user.username),
         json=[
             {"id": str(service1.id), "is_subscribed": True},
@@ -166,7 +223,7 @@ def test_update_current_user_services(client: TestClient, db, user, service_fact
 
 
 def test_read_current_user_notifications(
-    client: TestClient, db, user, notification_factory
+    client: TestClient, db, user, notification_factory, api_version
 ):
     notification1 = notification_factory()
     notification2 = notification_factory()
@@ -176,7 +233,7 @@ def test_read_current_user_notifications(
     user.notifications.append(notification2)
     db.commit()
     response = client.get(
-        "/api/v1/users/user/notifications",
+        f"/api/{api_version}/users/user/notifications",
         headers=user_authorization_headers(user.username),
     )
     assert response.status_code == 200
@@ -203,7 +260,7 @@ def test_read_current_user_notifications(
 
 
 def test_update_current_user_notifications(
-    client: TestClient, db, user, notification_factory
+    client: TestClient, db, user, notification_factory, api_version
 ):
     notification1 = notification_factory()
     notification2 = notification_factory()
@@ -214,7 +271,7 @@ def test_update_current_user_notifications(
     assert user.nb_unread_notifications == 3
     db.commit()
     response = client.patch(
-        "/api/v1/users/user/notifications",
+        f"/api/{api_version}/users/user/notifications",
         headers=user_authorization_headers(user.username),
         json=[
             {"id": notification1.id, "status": "read"},
@@ -236,14 +293,14 @@ def test_read_users(client: TestClient, user_factory):
     user3 = user_factory()
     admin = user_factory(is_admin=True)
     response = client.get(
-        "/api/v1/users/", headers=user_authorization_headers(admin.username)
+        "/api/v2/users/", headers=user_authorization_headers(admin.username)
     )
     assert response.status_code == 200
     users = [
         {
             "id": user.id,
             "username": user.username,
-            "apn_tokens": user.apn_tokens,
+            "device_tokens": user.device_tokens,
             "is_admin": user.is_admin,
             "is_active": user.is_active,
         }
@@ -271,7 +328,7 @@ def test_update_user(
     admin = user_factory(is_admin=True)
     assert not user1.is_admin
     response = client.patch(
-        f"/api/v1/users/{user1.id}",
+        f"/api/v2/users/{user1.id}",
         headers=user_authorization_headers(admin.username),
         json=updated_info,
     )
@@ -279,7 +336,7 @@ def test_update_user(
     assert response.json() == {
         "id": user1.id,
         "username": user1.username,
-        "apn_tokens": user1.apn_tokens,
+        "device_tokens": user1.device_tokens,
         "is_admin": expected_admin,
         "is_active": expected_active,
     }
@@ -287,7 +344,7 @@ def test_update_user(
 
 def test_update_user_invalid_id(client: TestClient, admin_token_headers):
     response = client.patch(
-        "/api/v1/users/1234",
+        "/api/v2/users/1234",
         headers=admin_token_headers,
         json={},
     )

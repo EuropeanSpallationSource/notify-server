@@ -10,31 +10,31 @@ def test_user(db: Session, user_factory) -> None:
     assert user.is_active
     assert not user.is_admin
     assert not hasattr(user, "token")
-    assert user.apn_tokens == []
-    assert user._apn_tokens == ""
+    assert user.device_tokens == []
+    assert user._device_tokens == ""
 
 
-def test_user_add_apn_token(db: Session, user) -> None:
-    apn_token1 = "my-token"
-    user.add_apn_token(apn_token1)
-    assert user.apn_tokens == [apn_token1]
-    assert user._apn_tokens == apn_token1
-    apn_token2 = "another-token"
-    user.add_apn_token(apn_token2)
-    assert user.apn_tokens == [apn_token1, apn_token2]
-    assert user._apn_tokens == f"{apn_token1};{apn_token2}"
+def test_user_add_device_token(db: Session, user) -> None:
+    device_token1 = "my-token"
+    user.add_device_token(device_token1)
+    assert user.device_tokens == [device_token1]
+    assert user._device_tokens == device_token1
+    device_token2 = "another-token"
+    user.add_device_token(device_token2)
+    assert user.device_tokens == [device_token1, device_token2]
+    assert user._device_tokens == f"{device_token1};{device_token2}"
     # Adding an existing token doesn't change anything
-    user.add_apn_token(apn_token1)
-    assert user.apn_tokens == [apn_token1, apn_token2]
+    user.add_device_token(device_token1)
+    assert user.device_tokens == [device_token1, device_token2]
 
 
-def test_user_remove_apn_token(db: Session, user_factory) -> None:
-    user = user_factory(apn_tokens=["first-token", "second-token"])
+def test_user_remove_device_token(db: Session, user_factory) -> None:
+    user = user_factory(device_tokens=["first-token", "second-token"])
     # Removing a non existing token doesn't change anything
-    user.remove_apn_token("foo")
-    assert user.apn_tokens == ["first-token", "second-token"]
-    user.remove_apn_token("first-token")
-    assert user.apn_tokens == ["second-token"]
+    user.remove_device_token("foo")
+    assert user.device_tokens == ["first-token", "second-token"]
+    user.remove_device_token("first-token")
+    assert user.device_tokens == ["second-token"]
 
 
 def test_user_subscribe_service(db: Session, user, service_factory):

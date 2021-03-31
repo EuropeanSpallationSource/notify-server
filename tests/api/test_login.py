@@ -2,21 +2,21 @@ from fastapi.testclient import TestClient
 from app import models, utils
 
 
-def test_login_invalid_credentials(client: TestClient, mocker):
+def test_login_invalid_credentials(client: TestClient, api_version, mocker):
     mock_authenticate_user = mocker.patch(
         "app.api.login.ldap.authenticate_user", return_value=False
     )
     username = "johndoe"
     password = "secret"
     response = client.post(
-        "/api/v1/login", data={"username": username, "password": password}
+        f"/api/{api_version}/login", data={"username": username, "password": password}
     )
     mock_authenticate_user.assert_called_once_with(username, password)
     assert response.status_code == 401
     assert response.json() == {"detail": "Incorrect username or password"}
 
 
-def test_login_new_user(client: TestClient, db, mocker):
+def test_login_new_user(client: TestClient, db, api_version, mocker):
     mock_authenticate_user = mocker.patch(
         "app.api.login.ldap.authenticate_user", return_value=True
     )
@@ -26,7 +26,7 @@ def test_login_new_user(client: TestClient, db, mocker):
         db.query(models.User).filter(models.User.username == username).first() is None
     )
     response = client.post(
-        "/api/v1/login", data={"username": username, "password": password}
+        f"/api/{api_version}/login", data={"username": username, "password": password}
     )
     mock_authenticate_user.assert_called_once_with(username, password)
     assert response.status_code == 201
@@ -37,7 +37,7 @@ def test_login_new_user(client: TestClient, db, mocker):
     assert utils.decode_access_token(token)["sub"] == username
 
 
-def test_login_existing_user(client: TestClient, db, mocker, user):
+def test_login_existing_user(client: TestClient, db, api_version, mocker, user):
     mock_authenticate_user = mocker.patch(
         "app.api.login.ldap.authenticate_user", return_value=True
     )
@@ -47,7 +47,8 @@ def test_login_existing_user(client: TestClient, db, mocker, user):
         == user
     )
     response = client.post(
-        "/api/v1/login", data={"username": user.username, "password": password}
+        f"/api/{api_version}/login",
+        data={"username": user.username, "password": password},
     )
     mock_authenticate_user.assert_called_once_with(user.username, password)
     assert response.status_code == 200
