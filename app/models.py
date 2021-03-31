@@ -101,6 +101,14 @@ class User(Base):
     def device_tokens(self, value: List[str]):
         self._device_tokens = ";".join(value)
 
+    @property
+    def ios_tokens(self):
+        return [token for token in self.device_tokens if len(token) == 64]
+
+    @property
+    def android_tokens(self):
+        return [token for token in self.device_tokens if len(token) > 64]
+
     def add_device_token(self, value: str):
         if value in self.device_tokens:
             return
@@ -168,6 +176,9 @@ class Notification(Base):
     def to_alert(self) -> schemas.Alert:
         return schemas.Alert(title=self.title, subtitle=self.subtitle)
 
+    def to_android_notification(self) -> schemas.AndroidNotification:
+        return schemas.AndroidNotification(title=self.title, body=self.subtitle)
+
 
 class UserNotification(Base):
     __tablename__ = "users_notifications"
@@ -200,3 +211,11 @@ class UserNotification(Base):
             alert=self.notification.to_alert(), badge=self.user.nb_unread_notifications
         )
         return schemas.ApnPayload(aps=aps)
+
+    def to_android_payload(self, token) -> schemas.AndroidPayload:
+        message = schemas.AndroidMessage(
+            token=token,
+            notification=self.notification.to_android_notification(),
+            data=schemas.AndroidData(url=self.notification.url),
+        )
+        return schemas.AndroidPayload(message=message)

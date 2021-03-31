@@ -31,6 +31,12 @@ APPLE_SERVER = config(
 BUNDLE_ID = "eu.ess.ESS-Notify"
 ALLOWED_NETWORKS = config("ALLOWED_NETWORKS", cast=CommaSeparatedStrings, default="")
 
+# Firebase settings
+FIREBASE_PROJECT_ID = config("FIREBASE_PROJECT_ID", cast=str, default="my-project")
+GOOGLE_APPLICATION_CREDENTIALS = config(
+    "GOOGLE_APPLICATION_CREDENTIALS", cast=str, default="test-key.json"
+)
+
 # Secret key to generate jwt. To change in production!
 SECRET_KEY = config(
     "SECRET_KEY",
