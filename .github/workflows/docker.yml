@@ -1,0 +1,14 @@
+name: Docker build
+
+on:
+  pull_request:
+  push:
+    branches: [ $default-branch ]
+
+jobs:
+  build-docker-image:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      run: docker build -t notify-server .
