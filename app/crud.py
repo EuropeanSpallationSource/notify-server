@@ -1,4 +1,5 @@
 from operator import attrgetter
+import datetime
 import uuid
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
@@ -163,4 +164,20 @@ def update_user_notifications(
             user_notification.is_read = False
         elif updated_notification.status == schemas.NotificationStatus.deleted:
             user.user_notifications.remove(user_notification)
+    db.commit()
+
+
+def delete_notifications(db: Session, keep_days: int) -> None:
+    """Delete notifications older than X days"""
+    date_limit = datetime.datetime.utcnow() - datetime.timedelta(days=keep_days)
+    # First retrieve all notifications id to delete
+    old_notification_ids = db.query(models.Notification.id).filter(
+        models.Notification.timestamp < date_limit
+    )
+    # Delete the UserNotification linked to those notifications
+    db.query(models.UserNotification).filter(
+        models.UserNotification.notification_id.in_(old_notification_ids.subquery())
+    ).delete(synchronize_session=False)
+    # Delete the notifications themselves
+    old_notification_ids.delete(synchronize_session=False)
     db.commit()

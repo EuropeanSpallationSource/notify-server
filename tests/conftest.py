@@ -1,3 +1,4 @@
+import datetime
 import secrets
 import pytest
 from fastapi.testclient import TestClient
@@ -89,3 +90,11 @@ def make_device_token():
         return secrets.token_hex(int(length / 2))
 
     return _make_device_token
+
+
+@pytest.fixture
+def notification_date():
+    def _notification_date(days_old):
+        return datetime.datetime.utcnow() - datetime.timedelta(days=days_old)
+
+    return _notification_date

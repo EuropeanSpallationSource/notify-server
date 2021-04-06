@@ -20,6 +20,8 @@ $ cat .env
 APNS_KEY_ID=my-key
 TEAM_ID=my-team
 ADMIN_USERS=username
+FIREBASE_PROJECT_ID=my-project
+GOOGLE_APPLICATION_CREDENTIALS=my-project.json
 ```
 
 Note that as `APNS_AUTH_KEY` shall contain a private key (on multiple lines) it's not easy to define
@@ -52,11 +54,15 @@ pip install -r requirements.txt
 pip install -e .[tests]
 ```
 
-Run the database migrations:
+When using sqlite, it's not possible to run `alembic` for database migration
+(sqlite doesn't support to drop a column in a table).
+Create the database from scratch using:
 
 ```bash
-alembic upgrade head
+notify-server create-db
 ```
+
+This is for development only. In production, use postgres and alembic.
 
 Run the application:
 
@@ -111,6 +117,17 @@ Deployment is performed with Ansible and Docker.
 When pushing to the master branch, the application is automatically deployed to the test server <https://notify-test.esss.lu.se>.
 
 To deploy to production, tag the branch (`git tag -a <version>`) and push that tag. At the end of the gitlab-ci pipeline, a manual job is created and shall be triggered manually.
+
+### Maintenance
+
+To remove old notifications, you can run the `notify-server delete-notifications` command.
+You can run it inside the ess_notify_web container using the crontab:
+
+```bash
+/usr/bin/docker exec ess_notify_web notify-server delete-notifications
+```
+
+By default, only the last 30 days are kept. You can change that value with the `--days`option.
 
 [fastapi]: https://fastapi.tiangolo.com
 [pytest]: https://docs.pytest.org/en/stable/
