@@ -25,5 +25,18 @@ def delete_notifications(days: int = typer.Option(30, help="Number of days to ke
     db.close()
 
 
+@cli.command()
+def delete_user(username: str = typer.Argument(..., help="The user to delete")):
+    """Delete the user USERNAME"""
+    db = database.SessionLocal()
+    user = crud.get_user_by_username(db, username)
+    if user is None:
+        typer.secho(f"User '{username}' not found. Aborting.", fg=typer.colors.RED)
+    else:
+        crud.delete_user(db, user)
+        typer.secho(f"User '{username}' deleted", fg=typer.colors.GREEN)
+    db.close()
+
+
 if __name__ == "__main__":
     cli()
