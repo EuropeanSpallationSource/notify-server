@@ -55,14 +55,18 @@ async def test_send_push_to_android_success(db, user, android_payload):
     [
         httpx.ConnectError,
         httpx.ConnectTimeout,
-        httpx.Response(400, json={"error": "message"}),
         httpx.Response(403, json={"error": "message"}),
         httpx.Response(405, json={"error": "message"}),
         httpx.Response(500, json={"error": "message"}),
         httpx.Response(429, json={"error": "message"}),
     ],
 )
-async def test_send_push_to_android_error(db, user, android_payload, side_effect):
+async def test_send_push_to_android_error(
+    db, user_factory, android_payload, side_effect
+):
+    device_token = android_payload.message.token
+    user = user_factory(device_tokens=[device_token])
+    assert user.device_tokens == [device_token]
     # No exception raised in case of error
     request = respx.post(
         "https://fcm.googleapis.com/v1/projects/my-project/messages:send",
@@ -72,3 +76,34 @@ async def test_send_push_to_android_error(db, user, android_payload, side_effect
         notification_sent = await firebase.send_push(client, android_payload, db, user)
     assert request.called
     assert not notification_sent
+    # Device token still present
+    db.refresh(user)
+    assert user.device_tokens == [device_token]
+
+
+@respx.mock
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "side_effect",
+    [
+        httpx.Response(400, json={"error": "message"}),
+        httpx.Response(404, json={"error": "message"}),
+    ],
+)
+async def test_send_push_to_android_400_or_404(
+    db, user_factory, android_payload, side_effect
+):
+    device_token = android_payload.message.token
+    user = user_factory(device_tokens=[device_token])
+    assert user.device_tokens == [device_token]
+    request = respx.post(
+        "https://fcm.googleapis.com/v1/projects/my-project/messages:send",
+    )
+    request.side_effect = side_effect
+    async with httpx.AsyncClient() as client:
+        notification_sent = await firebase.send_push(client, android_payload, db, user)
+    assert request.called
+    assert not notification_sent
+    db.refresh(user)
+    # No longer active or invalid token deleted
+    assert user.device_tokens == []

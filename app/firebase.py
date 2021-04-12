@@ -5,7 +5,7 @@ from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 from fastapi.logger import logger
 from typing import Dict
-from . import models, schemas
+from . import models, schemas, crud
 from .settings import GOOGLE_APPLICATION_CREDENTIALS, FIREBASE_PROJECT_ID
 
 
@@ -44,6 +44,8 @@ async def send_push(
 
     Return True in case of success
     """
+    device_token = payload.message.token
+    logger.info(f"Send notification to {user.username} (token: {device_token[:10]}...)")
     try:
         response = await client.post(
             f"https://fcm.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/messages:send",
@@ -56,6 +58,11 @@ async def send_push(
     except httpx.HTTPStatusError as exc:
         logger.warning(f"{exc}")
         logger.warning(response.json())
+        if response.status_code in (400, 404):
+            logger.info(
+                f"Device token invalid or no longer active. Delete {device_token} for user {user.username}"
+            )
+            crud.remove_user_device_token(db, user, device_token)
         return False
     logger.info(f"Notification sent to user {user.username}")
     return True

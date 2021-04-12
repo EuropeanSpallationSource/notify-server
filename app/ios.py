@@ -42,6 +42,7 @@ async def send_push(
 
     Return True in case of success
     """
+    logger.info(f"Send notification to {user.username} (apn: {apn[:10]}...)")
     try:
         response = await client.post(
             f"https://{APPLE_SERVER}/3/device/{apn}", json=payload.dict()
