@@ -1,8 +1,17 @@
 from __future__ import annotations
 import uuid
 from typing import List
-from sqlalchemy import Table, Boolean, Column, ForeignKey, Integer, String, DateTime
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import (
+    Table,
+    Boolean,
+    Column,
+    ForeignKey,
+    Integer,
+    String,
+    DateTime,
+    func,
+)
+from sqlalchemy.orm import relationship, backref, Session
 from datetime import datetime
 from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID
@@ -80,16 +89,14 @@ class User(Base):
         "notification",
     )
 
-    def unread_notifications(self) -> List[schemas.UserNotification]:
-        return [
-            user_notification.to_user_notification()
-            for user_notification in self.user_notifications
-            if not user_notification.is_read
-        ]
-
     @property
     def nb_unread_notifications(self) -> int:
-        return len(self.unread_notifications())
+        session = Session.object_session(self)
+        query = session.query(UserNotification).filter(
+            UserNotification.user_id == self.id,
+            UserNotification.is_read.is_(False),
+        )
+        return query.with_entities(func.count()).scalar()
 
     @property
     def device_tokens(self):
