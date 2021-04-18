@@ -141,10 +141,12 @@ def update_current_user_services(
 
 @router.get("/user/notifications", response_model=List[schemas.UserNotification])
 def read_current_user_notifications(
+    limit: int = 50,
+    db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user),
 ):
-    """Read the current user's notifications"""
-    return crud.get_user_notifications(current_user)
+    """Return the current user's notifications in descending order (limited to 50 by default)"""
+    return crud.get_user_notifications(db, current_user, limit)
 
 
 @router.patch("/user/notifications", status_code=status.HTTP_204_NO_CONTENT)

@@ -1,5 +1,7 @@
+import datetime
 import pytest
 import uuid
+from operator import attrgetter
 from app import crud, models, schemas
 
 
@@ -108,7 +110,7 @@ def test_get_user_notifications(db, user, service):
     notification2 = crud.create_service_notification(
         db, schemas.NotificationCreate(title="Second message"), service
     )
-    user_notifications = crud.get_user_notifications(user)
+    user_notifications = crud.get_user_notifications(db, user)
     user_notification1 = schemas.UserNotification(
         id=notification1.id,
         timestamp=notification1.timestamp,
@@ -127,7 +129,36 @@ def test_get_user_notifications(db, user, service):
         service_id=service.id,
         is_read=False,
     )
-    assert user_notifications == [user_notification1, user_notification2]
+    assert user_notifications == [user_notification2, user_notification1]
+
+
+@pytest.mark.parametrize("limit", [-1, 0, 1, 10, 20, 100])
+def test_get_user_notifications_limit(db, user, service, limit):
+    # Create some notifications
+    user.subscribe(service)
+    db.commit()
+    notifications = []
+    now = datetime.datetime.now()
+    for nb in range(20):
+        notification = crud.create_service_notification(
+            db, schemas.NotificationCreate(title=f"message{nb}"), service
+        )
+        notification.timestamp = now - datetime.timedelta(minutes=nb)
+        notifications.append(notification)
+    # Get the user notifications
+    user_notifications = crud.get_user_notifications(db, user, limit)
+    # Check the number of notifications returned
+    if limit > 0 and limit <= 20:
+        assert len(user_notifications) == limit
+        assert user_notifications[-1].timestamp == notifications[limit - 1].timestamp
+    else:
+        assert len(user_notifications) == 20
+    # Check they are properly sorted
+    assert user_notifications[0].timestamp == notifications[0].timestamp
+    sorted_user_notifications = sorted(
+        user_notifications, key=attrgetter("timestamp"), reverse=True
+    )
+    assert user_notifications == sorted_user_notifications
 
 
 def test_update_user_services(db, user, service_factory):
