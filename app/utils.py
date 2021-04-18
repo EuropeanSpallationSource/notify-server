@@ -78,33 +78,35 @@ async def gather_with_concurrency(n: int, *tasks, return_exceptions=True):
 
 async def send_notification(db: Session, notification: models.Notification) -> None:
     """Send the notification to all subscribers"""
+    tasks = []
     ios_headers = ios.create_headers(datetime.utcnow())
     ios_client = httpx.AsyncClient(http2=True, headers=ios_headers)
-    tasks = [
-        ios.send_push(
-            ios_client,
-            ios_token,
-            user_notification.to_apn_payload(),
-            db,
-            user_notification.user,
-        )
-        for user_notification in notification.users_notification
-        for ios_token in user_notification.user.ios_tokens
-    ]
     android_headers = await firebase.create_headers(str(uuid.uuid4()))
     android_client = httpx.AsyncClient(headers=android_headers)
-    tasks.extend(
-        [
-            firebase.send_push(
-                android_client,
-                user_notification.to_android_payload(android_token),
-                db,
-                user_notification.user,
+    for user_notification in notification.users_notification:
+        user = user_notification.user
+        ios_tokens = user.ios_tokens
+        if ios_tokens:
+            apn_payload = user_notification.to_apn_payload()
+            for ios_token in ios_tokens:
+                tasks.append(
+                    ios.send_push(
+                        ios_client,
+                        ios_token,
+                        apn_payload,
+                        db,
+                        user,
+                    )
+                )
+        for android_token in user.android_tokens:
+            tasks.append(
+                firebase.send_push(
+                    android_client,
+                    user_notification.to_android_payload(android_token),
+                    db,
+                    user,
+                )
             )
-            for user_notification in notification.users_notification
-            for android_token in user_notification.user.android_tokens
-        ]
-    )
     await gather_with_concurrency(NB_PARALLEL_PUSH, *tasks, return_exceptions=True)
     await ios_client.aclose()
     await android_client.aclose()
