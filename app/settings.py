@@ -21,6 +21,7 @@ ADMIN_USERS = config("ADMIN_USERS", cast=CommaSeparatedStrings, default="")
 SQLALCHEMY_DATABASE_URL = config(
     "SQLALCHEMY_DATABASE_URL", cast=str, default="sqlite:///./sql_app.db"
 )
+SQLALCHEMY_DEBUG = config("SQLALCHEMY_DEBUG", cast=bool, default=False)
 APNS_ALGORITHM = "ES256"
 APNS_KEY_ID = config("APNS_KEY_ID", cast=Secret, default="key-id")
 APNS_AUTH_KEY = config("APNS_AUTH_KEY", cast=Secret, default=DUMMY_PRIVATE_KEY)

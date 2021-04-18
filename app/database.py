@@ -1,14 +1,16 @@
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from .settings import SQLALCHEMY_DATABASE_URL
+from .settings import SQLALCHEMY_DATABASE_URL, SQLALCHEMY_DEBUG
 
 
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite:"):
     connect_args = {"check_same_thread": False}
 else:
     connect_args = {}
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args)
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args=connect_args, echo=SQLALCHEMY_DEBUG
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 convention = {
     "ix": "ix_%(column_0_label)s",
