@@ -142,11 +142,15 @@ def update_current_user_services(
 @router.get("/user/notifications", response_model=List[schemas.UserNotification])
 def read_current_user_notifications(
     limit: int = 50,
+    sort: schemas.SortOrder = schemas.SortOrder.asc,
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user),
 ):
-    """Return the current user's notifications in descending order (limited to 50 by default)"""
-    return crud.get_user_notifications(db, current_user, limit)
+    """Return the current user's notifications (limited to 50 by default)
+
+    Notifications are sorted in ascending order by default
+    """
+    return crud.get_user_notifications(db, current_user, limit=limit, sort=sort)
 
 
 @router.patch("/user/notifications", status_code=status.HTTP_204_NO_CONTENT)

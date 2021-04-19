@@ -132,8 +132,9 @@ def test_get_user_notifications(db, user, service):
     assert user_notifications == [user_notification2, user_notification1]
 
 
+@pytest.mark.parametrize("sort", ["asc", "desc"])
 @pytest.mark.parametrize("limit", [-1, 0, 1, 10, 20, 100])
-def test_get_user_notifications_limit(db, user, service, limit):
+def test_get_user_notifications_limit(db, user, service, limit, sort):
     # Create some notifications
     user.subscribe(service)
     db.commit()
@@ -146,17 +147,27 @@ def test_get_user_notifications_limit(db, user, service, limit):
         notification.timestamp = now - datetime.timedelta(minutes=nb)
         notifications.append(notification)
     # Get the user notifications
-    user_notifications = crud.get_user_notifications(db, user, limit)
+    user_notifications = crud.get_user_notifications(db, user, limit, sort)
     # Check the number of notifications returned
     if limit > 0 and limit <= 20:
         assert len(user_notifications) == limit
-        assert user_notifications[-1].timestamp == notifications[limit - 1].timestamp
+        oldest_timestamp = notifications[limit - 1].timestamp
     else:
         assert len(user_notifications) == 20
+        oldest_timestamp = notifications[-1].timestamp
     # Check they are properly sorted
-    assert user_notifications[0].timestamp == notifications[0].timestamp
+    # In both cases, we have the same list, but sorted in reverse order
+    newest_timestamp = notifications[0].timestamp
+    if sort == "asc":
+        assert user_notifications[0].timestamp == oldest_timestamp
+        assert user_notifications[-1].timestamp == newest_timestamp
+        is_reverse = False
+    elif sort == "desc":
+        assert user_notifications[0].timestamp == newest_timestamp
+        assert user_notifications[-1].timestamp == oldest_timestamp
+        is_reverse = True
     sorted_user_notifications = sorted(
-        user_notifications, key=attrgetter("timestamp"), reverse=True
+        user_notifications, key=attrgetter("timestamp"), reverse=is_reverse
     )
     assert user_notifications == sorted_user_notifications
 

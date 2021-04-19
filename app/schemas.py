@@ -6,6 +6,11 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
+class SortOrder(str, Enum):
+    asc = "asc"
+    desc = "desc"
+
+
 class ApnToken(BaseModel):
     apn_token: str
 

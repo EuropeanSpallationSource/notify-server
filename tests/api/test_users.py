@@ -222,8 +222,12 @@ def test_update_current_user_services(
     assert db_user.services == sorted([service1, service3], key=lambda s: s.category)
 
 
+@pytest.mark.parametrize(
+    "sort",
+    [None, "asc", "desc"],
+)
 def test_read_current_user_notifications(
-    client: TestClient, db, user, notification_factory, api_version
+    client: TestClient, db, user, notification_factory, api_version, sort
 ):
     notification1 = notification_factory()
     notification2 = notification_factory()
@@ -232,21 +236,17 @@ def test_read_current_user_notifications(
     user.notifications.append(notification1)
     user.notifications.append(notification2)
     db.commit()
+    params = {}
+    if sort is not None:
+        params = {"sort": sort}
     response = client.get(
         f"/api/{api_version}/users/user/notifications",
+        params=params,
         headers=user_authorization_headers(user.username),
     )
     assert response.status_code == 200
-    assert response.json() == [
-        {
-            "id": notification2.id,
-            "is_read": False,
-            "service_id": str(notification2.service_id),
-            "subtitle": notification2.subtitle,
-            "timestamp": notification2.timestamp.isoformat(),
-            "title": notification2.title,
-            "url": notification2.url,
-        },
+    # By default the notifications are expected in ascending order (for backward compatibility)
+    expected_response = [
         {
             "id": notification1.id,
             "is_read": False,
@@ -256,7 +256,19 @@ def test_read_current_user_notifications(
             "title": notification1.title,
             "url": notification1.url,
         },
+        {
+            "id": notification2.id,
+            "is_read": False,
+            "service_id": str(notification2.service_id),
+            "subtitle": notification2.subtitle,
+            "timestamp": notification2.timestamp.isoformat(),
+            "title": notification2.title,
+            "url": notification2.url,
+        },
     ]
+    if sort == "desc":
+        expected_response.reverse()
+    assert response.json() == expected_response
 
 
 def test_update_current_user_notifications(

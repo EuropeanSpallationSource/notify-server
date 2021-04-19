@@ -140,12 +140,17 @@ def create_service_notification(
 
 
 def get_user_notifications(
-    db: Session, user: models.User, limit: int = 0
+    db: Session,
+    user: models.User,
+    limit: int = 0,
+    sort: schemas.SortOrder = schemas.SortOrder.desc,
 ) -> List[schemas.UserNotification]:
     """Return the latest user's notifications sorted by timestamp
 
     If limit is 0, all notifications are returned
     Otherwise, only the number requested
+    The newest notifications are always returned. Sorting by ascending order
+    will just reverse that list.
     """
     query = (
         db.query(models.UserNotification)
@@ -159,7 +164,11 @@ def get_user_notifications(
         query = query.limit(limit)
     else:
         query = query.all()
-    return [un.to_user_notification() for un in query]
+    notifications = [un.to_user_notification() for un in query]
+    # Sorting in ascending order is mostly for backward compatibility
+    if sort == schemas.SortOrder.asc:
+        notifications.reverse()
+    return notifications
 
 
 def update_user_notifications(
