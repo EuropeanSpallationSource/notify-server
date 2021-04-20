@@ -1,7 +1,7 @@
-from operator import attrgetter
 import datetime
 import uuid
 from fastapi.logger import logger
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from typing import List
 from . import models, schemas
@@ -139,10 +139,36 @@ def create_service_notification(
     return db_notification
 
 
-def get_user_notifications(user: models.User) -> List[schemas.UserNotification]:
-    """Return all user's notifications sorted by timestamp"""
-    user_notifications = [un.to_user_notification() for un in user.user_notifications]
-    return sorted(user_notifications, key=attrgetter("timestamp"))[-50:]
+def get_user_notifications(
+    db: Session,
+    user: models.User,
+    limit: int = 0,
+    sort: schemas.SortOrder = schemas.SortOrder.desc,
+) -> List[schemas.UserNotification]:
+    """Return the latest user's notifications sorted by timestamp
+
+    If limit is 0, all notifications are returned
+    Otherwise, only the number requested
+    The newest notifications are always returned. Sorting by ascending order
+    will just reverse that list.
+    """
+    query = (
+        db.query(models.UserNotification)
+        .filter(
+            models.UserNotification.user_id == user.id,
+        )
+        .join(models.Notification)
+        .order_by(desc(models.Notification.timestamp))
+    )
+    if limit > 0:
+        query = query.limit(limit)
+    else:
+        query = query.all()
+    notifications = [un.to_user_notification() for un in query]
+    # Sorting in ascending order is mostly for backward compatibility
+    if sort == schemas.SortOrder.asc:
+        notifications.reverse()
+    return notifications
 
 
 def update_user_notifications(
