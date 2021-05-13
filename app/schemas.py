@@ -114,18 +114,14 @@ class Alert(BaseModel):
     subtitle: str
 
 
-class AndroidNotification(BaseModel):
+class AndroidData(BaseModel):
     title: str
     body: str
-
-
-class AndroidData(BaseModel):
     url: str
 
 
 class AndroidMessage(BaseModel):
     token: str
-    notification: AndroidNotification
     data: AndroidData
 
 
