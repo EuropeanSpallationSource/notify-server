@@ -101,28 +101,31 @@ async def test_send_notification(
     user2_payload1 = schemas.AndroidPayload(
         message=schemas.AndroidMessage(
             token=android_token1,
-            notification=schemas.AndroidNotification(
-                title=notification1.title, body=notification1.subtitle
+            data=schemas.AndroidData(
+                title=notification1.title,
+                body=notification1.subtitle,
+                url=notification1.url,
             ),
-            data=schemas.AndroidData(url=notification1.url),
         )
     )
     user3_payload1 = schemas.AndroidPayload(
         message=schemas.AndroidMessage(
             token=android_token2,
-            notification=schemas.AndroidNotification(
-                title=notification1.title, body=notification1.subtitle
+            data=schemas.AndroidData(
+                title=notification1.title,
+                body=notification1.subtitle,
+                url=notification1.url,
             ),
-            data=schemas.AndroidData(url=notification1.url),
         )
     )
     user3_payload2 = schemas.AndroidPayload(
         message=schemas.AndroidMessage(
             token=android_token3,
-            notification=schemas.AndroidNotification(
-                title=notification1.title, body=notification1.subtitle
+            data=schemas.AndroidData(
+                title=notification1.title,
+                body=notification1.subtitle,
+                url=notification1.url,
             ),
-            data=schemas.AndroidData(url=notification1.url),
         )
     )
     # Remove the first arg (httpx client) from the list of calls

@@ -9,10 +9,7 @@ def android_payload():
     return schemas.AndroidPayload(
         message=schemas.AndroidMessage(
             token="my-token",
-            notification=schemas.AndroidNotification(
-                title="My alert", body="this is a test"
-            ),
-            data=schemas.AndroidData(url=""),
+            data=schemas.AndroidData(title="My alert", body="this is a test", url=""),
         )
     )
 

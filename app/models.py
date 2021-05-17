@@ -183,8 +183,8 @@ class Notification(Base):
     def to_alert(self) -> schemas.Alert:
         return schemas.Alert(title=self.title, subtitle=self.subtitle)
 
-    def to_android_notification(self) -> schemas.AndroidNotification:
-        return schemas.AndroidNotification(title=self.title, body=self.subtitle)
+    def to_android_data(self) -> schemas.AndroidData:
+        return schemas.AndroidData(title=self.title, body=self.subtitle, url=self.url)
 
 
 class UserNotification(Base):
@@ -222,7 +222,6 @@ class UserNotification(Base):
     def to_android_payload(self, token) -> schemas.AndroidPayload:
         message = schemas.AndroidMessage(
             token=token,
-            notification=self.notification.to_android_notification(),
-            data=schemas.AndroidData(url=self.notification.url),
+            data=self.notification.to_android_data(),
         )
         return schemas.AndroidPayload(message=message)
