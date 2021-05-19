@@ -4,7 +4,7 @@ from app import models, utils
 
 def test_login_invalid_credentials(client: TestClient, api_version, mocker):
     mock_authenticate_user = mocker.patch(
-        "app.api.login.ldap.authenticate_user", return_value=False
+        "app.api.login.auth.authenticate_user", return_value=False
     )
     username = "johndoe"
     password = "secret"
@@ -18,7 +18,7 @@ def test_login_invalid_credentials(client: TestClient, api_version, mocker):
 
 def test_login_new_user(client: TestClient, db, api_version, mocker):
     mock_authenticate_user = mocker.patch(
-        "app.api.login.ldap.authenticate_user", return_value=True
+        "app.api.login.auth.authenticate_user", return_value=True
     )
     username = "johndoe"
     password = "secret"
@@ -39,7 +39,7 @@ def test_login_new_user(client: TestClient, db, api_version, mocker):
 
 def test_login_existing_user(client: TestClient, db, api_version, mocker, user):
     mock_authenticate_user = mocker.patch(
-        "app.api.login.ldap.authenticate_user", return_value=True
+        "app.api.login.auth.authenticate_user", return_value=True
     )
     password = "secret"
     assert (

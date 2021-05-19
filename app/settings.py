@@ -11,12 +11,19 @@ ytZPnlbWNLGGR7tKdB1eLzyBlIVFe9El4Wlvs19ACPRMtE7l75IlbOT+
 # Config will be read from environment variables and/or ".env" files.
 config = Config(".env")
 
+# Should be set to "ldap" or "url"
+AUTHENTICATION_METHOD = config("AUTHENTICATION_METHOD", cast=str, default="ldap")
+# LDAP configuration
 LDAP_HOST = config("LDAP_HOST", cast=str, default="ldap.example.org")
 LDAP_PORT = config("LDAP_PORT", cast=int, default=636)
 LDAP_USE_SSL = config("LDAP_USE_SSL", cast=bool, default=True)
 LDAP_BASE_DN = config("LDAP_BASE_DN", cast=str, default="DC=esss,DC=lu,DC=se")
 LDAP_USER_DN = config("LDAP_USER_DN", cast=str, default="")
 LDAP_USER_RDN_ATTR = config("LDAP_USER_RDN_ATTR", cast=str, default="uid")
+# URL to use when AUTHENTICATION_METHOD is set to "url"
+AUTHENTICATION_URL = config(
+    "AUTHENTICATION_URL", cast=str, default="https//auth.example.org/login"
+)
 ADMIN_USERS = config("ADMIN_USERS", cast=CommaSeparatedStrings, default="")
 SQLALCHEMY_DATABASE_URL = config(
     "SQLALCHEMY_DATABASE_URL", cast=str, default="sqlite:///./sql_app.db"
