@@ -1,0 +1,107 @@
+---
+stages:
+  - .pre
+  - build
+  - test
+  - deploy
+
+variables:
+  DOCKER_REGISTRY_URL: "harbor.maxiv.lu.se/notify-server"
+
+include:
+  - project: kits-maxiv/kubernetes/k8s-gitlab-ci
+    file: "/Docker-build.gitlab-ci.yml"
+    ref: "0.1.2"
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - if: "$CI_COMMIT_BRANCH"
+    - if: "$CI_COMMIT_TAG"
+
+default:
+  tags:
+    - kubernetes
+
+test-python38:
+  stage: test
+  image: harbor.maxiv.lu.se/dockerhub/library/python:3.8
+  before_script:
+    - pip install -e .[tests]
+  script:
+    - pytest --junitxml=junit.xml --cov-report=xml:coverage.xml --cov-report=term --cov=app -v
+  artifacts:
+    paths:
+      - junit.xml
+      - coverage.xml
+    reports:
+      junit: junit.xml
+    expire_in: 1 hour
+
+.deploy2k8s:
+  stage: deploy
+  image: harbor.maxiv.lu.se/maxiv-charts/kits-maxiv/kubernetes/helm-builder:0.4.0
+  script:
+    - helm repo add maxiv-helm http://kits-maxiv.gitlab-pages.maxiv.lu.se/kubernetes/maxiv-helm
+    - >
+      helm upgrade ${RELEASE_NAME} maxiv-helm/notify-server
+      --install
+      --set image.repository=${REGISTRY_IMAGE_NAME}
+      --set image.tag=${REGISTRY_IMAGE_TAG}
+      --set ingress.host=${INGRES_HOST}
+      --values=$SECRET_VALUES
+
+deploy-review:
+  extends: .deploy2k8s
+  variables:
+    RELEASE_NAME: "${CI_COMMIT_BRANCH}"
+    INGRES_HOST: "notify-test-${CI_COMMIT_BRANCH}.apps.okd.maxiv.lu.se"
+  before_script:
+    # Propagate SECRET_VALUES and KUBECONFIG as a file path.
+    # See https://gitlab.com/gitlab-org/gitlab/-/issues/30775
+    - export SECRET_VALUES=$SECRET_VALUES_TEST
+    - export KUBECONFIG=$KUBECONFIG_FILE_TEST
+    - chmod 400 $KUBECONFIG_FILE_TEST
+  environment:
+    name: review/$CI_COMMIT_BRANCH
+    url: https://notify-test-${CI_COMMIT_BRANCH}.apps.okd.maxiv.lu.se
+    on_stop: stop-review
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stop-review:
+  stage: deploy
+  image: harbor.maxiv.lu.se/maxiv-charts/kits-maxiv/kubernetes/helm-builder:0.4.0
+  variables:
+    GIT_STRATEGY: none
+  before_script:
+    - export KUBECONFIG=$KUBECONFIG_FILE_TEST
+    - chmod 400 $KUBECONFIG_FILE_TEST
+  script:
+    - helm delete ${CI_COMMIT_BRANCH}
+  environment:
+    name: review/$CI_COMMIT_BRANCH
+    action: stop
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual
+  # Set allow failure to not block the pipeline / MR
+  allow_failure: true
+
+deploy-prod:
+  extends: .deploy2k8s
+  variables:
+    RELEASE_NAME: notify
+    INGRES_HOST: notify.maxiv.lu.se
+  before_script:
+    # Propagate SECRET_VALUES and KUBECONFIG as a file path.
+    # See https://gitlab.com/gitlab-org/gitlab/-/issues/30775
+    - export SECRET_VALUES=$SECRET_VALUES_PROD
+    - export KUBECONFIG=$KUBECONFIG_FILE_PROD
+    - chmod 400 $KUBECONFIG_FILE_PROD
+  environment:
+    name: production
+    url: https://notify.maxiv.lu.se
+  rules:
+    - if: '$CI_COMMIT_TAG'
