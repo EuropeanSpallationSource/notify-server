@@ -13,6 +13,7 @@ from typing import Generator
 environ["SQLALCHEMY_DATABASE_URL"] = "sqlite://"
 environ["LDAP_SERVER"] = "ldap.example.org"
 environ["APNS_KEY_ID"] = "UB40ZXKCDZ"
+environ["AUTHENTICATION_URL"] = "https://auth.example.org/login"
 environ[
     "APNS_AUTH_KEY"
 ] = """-----BEGIN PRIVATE KEY-----

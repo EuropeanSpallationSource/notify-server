@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
-from . import deps, ldap
-from .. import crud, utils
+from . import deps
+from .. import crud, utils, auth
 
 router = APIRouter()
 
@@ -14,8 +14,8 @@ def login(
     db: Session = Depends(deps.get_db),
     form_data: OAuth2PasswordRequestForm = Depends(),
 ):
-    if not ldap.authenticate_user(form_data.username.lower(), form_data.password):
-        logger.warning(f"LDAP authentication failed for {form_data.username.lower()}")
+    if not auth.authenticate_user(form_data.username.lower(), form_data.password):
+        logger.warning(f"Authentication failed for {form_data.username.lower()}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
