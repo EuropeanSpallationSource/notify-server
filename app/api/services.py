@@ -2,6 +2,7 @@ import uuid
 from fastapi import (
     APIRouter,
     Depends,
+    Response,
     BackgroundTasks,
     HTTPException,
     Header,
@@ -52,6 +53,22 @@ def update_service(
         )
     updated_service = crud.update_service(db, service, updated_info)
     return updated_service
+
+
+@router.delete("/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_service(
+    service_id: uuid.UUID,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_admin_user),
+):
+    """Delete the given service - admin only"""
+    service = crud.get_service(db, service_id)
+    if service is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Service not found"
+        )
+    crud.delete_service(db, service)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/{service_id}/notifications", response_model=List[schemas.Notification])
