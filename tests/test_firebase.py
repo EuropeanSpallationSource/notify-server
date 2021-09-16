@@ -52,6 +52,7 @@ async def test_send_push_to_android_success(db, user, android_payload):
     [
         httpx.ConnectError,
         httpx.ConnectTimeout,
+        httpx.Response(400, json={"error": "Request contains an invalid argument"}),
         httpx.Response(403, json={"error": "message"}),
         httpx.Response(405, json={"error": "message"}),
         httpx.Response(500, json={"error": "message"}),
@@ -80,15 +81,10 @@ async def test_send_push_to_android_error(
 
 @respx.mock
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "side_effect",
-    [
-        httpx.Response(400, json={"error": "message"}),
-        httpx.Response(404, json={"error": "message"}),
-    ],
-)
-async def test_send_push_to_android_400_or_404(
-    db, user_factory, android_payload, side_effect
+async def test_send_push_to_android_404(
+    db,
+    user_factory,
+    android_payload,
 ):
     device_token = android_payload.message.token
     user = user_factory(device_tokens=[device_token])
@@ -96,7 +92,7 @@ async def test_send_push_to_android_400_or_404(
     request = respx.post(
         "https://fcm.googleapis.com/v1/projects/my-project/messages:send",
     )
-    request.side_effect = side_effect
+    request.side_effect = httpx.Response(404, json={"error": "message"})
     async with httpx.AsyncClient() as client:
         notification_sent = await firebase.send_push(client, android_payload, db, user)
     assert request.called
