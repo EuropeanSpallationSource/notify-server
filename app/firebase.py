@@ -58,7 +58,8 @@ async def send_push(
     except httpx.HTTPStatusError as exc:
         logger.warning(f"{exc}")
         logger.warning(response.json())
-        if response.status_code in (400, 404):
+        # See https://firebase.google.com/docs/reference/fcm/rest/v1/ErrorCode
+        if response.status_code == 404:
             logger.info(
                 f"Device token invalid or no longer active. Delete {device_token} for user {user.username}"
             )
