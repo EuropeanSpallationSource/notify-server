@@ -180,11 +180,18 @@ class Notification(Base):
     url = Column(String)
     service_id = Column(GUID, ForeignKey("services.id"), nullable=False)
 
+    # The maximum payload size is 4096 bytes for Apple notification
+    # https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/CreatingtheNotificationPayload.html#//apple_ref/doc/uid/TP40008194-CH10-SW1
+    # There is no need to send very long messages. Only a small part is displayed as push notification.
+    # When opened, the full message is retrieved from the notify server API.
+    # -> Limit subtitle to 256 characters maximum
     def to_alert(self) -> schemas.Alert:
-        return schemas.Alert(title=self.title, subtitle=self.subtitle)
+        return schemas.Alert(title=self.title, subtitle=self.subtitle[:256])
 
     def to_android_data(self) -> schemas.AndroidData:
-        return schemas.AndroidData(title=self.title, body=self.subtitle, url=self.url)
+        return schemas.AndroidData(
+            title=self.title, body=self.subtitle[:256], url=self.url
+        )
 
 
 class UserNotification(Base):
