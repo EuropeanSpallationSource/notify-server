@@ -44,6 +44,7 @@ test-python38:
   image: harbor.maxiv.lu.se/maxiv-charts/kits-maxiv/kubernetes/helm-builder:0.4.0
   script:
     - helm repo add maxiv-helm http://kits-maxiv.gitlab-pages.maxiv.lu.se/kubernetes/maxiv-helm
+    - helm repo update
     - >
       helm upgrade ${RELEASE_NAME} maxiv-helm/notify-server
       --install
