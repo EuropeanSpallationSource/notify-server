@@ -11,7 +11,7 @@ variables:
 include:
   - project: kits-maxiv/kubernetes/k8s-gitlab-ci
     file: "/Docker-build.gitlab-ci.yml"
-    ref: "0.1.2"
+    ref: "0.4.0"
 
 workflow:
   rules:
