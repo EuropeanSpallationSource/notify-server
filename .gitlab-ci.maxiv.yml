@@ -43,10 +43,10 @@ test-python38:
   stage: deploy
   image: harbor.maxiv.lu.se/maxiv-charts/kits-maxiv/kubernetes/helm-builder:0.4.0
   script:
-    - helm repo add maxiv-helm http://kits-maxiv.gitlab-pages.maxiv.lu.se/kubernetes/maxiv-helm
+    - helm repo add notify-server https://harbor.maxiv.lu.se/chartrepo/notify-server
     - helm repo update
     - >
-      helm upgrade ${RELEASE_NAME} maxiv-helm/notify-server
+      helm upgrade ${RELEASE_NAME} notify-server/notify-server
       --install
       --set image.repository=${REGISTRY_IMAGE_NAME}
       --set image.tag=${REGISTRY_IMAGE_TAG}
