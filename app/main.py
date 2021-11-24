@@ -1,11 +1,14 @@
 import logging
 import sentry_sdk
+from pathlib import Path
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from fastapi import FastAPI
 from fastapi_versioning import VersionedFastAPI
 from fastapi.logger import logger
+from fastapi.staticfiles import StaticFiles
 from . import monitoring
 from .api import login, users, services
+from .views import home
 from .settings import SENTRY_DSN, ESS_NOTIFY_SERVER_ENVIRONMENT
 
 
@@ -16,23 +19,32 @@ uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
 logger.handlers = gunicorn_error_logger.handlers
 logger.setLevel(gunicorn_error_logger.level)
 
-original_app = FastAPI()
+# Main application to serve HTML
+app = FastAPI()
+app.include_router(home.router, tags=["home"])
 
+# Serve static files
+app_dir = Path(__file__).parent.resolve()
+app.mount("/static", StaticFiles(directory=str(app_dir / "static")), name="static")
 
-original_app.include_router(monitoring.router, prefix="/-", tags=["monitoring"])
-original_app.include_router(login.router, tags=["login"])
-original_app.include_router(users.router, prefix="/users", tags=["users"])
-original_app.include_router(
+# API mounted under /api
+original_api = FastAPI()
+original_api.include_router(monitoring.router, prefix="/-", tags=["monitoring"])
+original_api.include_router(login.router, tags=["login"])
+original_api.include_router(users.router, prefix="/users", tags=["users"])
+original_api.include_router(
     services.router,
     prefix="/services",
     tags=["services"],
 )
 
-app = VersionedFastAPI(
-    original_app,
+versioned_api = VersionedFastAPI(
+    original_api,
     version_format="{major}",
-    prefix_format="/api/v{major}",
+    prefix_format="/v{major}",
 )
+
+app.mount("/api", versioned_api)
 
 if SENTRY_DSN:
     sentry_sdk.init(dsn=SENTRY_DSN, environment=ESS_NOTIFY_SERVER_ENVIRONMENT)

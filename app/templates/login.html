@@ -1,0 +1,29 @@
+{%- extends "base.html" %}
+
+{% block main %}
+<main class="row justify-content-center">
+  <div class="form-signin text-center col-4">
+    <form action="" method="POST">
+      {% if error %}
+        {% set class_ = "form-control is-invalid" %}
+      {% else %}
+        {% set class_ = "form-control" %}
+      {% endif %}
+      <h1 class="h3 mb-3 fw-normal">Login</h1>
+
+      <div class="form-floating">
+        <input name="username" type="text" class="{{ class_ }}" id="floatingInput" placeholder="username" value="{{ username }}">
+        <label for="floatingInput">Username</label>
+        <div class="invalid-feedback">{{ error }}</div>
+      </div>
+      <div class="form-floating">
+        <input name="password" type="password" class="{{ class_ }}" id="floatingPassword" placeholder="Password" value="{{ password }}">
+        <label for="floatingPassword">Password</label>
+        <div class="invalid-feedback">{{ error }}</div>
+      </div>
+
+      <button class="w-100 btn btn-lg btn-primary" type="submit">Login</button>
+    </form>
+  </div>
+</main>
+{%- endblock %}
