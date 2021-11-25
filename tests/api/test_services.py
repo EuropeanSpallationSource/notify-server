@@ -32,7 +32,7 @@ def test_read_services(
 def test_create_service_invalid_privileges(
     client: TestClient, user_token_headers, api_version
 ):
-    data = {"category": "My Service", "color": "blue", "owner": "foo"}
+    data = {"category": "My Service", "color": "FFFFFF", "owner": "foo"}
     response = client.post(
         f"/api/{api_version}/services/", headers=user_token_headers, json=data
     )
@@ -40,10 +40,31 @@ def test_create_service_invalid_privileges(
     assert response.json() == {"detail": "The user doesn't have enough privileges"}
 
 
+@pytest.mark.parametrize("color", ["blue", "#FF0000", "0000"])
+def test_create_service_invalid_color(
+    color, client: TestClient, admin_token_headers, api_version
+):
+    data = {"category": "My Service", "color": color, "owner": "foo"}
+    response = client.post(
+        f"/api/{api_version}/services/", headers=admin_token_headers, json=data
+    )
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["msg"] == "Color should match [0-9a-fA-F]{6}"
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "color"],
+                "msg": "Color should match [0-9a-fA-F]{6}",
+                "type": "value_error",
+            }
+        ],
+    }
+
+
 def test_create_service(client: TestClient, db, admin_token_headers, api_version):
     data = {
         "category": "My Service",
-        "color": "blue",
+        "color": "FF0000",
         "owner": "John",
     }
     response = client.post(
@@ -56,6 +77,58 @@ def test_create_service(client: TestClient, db, admin_token_headers, api_version
         .first()
     )
     assert response.json() == db_service_to_dict(db_service)
+
+
+@pytest.mark.parametrize("color", ["black", "00FF0000", "#00FF00"])
+def test_update_service_invalid_color(
+    color, client: TestClient, service_factory, admin_token_headers, api_version
+):
+    original_data = {
+        "category": "My Service",
+        "color": "FF0000",
+        "owner": "John",
+    }
+    service = service_factory(**original_data)
+    data = original_data.copy()
+    data["color"] = color
+    response = client.patch(
+        f"/api/{api_version}/services/{service.id}",
+        headers=admin_token_headers,
+        json=data,
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "color"],
+                "msg": "Color should match [0-9a-fA-F]{6}",
+                "type": "value_error",
+            }
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    "data", [{"category": "New service"}, {"color": "00FF00"}, {"owner": "Jane"}]
+)
+def test_update_service(
+    data, client: TestClient, service_factory, admin_token_headers, api_version
+):
+    original_data = {
+        "category": "My Service",
+        "color": "FF0000",
+        "owner": "John",
+    }
+    service = service_factory(**original_data)
+    response = client.patch(
+        f"/api/{api_version}/services/{service.id}",
+        headers=admin_token_headers,
+        json=data,
+    )
+    assert response.status_code == 200
+    new_data = {**original_data, **data}
+    new_data["id"] = str(service.id)
+    assert response.json() == new_data
 
 
 def test_read_service_notifications(

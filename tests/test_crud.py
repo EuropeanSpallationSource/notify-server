@@ -32,7 +32,7 @@ def test_get_user_by_username(db, user):
 
 def test_create_service(db):
     service = crud.create_service(
-        db, schemas.ServiceCreate(category="My Service", color="blue", owner="John")
+        db, schemas.ServiceCreate(category="My Service", color="00FF00", owner="John")
     )
     assert service.category == "My Service"
     assert isinstance(service.id, uuid.UUID)
