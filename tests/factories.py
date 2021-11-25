@@ -16,7 +16,11 @@ class ServiceFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session_persistence = "commit"
 
     category = factory.Faker("sentence", nb_words=2)
-    color = factory.Faker("color")
+    color = factory.Faker(
+        "pystr_format",
+        string_format="??????",
+        letters="0123456789abcdefABCDEF",
+    )
     owner = factory.Faker("name")
 
 

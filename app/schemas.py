@@ -1,9 +1,18 @@
 from __future__ import annotations
 import datetime
+import re
 import uuid
 from enum import Enum
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+
+RE_COLOR = re.compile(r"^[0-9a-fA-F]{6}$")
+
+
+def validate_color(color: str) -> str:
+    if RE_COLOR.match(color) is None:
+        raise ValueError("Color should match [0-9a-fA-F]{6}")
+    return color
 
 
 class SortOrder(str, Enum):
@@ -48,6 +57,8 @@ class ServiceBase(BaseModel):
     color: str
     owner: str
 
+    _validate_color = validator("color", allow_reuse=True)(validate_color)
+
 
 class ServiceCreate(ServiceBase):
     pass
@@ -64,6 +75,8 @@ class ServiceUpdate(BaseModel):
     category: Optional[str]
     color: Optional[str]
     owner: Optional[str]
+
+    _validate_color = validator("color", allow_reuse=True)(validate_color)
 
 
 class UserService(Service):
