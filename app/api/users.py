@@ -37,7 +37,7 @@ def update_user(
     return updated_user
 
 
-@router.delete("/{user_id}", response_model=schemas.User)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 @version(2)
 def delete_user(
     user_id: int,
@@ -51,6 +51,7 @@ def delete_user(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     crud.delete_user(db, user)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/user/profile", response_model=schemas.UserV1)
