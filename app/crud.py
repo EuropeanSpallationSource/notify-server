@@ -96,6 +96,21 @@ def update_service(
     return service
 
 
+def delete_service(db: Session, service: models.Service) -> None:
+    # First retrieve all notifications id to delete
+    service_notification_ids = db.query(models.Notification.id).filter(
+        models.Notification.service_id == service.id
+    )
+    # Delete the UserNotification linked to those notifications
+    db.query(models.UserNotification).filter(
+        models.UserNotification.notification_id.in_(service_notification_ids.subquery())
+    ).delete(synchronize_session=False)
+    # Delete the notifications themselves
+    service_notification_ids.delete(synchronize_session=False)
+    db.delete(service)
+    db.commit()
+
+
 def get_user_services(db: Session, user: models.User) -> List[schemas.UserService]:
     """Return all services for the user sorted by category"""
     services = get_services(db)

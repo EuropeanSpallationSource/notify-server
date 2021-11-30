@@ -47,6 +47,77 @@ def test_get_service(db, service):
     assert retrieved_service is None
 
 
+def test_delete_service(db, service_factory):
+    service1 = service_factory(category="service1")
+    service2 = service_factory(category="service2")
+    service3 = service_factory(category="service3")
+    assert db.query(models.Service).order_by(models.Service.category).all() == [
+        service1,
+        service2,
+        service3,
+    ]
+    crud.delete_service(db, service2)
+    assert db.query(models.Service).order_by(models.Service.category).all() == [
+        service1,
+        service3,
+    ]
+
+
+def test_delete_service_with_user(db, user, service_factory):
+    service1 = service_factory(category="category1")
+    service2 = service_factory(category="category2")
+    service3 = service_factory(category="category3")
+    user.subscribe(service1)
+    user.subscribe(service3)
+    db.commit()
+    notification1 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message1"), service1
+    )
+    notification2 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message2"), service1
+    )
+    notification3 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message3"), service2
+    )
+    notification4 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message4"), service1
+    )
+    notification5 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message5"), service2
+    )
+    notification6 = crud.create_service_notification(
+        db, schemas.NotificationCreate(title="message6"), service3
+    )
+    assert user.notifications == [
+        notification1,
+        notification2,
+        notification4,
+        notification6,
+    ]
+    assert db.query(models.Notification).order_by(models.Notification.title).all() == [
+        notification1,
+        notification2,
+        notification3,
+        notification4,
+        notification5,
+        notification6,
+    ]
+    crud.delete_service(db, service1)
+    # Check that service1 UserNotifications have been deleted
+    assert user.notifications == [notification6]
+    # Check that service1 notifications have been deleted
+    assert db.query(models.Notification).order_by(models.Notification.title).all() == [
+        notification3,
+        notification5,
+        notification6,
+    ]
+    # Check that service1 has been deleted
+    assert db.query(models.Service).order_by(models.Service.category).all() == [
+        service2,
+        service3,
+    ]
+
+
 def test_get_user_services(db, user, service_factory):
     service1 = service_factory()
     service2 = service_factory()
