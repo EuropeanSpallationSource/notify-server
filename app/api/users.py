@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends, Response, HTTPException, status
 from fastapi_versioning import version
 from sqlalchemy.orm import Session
 from typing import List
-from . import deps
-from .. import crud, models, schemas
+from .. import deps, crud, models, schemas
 
 router = APIRouter()
 

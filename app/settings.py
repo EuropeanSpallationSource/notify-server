@@ -60,6 +60,8 @@ JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = config(
     "ACCESS_TOKEN_EXPIRE_MINUTES", cast=int, default=43200
 )
+# Cookie name
+AUTH_COOKIE_NAME = config("AUTH_COOKIE_NAME", cast=str, default="notify_token")
 
 # Number of push notifications sent in parallel
 NB_PARALLEL_PUSH = config("NB_PARALLEL_PUSH", cast=int, default=50)

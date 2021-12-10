@@ -1,17 +1,13 @@
 import hashlib
 import hmac
-from typing import Optional
-from fastapi.logger import logger
-from fastapi.requests import Request
 from fastapi.responses import Response
-from .settings import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES
+from .settings import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, AUTH_COOKIE_NAME
 
-AUTH_COOKIE_NAME = "notify_token"
 AUTH_SIZE = 16
 
 
 def sign(cookie: str) -> str:
-    h = hashlib.blake2b(digest_size=AUTH_SIZE, key=SECRET_KEY)
+    h = hashlib.blake2b(digest_size=AUTH_SIZE, key=str(SECRET_KEY).encode("utf-8"))
     h.update(cookie.encode("utf-8"))
     return h.hexdigest()
 
@@ -32,24 +28,6 @@ def set_auth(response: Response, user_id: int):
         httponly=True,
         samesite="Lax",
     )
-
-
-def get_user_id_via_auth_cookie(request: Request) -> Optional[int]:
-    if AUTH_COOKIE_NAME not in request.cookies:
-        return None
-    val = request.cookies[AUTH_COOKIE_NAME]
-    parts = val.split(":")
-    if len(parts) != 2:
-        return None
-    user_id, sig = parts
-    if not verify(str(user_id), sig):
-        logger.warning("Hash mismatch, invalid cookie value")
-        return None
-    try:
-        return int(user_id)
-    except ValueError:
-        logger.warning(f"Invalid user_id {user_id} in cookie")
-        return None
 
 
 def logout(response: Response):

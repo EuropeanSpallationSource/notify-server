@@ -1,12 +1,15 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from starlette.requests import Request
+from fastapi.security import OAuth2PasswordBearer, APIKeyCookie
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
 from jwt import PyJWTError, ExpiredSignatureError
-from .. import crud, models, utils
-from ..database import SessionLocal
+from . import crud, models, utils, cookie_auth
+from .database import SessionLocal
+from .settings import AUTH_COOKIE_NAME
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+cookie_sec = APIKeyCookie(name=AUTH_COOKIE_NAME)
 
 
 def get_db():
@@ -67,3 +70,36 @@ def get_current_admin_user(
             detail="The user doesn't have enough privileges",
         )
     return current_user
+
+
+def get_current_user_from_cookie(
+    request: Request, db: Session = Depends(get_db)
+) -> models.User:
+    unauthorized_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication"
+    )
+    if AUTH_COOKIE_NAME not in request.cookies:
+        raise unauthorized_exception
+    cookie = request.cookies[AUTH_COOKIE_NAME]
+    parts = cookie.split(":")
+    if len(parts) != 2:
+        raise unauthorized_exception
+    user_id_s, sig = parts
+    if not cookie_auth.verify(user_id_s, sig):
+        logger.warning("Hash mismatch, invalid cookie value")
+        raise unauthorized_exception
+    try:
+        user_id = int(user_id_s)
+    except ValueError:
+        logger.warning(f"Invalid user_id {user_id_s} in cookie")
+        raise unauthorized_exception
+    user = crud.get_user(db, user_id)
+    if user is None:
+        logger.warning(f"Unknown user id {user_id}")
+        raise unauthorized_exception
+    if not user.is_active:
+        logger.warning(f"User {user.username} is inactive")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user"
+        )
+    return user
