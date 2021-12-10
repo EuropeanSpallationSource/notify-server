@@ -4,15 +4,20 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.requests import Request
 from sqlalchemy.orm import Session
 from . import templates
-from .. import cookie_auth, crud, auth
-from ..api import deps
+from .. import cookie_auth, crud, auth, models
+from .. import deps
 
 router = APIRouter()
 
 
 @router.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def index(
+    request: Request,
+    current_user: models.User = Depends(deps.get_current_user_from_cookie),
+):
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "current_user": current_user}
+    )
 
 
 @router.get("/login", response_class=HTMLResponse)
