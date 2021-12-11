@@ -1,0 +1,3 @@
+{% macro is_active(request, path) -%}
+{% if request.url.path.startswith(path) %}active{% endif %}
+{%- endmacro %}
