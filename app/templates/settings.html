@@ -1,0 +1,22 @@
+{%- extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block main %}
+<main class="row justify-content-center">
+	<div class="form-settings col-6">
+		<h2>My services</h2>
+		<form action="" method="POST">
+			{% for service in services %}
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" value="" id="{{ service.id }}" name="{{ service.category }}" {% if service.is_subscribed %}checked{% endif %}>
+				<label class="form-check-label" for="{{ service.id }}">
+					{{ service.category }}
+				</label>
+			</div>
+			{% endfor %}
+			<button class="btn btn-primary" type="submit">Save</button>
+		</form>
+	</div>
+</main>
+{%- endblock %}

@@ -8,7 +8,7 @@ from fastapi.logger import logger
 from fastapi.staticfiles import StaticFiles
 from . import monitoring
 from .api import login, users, services
-from .views import home, exceptions
+from .views import exceptions, account, notifications, settings
 from .settings import SENTRY_DSN, ESS_NOTIFY_SERVER_ENVIRONMENT
 
 
@@ -21,7 +21,9 @@ logger.setLevel(gunicorn_error_logger.level)
 
 # Main application to serve HTML
 app = FastAPI(exception_handlers=exceptions.exception_handlers)
-app.include_router(home.router, tags=["home"])
+app.include_router(account.router)
+app.include_router(notifications.router, prefix="/notifications")
+app.include_router(settings.router, prefix="/settings")
 
 # Serve static files
 app_dir = Path(__file__).parent.resolve()
