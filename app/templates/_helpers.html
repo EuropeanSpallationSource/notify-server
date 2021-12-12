@@ -1,3 +1,14 @@
 {% macro is_active(request, path) -%}
 {% if request.url.path.startswith(path) %}active{% endif %}
 {%- endmacro %}
+
+{% macro format_notification(notification) -%}
+<pre>
+{{ notification.title }}
+{% if notification.subtitle %}{{ notification.subtitle }}{% endif -%}
+</pre>
+{%- endmacro %}
+
+{% macro format_datetime(dt) -%}
+{{ dt.strftime("%Y-%m-%d %H:%M:%S") }}
+{%- endmacro %}
