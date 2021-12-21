@@ -70,9 +70,12 @@ def get_service(db: Session, service_id: uuid.UUID):
     return db.query(models.Service).filter(models.Service.id == service_id).first()
 
 
-def get_services(db: Session):
+def get_services(db: Session, demo: bool=False):
     """Return all services sorted by category"""
-    return db.query(models.Service).order_by(models.Service.category).all()
+    if demo:
+        return db.query(models.Service).filter(models.Service.category == "test").all()
+    else:
+        return db.query(models.Service).order_by(models.Service.category).all()
 
 
 def create_service(db: Session, service: schemas.ServiceCreate):

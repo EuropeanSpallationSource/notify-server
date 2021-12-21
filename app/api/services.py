@@ -23,7 +23,10 @@ def read_services(
     current_user: models.User = Depends(deps.get_current_user),
 ):
     """Read all services"""
-    db_services = crud.get_services(db)
+    if current_user.username == "demo":
+        db_services = crud.get_services(db, demo=True)
+    else:
+        db_services = crud.get_services(db)
     return db_services
 
 
