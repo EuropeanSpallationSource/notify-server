@@ -116,7 +116,10 @@ def delete_service(db: Session, service: models.Service) -> None:
 
 def get_user_services(db: Session, user: models.User) -> List[schemas.UserService]:
     """Return all services for the user sorted by category"""
-    services = get_services(db)
+    if user.username == "demo":
+        services = get_services(db, demo=True)
+    else:
+        services = get_services(db)
     return [service.to_user_service(user) for service in services]
 
 
