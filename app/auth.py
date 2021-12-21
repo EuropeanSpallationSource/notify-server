@@ -15,7 +15,7 @@ from .settings import (
 
 def authenticate_user(username: str, password: str) -> bool:
     """Return True if the authentication is successful, False otherwise"""
-    if username == "demo" and password=="demo":
+    if username == "demo" and password == "demo":
         return True
     if AUTHENTICATION_METHOD == "ldap":
         return ldap_authenticate_user(username, password)
