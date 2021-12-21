@@ -20,11 +20,15 @@ LDAP_USE_SSL = config("LDAP_USE_SSL", cast=bool, default=True)
 LDAP_BASE_DN = config("LDAP_BASE_DN", cast=str, default="DC=esss,DC=lu,DC=se")
 LDAP_USER_DN = config("LDAP_USER_DN", cast=str, default="")
 LDAP_USER_RDN_ATTR = config("LDAP_USER_RDN_ATTR", cast=str, default="uid")
+
 # URL to use when AUTHENTICATION_METHOD is set to "url"
 AUTHENTICATION_URL = config(
     "AUTHENTICATION_URL", cast=str, default="https//auth.example.org/login"
 )
 ADMIN_USERS = config("ADMIN_USERS", cast=CommaSeparatedStrings, default="")
+# Demo account with "demo" username has access only to "test" service
+DEMO_ACCOUNT_ENABLED = config("DEMO_ACCOUNT", cast=bool, default=False)
+DEMO_ACCOUNT_PASSWORD = config("DEMO_ACCOUNT", cast=Secret, default="demo")
 SQLALCHEMY_DATABASE_URL = config(
     "SQLALCHEMY_DATABASE_URL", cast=str, default="sqlite:///./sql_app.db"
 )
