@@ -36,6 +36,7 @@ variables:
   HELM_SET_PROD_image_tag: "__from_env_var:REGISTRY_IMAGE_TAG"
   HELM_SET_TEST_image_repository: "__from_env_var:REGISTRY_IMAGE_NAME"
   HELM_SET_TEST_image_tag: "__from_env_var:REGISTRY_IMAGE_TAG"
+  GITLAB_ENVIRONMENT_NAME: notify
 
 test-python38:
   stage: test
