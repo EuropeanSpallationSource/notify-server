@@ -19,7 +19,7 @@ def authenticate_user(username: str, password: str) -> bool:
     if (
         DEMO_ACCOUNT_ENABLED
         and username == "demo"
-        and password == DEMO_ACCOUNT_PASSWORD
+        and password == str(DEMO_ACCOUNT_PASSWORD)
     ):
         return True
     if AUTHENTICATION_METHOD == "ldap":
