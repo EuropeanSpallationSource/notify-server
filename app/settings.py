@@ -26,7 +26,7 @@ AUTHENTICATION_URL = config(
     "AUTHENTICATION_URL", cast=str, default="https//auth.example.org/login"
 )
 ADMIN_USERS = config("ADMIN_USERS", cast=CommaSeparatedStrings, default="")
-# Demo account with "demo" username has access only to "test" service
+# Demo account with "demo" username has access only to service defined in DEMO_ACCOUNT_SERVICE
 DEMO_ACCOUNT_SERVICE = config("DEMO_ACCOUNT_SERVICE", cast=str, default="demo")
 DEMO_ACCOUNT_PASSWORD = config("DEMO_ACCOUNT_PASSWORD", cast=Secret, default="demo")
 SQLALCHEMY_DATABASE_URL = config(
