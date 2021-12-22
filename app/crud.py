@@ -5,7 +5,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from typing import List
 from . import models, schemas
-from .settings import ADMIN_USERS
+from .settings import ADMIN_USERS, DEMO_ACCOUNT_SERVICE
 
 
 def get_users(db: Session):
@@ -73,7 +73,11 @@ def get_service(db: Session, service_id: uuid.UUID):
 def get_services(db: Session, demo: bool = False):
     """Return all services sorted by category"""
     if demo:
-        return db.query(models.Service).filter(models.Service.category == "test").all()
+        return (
+            db.query(models.Service)
+            .filter(models.Service.category == DEMO_ACCOUNT_SERVICE)
+            .all()
+        )
     else:
         return db.query(models.Service).order_by(models.Service.category).all()
 
