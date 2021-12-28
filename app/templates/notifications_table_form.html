@@ -1,0 +1,27 @@
+<div class="row" id="notifications-table-form">
+  <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+    <div class="position-sticky pt-3">
+      <h5>Selected services</h5>
+      <form action="" hx-post="{{ url_for('notifications') }}" hx-trigger="click" hx-target="#notifications-table-form">
+        {% for service in services %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="{{ service.category }}"
+            name="{{ service.category }}" {% if service.is_selected %}checked{% endif %}>
+          <label class="form-check-label" for="{{ service.category }}">
+            {{ service.category }}
+          </label>
+        </div>
+        {% endfor %}
+      </form>
+    </div>
+  </nav>
+
+  <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+      <h1 class="h2">Notifications</h1>
+    </div>
+    <div class="table-responsive">
+      {% include "notifications_table.html" %}
+  </main>
+
+</div>
