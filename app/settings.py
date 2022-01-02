@@ -49,7 +49,7 @@ GOOGLE_APPLICATION_CREDENTIALS = config(
     "GOOGLE_APPLICATION_CREDENTIALS", cast=str, default="test-key.json"
 )
 
-# Secret key to generate jwt. To change in production!
+# Secret key to generate jwt and encode cookies. To change in production!
 SECRET_KEY = config(
     "SECRET_KEY",
     cast=Secret,

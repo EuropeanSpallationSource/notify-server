@@ -19,6 +19,7 @@ requirements = [
     "httptools==0.1.1",
     "httpx==0.16.1",
     "hyperframe==6.0.0",
+    "itsdangerous",
     "PyJWT==2.0.0",
     "cryptography==3.2.1",
     "ldap3==2.8.1",
