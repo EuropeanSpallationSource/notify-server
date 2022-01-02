@@ -6,10 +6,12 @@ from fastapi import FastAPI
 from fastapi_versioning import VersionedFastAPI
 from fastapi.logger import logger
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware import Middleware
+from starlette.middleware.sessions import SessionMiddleware
 from . import monitoring
 from .api import login, users, services
 from .views import exceptions, account, notifications, settings
-from .settings import SENTRY_DSN, ESS_NOTIFY_SERVER_ENVIRONMENT
+from .settings import SENTRY_DSN, ESS_NOTIFY_SERVER_ENVIRONMENT, SECRET_KEY
 
 
 # The following logging setup assumes the app is run with gunicorn
@@ -20,7 +22,12 @@ logger.handlers = gunicorn_error_logger.handlers
 logger.setLevel(gunicorn_error_logger.level)
 
 # Main application to serve HTML
-app = FastAPI(exception_handlers=exceptions.exception_handlers)
+middleware = [
+    Middleware(
+        SessionMiddleware, secret_key=SECRET_KEY, session_cookie="notify_session"
+    )
+]
+app = FastAPI(exception_handlers=exceptions.exception_handlers, middleware=middleware)
 app.include_router(account.router)
 app.include_router(notifications.router, prefix="/notifications")
 app.include_router(settings.router, prefix="/settings")
