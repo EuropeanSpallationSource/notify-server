@@ -4,6 +4,8 @@
 
 {% block main %}
 <div class="container-fluid">
+  <div hx-get="/notifications/update" hx-trigger="every 3s" hx-target="#notifications-table">
   {% include "notifications_table_form.html" %}
+  </div>
 </div>
 {%- endblock %}
