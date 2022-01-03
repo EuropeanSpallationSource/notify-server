@@ -218,7 +218,7 @@ def test_get_user_notifications_limit(db, user, service, limit, sort):
         notification.timestamp = now - datetime.timedelta(minutes=nb)
         notifications.append(notification)
     # Get the user notifications
-    user_notifications = crud.get_user_notifications(db, user, limit, sort)
+    user_notifications = crud.get_user_notifications(db, user, limit=limit, sort=sort)
     # Check the number of notifications returned
     if limit > 0 and limit <= 20:
         assert len(user_notifications) == limit
@@ -241,6 +241,59 @@ def test_get_user_notifications_limit(db, user, service, limit, sort):
         user_notifications, key=attrgetter("timestamp"), reverse=is_reverse
     )
     assert user_notifications == sorted_user_notifications
+
+
+def test_get_user_notifications_filter_services_id(db, user, service_factory):
+    # Create some notifications
+    service1 = service_factory()
+    service2 = service_factory()
+    service3 = service_factory()
+    user.subscribe(service1)
+    user.subscribe(service2)
+    user.subscribe(service3)
+    db.commit()
+    notifications = []
+    now = datetime.datetime.now()
+    for service_nb, service in enumerate((service1, service2, service3), start=1):
+        for nb in range(10):
+            notification = crud.create_service_notification(
+                db,
+                schemas.NotificationCreate(title=f"Service{service_nb} - message{nb}"),
+                service,
+            )
+            notification.timestamp = now - datetime.timedelta(minutes=nb + service_nb)
+            notifications.append(notification)
+    # Get the user notifications with filtering on the services id
+    user_notifications = crud.get_user_notifications(db, user)
+    assert len(user_notifications) == 30
+    # Filter on service1 only
+    service1_user_notifications = crud.get_user_notifications(
+        db, user, filter_services_id=[service1.id]
+    )
+    assert len(service1_user_notifications) == 10
+    for notification in service1_user_notifications:
+        assert notification.title.startswith("Service1")
+    # Filter on service1 and service3
+    service1_3_user_notifications = crud.get_user_notifications(
+        db, user, filter_services_id=[service1.id, service3.id]
+    )
+    assert len(service1_3_user_notifications) == 20
+    for notification in service1_3_user_notifications:
+        assert not notification.title.startswith("Service2")
+    # Filter on all services is the same as no filtering
+    services_user_notifications = crud.get_user_notifications(
+        db, user, filter_services_id=[service1.id, service2.id, service3.id]
+    )
+    assert user_notifications == services_user_notifications
+    # Filter on empty list
+    assert crud.get_user_notifications(db, user, filter_services_id=[]) == []
+    # Filter on unknown service id
+    assert (
+        crud.get_user_notifications(
+            db, user, filter_services_id=["2cf81604-514a-45e1-9a34-f4368834db99"]
+        )
+        == []
+    )
 
 
 def test_update_user_services(db, user, service_factory):
