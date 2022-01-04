@@ -58,12 +58,14 @@ async def notifications_post(
         else:
             service.is_selected = False
     categories = {service.id: service.category for service in user_services}
-    notifications = crud.get_user_notifications(db, current_user)
-    notifications = [
-        notification
-        for notification in notifications
-        if categories[notification.service_id] in selected_categories
+    selected_services_id = [
+        service.id
+        for service in user_services
+        if service.category in selected_categories
     ]
+    notifications = crud.get_user_notifications(
+        db, current_user, filter_services_id=selected_services_id
+    )
     return templates.TemplateResponse(
         "notifications_table_form.html",
         {
@@ -83,13 +85,15 @@ async def notifications_update(
 ):
     user_services = crud.get_user_services(db, current_user)
     categories = {service.id: service.category for service in user_services}
-    notifications = crud.get_user_notifications(db, current_user)
     selected_categories = request.session.get("selected_categories", [])
-    notifications = [
-        notification
-        for notification in notifications
-        if categories[notification.service_id] in selected_categories
+    selected_services_id = [
+        service.id
+        for service in user_services
+        if service.category in selected_categories
     ]
+    notifications = crud.get_user_notifications(
+        db, current_user, filter_services_id=selected_services_id
+    )
     return templates.TemplateResponse(
         "notifications_table.html",
         {
