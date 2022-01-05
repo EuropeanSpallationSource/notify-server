@@ -12,3 +12,7 @@
 {% macro format_datetime(dt) -%}
 {{ dt.strftime("%Y-%m-%d %H:%M:%S") }}
 {%- endmacro %}
+
+{% macro is_checked(value, expected) -%}
+{% if value == expected %}checked{% endif -%}
+{%- endmacro %}
