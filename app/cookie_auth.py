@@ -1,25 +1,12 @@
-import hashlib
-import hmac
 from fastapi.responses import Response
+from itsdangerous.serializer import Serializer
 from .settings import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, AUTH_COOKIE_NAME
 
-AUTH_SIZE = 16
-
-
-def sign(cookie: str) -> str:
-    h = hashlib.blake2b(digest_size=AUTH_SIZE, key=str(SECRET_KEY).encode("utf-8"))
-    h.update(cookie.encode("utf-8"))
-    return h.hexdigest()
-
-
-def verify(cookie: str, sig: str) -> bool:
-    good_sig = sign(cookie)
-    return hmac.compare_digest(good_sig, sig)
+serializer = Serializer(str(SECRET_KEY))
 
 
 def set_auth(response: Response, user_id: int):
-    sig = sign(str(user_id))
-    val = f"{user_id}:{sig}"
+    val = serializer.dumps(user_id)
     response.set_cookie(
         AUTH_COOKIE_NAME,
         val,
