@@ -2,6 +2,7 @@ from fastapi import Depends, HTTPException, status
 from starlette.requests import Request
 from fastapi.security import OAuth2PasswordBearer, APIKeyCookie
 from fastapi.logger import logger
+from itsdangerous.exc import BadSignature
 from sqlalchemy.orm import Session
 from jwt import PyJWTError, ExpiredSignatureError
 from . import crud, models, utils, cookie_auth
@@ -81,17 +82,10 @@ def get_current_user_from_cookie(
     if AUTH_COOKIE_NAME not in request.cookies:
         raise unauthorized_exception
     cookie = request.cookies[AUTH_COOKIE_NAME]
-    parts = cookie.split(":")
-    if len(parts) != 2:
-        raise unauthorized_exception
-    user_id_s, sig = parts
-    if not cookie_auth.verify(user_id_s, sig):
-        logger.warning("Hash mismatch, invalid cookie value")
-        raise unauthorized_exception
     try:
-        user_id = int(user_id_s)
-    except ValueError:
-        logger.warning(f"Invalid user_id {user_id_s} in cookie")
+        user_id = cookie_auth.serializer.loads(cookie)
+    except BadSignature as e:
+        logger.warning(f"Bad Signature, invalid cookie value: {e}")
         raise unauthorized_exception
     user = crud.get_user(db, user_id)
     if user is None:
