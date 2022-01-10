@@ -7,6 +7,7 @@ with open("README.md", "r") as f:
 postgres_requires = ["psycopg2"]
 requirements = [
     "alembic==1.5.7",
+    "aiofiles",
     "fastapi==0.61.2",
     "fastapi-versioning",
     "google-auth",
