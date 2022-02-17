@@ -11,8 +11,7 @@ from fastapi import (
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from . import deps
-from .. import crud, models, schemas, utils
+from .. import deps, crud, models, schemas, utils
 
 router = APIRouter()
 

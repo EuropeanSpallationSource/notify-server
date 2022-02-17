@@ -1,0 +1,43 @@
+{%- extends "bootstrap.html" %}
+{% from "_helpers.html" import is_active %}
+
+{% block styles %}
+{{super()}}
+<link href="{{ url_for('static', path='/css/notify.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block title %}Notify{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{{ url_for('index') }}">Notify</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+      aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+      <ul class="navbar-nav me-auto mb-2 mb-md-0">
+        <li class="nav-item">
+          <a class="nav-link {{ is_active(request, '/notifications') }}" href="{{ url_for('notifications') }}">Notifications</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ is_active(request, '/settings') }}" href="{{ url_for('settings') }}">Settings</a>
+        </li>
+      </ul>
+      {% if current_user is defined %}
+      <div class="navbar-nav navbar-right">
+        <span class="navbar-text">{{ current_user.username }}</span>
+        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container" id="mainContent">
+  {% block main %}{% endblock %}
+</div>
+{% endblock %}

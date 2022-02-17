@@ -28,9 +28,9 @@ environ["NB_PARALLEL_PUSH"] = "2"
 environ["FIREBASE_PROJECT_ID"] = "my-project"
 environ["GOOGLE_APPLICATION_CREDENTIALS"] = "test-key.json"
 
-from app.main import original_app, app  # noqa E402
+from app.main import original_api, app  # noqa E402
 from app.database import Base, engine  # noqa E402
-from app.api import deps  # noqa E402
+from app import deps  # noqa E402
 from app.utils import create_access_token  # noqa E402
 from . import factories  # noqa E402
 
@@ -55,7 +55,7 @@ def db(connection) -> Generator:
     factories.UserFactory._meta.sqlalchemy_session = session
     factories.ServiceFactory._meta.sqlalchemy_session = session
     factories.NotificationFactory._meta.sqlalchemy_session = session
-    original_app.dependency_overrides[deps.get_db] = lambda: session
+    original_api.dependency_overrides[deps.get_db] = lambda: session
     yield session
     session.close()
     transaction.rollback()

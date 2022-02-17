@@ -88,6 +88,14 @@ class UserUpdateService(BaseModel):
     is_subscribed: bool
 
 
+class UserServiceForm(UserService):
+    is_selected: bool
+
+    @classmethod
+    def from_user_service(cls, user_service: UserService):
+        return cls(**user_service.dict(), is_selected=user_service.is_subscribed)
+
+
 class NotificationBase(BaseModel):
     title: str
     subtitle: str = ""

@@ -3,7 +3,7 @@ import uuid
 from fastapi.logger import logger
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from . import models, schemas
 from .settings import ADMIN_USERS, DEMO_ACCOUNT_SERVICE
 
@@ -168,12 +168,14 @@ def get_user_notifications(
     db: Session,
     user: models.User,
     limit: int = 0,
+    filter_services_id: Optional[List[uuid.UUID]] = None,
     sort: schemas.SortOrder = schemas.SortOrder.desc,
 ) -> List[schemas.UserNotification]:
     """Return the latest user's notifications sorted by timestamp
 
     If limit is 0, all notifications are returned
     Otherwise, only the number requested
+    If a list of services id is given, only notifcations part of those are returned.
     The newest notifications are always returned. Sorting by ascending order
     will just reverse that list.
     """
@@ -183,8 +185,10 @@ def get_user_notifications(
             models.UserNotification.user_id == user.id,
         )
         .join(models.Notification)
-        .order_by(desc(models.Notification.timestamp))
     )
+    if filter_services_id is not None:
+        query = query.filter(models.Notification.service_id.in_(filter_services_id))
+    query = query.order_by(desc(models.Notification.timestamp))
     if limit > 0:
         query = query.limit(limit)
     else:
