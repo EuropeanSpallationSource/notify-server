@@ -73,3 +73,5 @@ SENTRY_DSN = config("SENTRY_DSN", cast=str, default="")
 ESS_NOTIFY_SERVER_ENVIRONMENT = config(
     "ESS_NOTIFY_SERVER_ENVIRONMENT", cast=str, default="staging"
 )
+
+APP_NAME = config("APP_NAME", cast=str, default="ESS Notify")
