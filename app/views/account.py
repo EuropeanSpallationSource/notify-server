@@ -5,6 +5,7 @@ from starlette.requests import Request
 from sqlalchemy.orm import Session
 from . import templates
 from .. import deps, cookie_auth, crud, auth, models
+from ..settings import APP_NAME
 
 router = APIRouter()
 
@@ -67,3 +68,12 @@ def logout():
     response = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     cookie_auth.logout(response)
     return response
+
+
+@router.get("/privacy", response_class=HTMLResponse, name="privacy")
+async def privacy(
+    request: Request,
+):
+    return templates.TemplateResponse(
+        "privacy_policy.html", {"request": request, "app_name": APP_NAME}
+    )
