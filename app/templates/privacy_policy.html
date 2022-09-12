@@ -1,0 +1,16 @@
+{%- extends "base.html" %}
+
+{% block title %}{{ app_name }} Privacy Policy{% endblock %}
+
+{% block main %}
+<main class="row justify-content-center">
+  <h2>Privacy Policy</h2>
+  <p>
+    To use the {{ app_name }} app, users must provide credentials (username/password) to be validated by the remote service.<br>
+    Upon successful login a unique authentication token is generated and stored both in the app and in the remote service.
+    This token is used to authenticate all subsequent requests. It expires after 30 days.
+  </p>
+  <p>Besides the user credentials, no other personal data is collected or otherwise processed by the app.</p>
+  <p>Communication between the app and the remote service uses encrypted connections (HTTPS).</p>
+</main>
+{%- endblock %}
