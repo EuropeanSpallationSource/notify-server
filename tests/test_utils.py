@@ -52,23 +52,46 @@ async def test_send_notification(
     ios_token2 = make_device_token(64)
     ios_token3 = make_device_token(64)
     ios_token4 = make_device_token(64)
+    ios_token5 = make_device_token(64)
     android_token1 = make_device_token(128)
     android_token2 = make_device_token(128)
     android_token3 = make_device_token(128)
     android_token4 = make_device_token(128)
-    user1 = user_factory(device_tokens=[ios_token1, ios_token2])
-    user2 = user_factory(device_tokens=[ios_token3, android_token1])
-    user3 = user_factory(device_tokens=[android_token2, android_token3])
+    android_token5 = make_device_token(128)
+    expire_date = datetime.utcnow() + timedelta(minutes=60)
+    user1 = user_factory(
+        device_tokens=[ios_token1, ios_token2], login_token_expire_date=expire_date
+    )
+    user2 = user_factory(
+        device_tokens=[ios_token3, android_token1], login_token_expire_date=expire_date
+    )
+    user3 = user_factory(
+        device_tokens=[android_token2, android_token3],
+        login_token_expire_date=expire_date,
+    )
+    user4 = user_factory(
+        device_tokens=[ios_token5, android_token5],
+        login_token_expire_date=datetime.utcnow() + timedelta(minutes=-1),
+    )
+    user5 = user_factory(
+        device_tokens=[ios_token5, android_token5],
+        login_token_expire_date=expire_date,
+        is_active=False,
+    )
     user_factory(device_tokens=[ios_token4, android_token4])
     user1.notifications.append(notification1)
     user1.notifications.append(notification2)
     user2.notifications.append(notification1)
     user3.notifications.append(notification1)
+    user4.notifications.append(notification1)
+    user5.notifications.append(notification1)
     db.commit()
     await utils.send_notification(db, notification1)
     # Check that send_push_to_ios was called 3 times
     # - twice for user1 (2 APN tokens)
     # - once for user2 (1 APN tokens)
+    # - none for user4 as it is not logged in
+    # - none for user5 as it is not active
     assert mock_send_push_to_ios.call_count == 3
     user1_payload = schemas.ApnPayload(
         aps=schemas.Aps(
@@ -97,6 +120,8 @@ async def test_send_notification(
     # Check that send_push_to_android was called 3 times
     # - once for user2 (1 android token)
     # - twice for user3 (2 adnroid tokens)
+    # - none for user4 as it is not logged in
+    # - none for user5 as it is not active
     assert mock_get_firebase_access_token.call_count == 1
     assert mock_send_push_to_android.call_count == 3
     user2_payload1 = schemas.AndroidPayload(

@@ -81,6 +81,8 @@ async def send_notification(db: Session, notification: models.Notification) -> N
     android_client = httpx.AsyncClient(headers=android_headers)
     for user_notification in notification.users_notification:
         user = user_notification.user
+        if not user.is_logged_in or not user.is_active:
+            continue
         ios_tokens = user.ios_tokens
         if ios_tokens:
             apn_payload = user_notification.to_apn_payload()

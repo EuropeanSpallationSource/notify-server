@@ -46,6 +46,7 @@ def test_login_existing_user(client: TestClient, db, api_version, mocker, user):
         db.query(models.User).filter(models.User.username == user.username).first()
         == user
     )
+    assert not user.is_logged_in
     response = client.post(
         f"/api/{api_version}/login",
         data={"username": user.username, "password": password},
@@ -55,3 +56,4 @@ def test_login_existing_user(client: TestClient, db, api_version, mocker, user):
     assert response.json()["token_type"] == "bearer"
     token = response.json()["access_token"]
     assert utils.decode_access_token(token)["sub"] == user.username
+    assert user.is_logged_in
