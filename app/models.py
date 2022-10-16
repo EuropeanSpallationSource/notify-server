@@ -75,6 +75,7 @@ class User(Base):
     _device_tokens = Column(String, default="")
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
+    login_token_expire_date = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     services = relationship(
         "Service",
@@ -115,6 +116,10 @@ class User(Base):
     @property
     def android_tokens(self):
         return [token for token in self.device_tokens if len(token) > 64]
+
+    @property
+    def is_logged_in(self):
+        return datetime.utcnow() < self.login_token_expire_date
 
     def add_device_token(self, value: str):
         if value in self.device_tokens:
