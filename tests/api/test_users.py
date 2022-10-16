@@ -1,10 +1,13 @@
 import pytest
+from datetime import datetime, timedelta
 from fastapi.testclient import TestClient
 from app import schemas, models, utils
 
 
 def user_authorization_headers(username):
-    token = utils.create_access_token(username)
+    token = utils.create_access_token(
+        username, expire=datetime.utcnow() + timedelta(minutes=60)
+    )
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -51,7 +54,9 @@ def test_read_current_user_profile_invalid_username(client: TestClient, api_vers
 
 
 def test_read_current_user_profile_expired_token(client: TestClient, user, api_version):
-    token = utils.create_access_token(user.username, expires_delta_minutes=-5)
+    token = utils.create_access_token(
+        user.username, expire=datetime.utcnow() + timedelta(minutes=-5)
+    )
     response = client.get(
         f"/api/{api_version}/users/user/profile",
         headers={"Authorization": f"Bearer {token}"},

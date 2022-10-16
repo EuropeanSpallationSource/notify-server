@@ -3,7 +3,7 @@ import httpx
 import ipaddress
 import uuid
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Optional, Dict
 from sqlalchemy.orm import Session
 from . import models, ios, firebase
@@ -11,16 +11,12 @@ from .settings import (
     ALLOWED_NETWORKS,
     SECRET_KEY,
     JWT_ALGORITHM,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
     NB_PARALLEL_PUSH,
 )
 
 
-def create_access_token(
-    username: str, expires_delta_minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES
-) -> str:
+def create_access_token(username: str, expire: datetime) -> str:
     """Encode the data as JWT, including the expiration time claim"""
-    expire = datetime.utcnow() + timedelta(minutes=expires_delta_minutes)
     to_encode = {"sub": username, "exp": expire}
     encoded_jwt = jwt.encode(to_encode, str(SECRET_KEY), algorithm=JWT_ALGORITHM)
     return encoded_jwt

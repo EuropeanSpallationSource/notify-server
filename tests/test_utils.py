@@ -1,4 +1,5 @@
 import pytest
+from datetime import datetime, timedelta
 from app import schemas, utils
 
 
@@ -140,7 +141,9 @@ async def test_send_notification(
 
 def test_create_and_decode_access_token():
     username = "johndoe"
-    encoded_token = utils.create_access_token(username)
+    encoded_token = utils.create_access_token(
+        username, expire=datetime.utcnow() + timedelta(days=1)
+    )
     decoded_token = utils.decode_access_token(encoded_token)
     assert decoded_token["sub"] == username
     # Token includes Expiration Time Claim
