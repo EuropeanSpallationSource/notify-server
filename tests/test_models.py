@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from app import schemas
 
@@ -12,6 +13,14 @@ def test_user(db: Session, user_factory) -> None:
     assert not hasattr(user, "token")
     assert user.device_tokens == []
     assert user._device_tokens == ""
+
+
+def test_user_is_logged_in(db: Session, user_factory) -> None:
+    username = "johndoe"
+    user = user_factory(username=username)
+    assert not user.is_logged_in
+    user.login_token_expire_date = datetime.utcnow() + timedelta(minutes=5)
+    assert user.is_logged_in
 
 
 def test_user_add_device_token(db: Session, user) -> None:

@@ -38,11 +38,11 @@ variables:
   HELM_SET_TEST_image_tag: "__from_env_var:REGISTRY_IMAGE_TAG"
   GITLAB_ENVIRONMENT_NAME: notify
 
-test-python38:
+test-python310:
   stage: test
   tags:
     - kubernetes
-  image: harbor.maxiv.lu.se/dockerhub/library/python:3.8
+  image: harbor.maxiv.lu.se/dockerhub/library/python:3.10
   before_script:
     - pip install -e .[tests]
   script:

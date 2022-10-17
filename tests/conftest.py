@@ -69,14 +69,20 @@ def client() -> Generator:
 
 @pytest.fixture
 def user_token_headers(user):
-    token = create_access_token(user.username)
+    token = create_access_token(
+        user.username,
+        expire=datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+    )
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
 def admin_token_headers(user_factory):
     admin = user_factory(is_admin=True)
-    token = create_access_token(admin.username)
+    token = create_access_token(
+        admin.username,
+        expire=datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+    )
     return {"Authorization": f"Bearer {token}"}
 
 

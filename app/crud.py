@@ -52,6 +52,18 @@ def update_user(
     return user
 
 
+def update_user_login_token_expire_date(
+    db: Session, user: models.User, expire_date: datetime.datetime
+) -> models.User:
+    logger.info(
+        f"Update login_token_expire_date to {expire_date} for user {user.username}"
+    )
+    user.login_token_expire_date = expire_date
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def delete_user(db: Session, user: models.User):
     db.delete(user)
     db.commit()

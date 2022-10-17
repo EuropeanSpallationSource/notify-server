@@ -5,9 +5,9 @@ include:
   - remote: 'https://gitlab.esss.lu.se/ics-infrastructure/gitlab-ci-yml/raw/master/Docker.gitlab-ci.yml'
 
 
-test-python38:
+test-python310:
   stage: test
-  image: python:3.8
+  image: python:3.10
   before_script:
     - pip install -e .[tests]
   script:
