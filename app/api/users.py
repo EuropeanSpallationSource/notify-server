@@ -119,6 +119,24 @@ def create_current_user_device_token(
     return crud.create_user_device_token(db, device_token.device_token, current_user)
 
 
+@router.delete("/{user_id}/device-token", status_code=status.HTTP_204_NO_CONTENT)
+@version(2)
+def delete_user_device_token(
+    user_id: int,
+    device_token: schemas.DeviceToken,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_admin_user),
+):
+    """Delete a user device token - admin only"""
+    user = crud.get_user(db, user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    crud.remove_user_device_token(db, user, device_token.device_token)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get("/user/services", response_model=List[schemas.UserService])
 def read_current_user_services(
     db: Session = Depends(deps.get_db),
