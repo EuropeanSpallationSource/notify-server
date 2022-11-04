@@ -53,6 +53,11 @@ async def send_push(
         return False
     except httpx.HTTPStatusError as exc:
         logger.warning(f"{exc}")
+        try:
+            logger.warning(f"response: {response.json()}")
+        except Exception:
+            logger.warning("No json response content")
+        # See https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/handling_notification_responses_from_apns
         if response.status_code == 410:
             logger.info(
                 f"Device token no longer active. Delete {apn} for user {user.username}"
