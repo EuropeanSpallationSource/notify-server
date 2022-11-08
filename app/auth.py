@@ -1,5 +1,6 @@
 import httpx
 import ldap3
+import ssl
 from fastapi.logger import logger
 from .settings import (
     AUTHENTICATION_METHOD,
@@ -32,7 +33,8 @@ def ldap_authenticate_user(username: str, password: str) -> bool:
 
     Authentication is checked using a direct bind
     """
-    server = ldap3.Server(LDAP_HOST, port=LDAP_PORT, use_ssl=LDAP_USE_SSL)
+    tls = ldap3.Tls(validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLSv1_2, ciphers='ALL')
+    server = ldap3.Server(LDAP_HOST, port=LDAP_PORT, use_ssl=LDAP_USE_SSL, tls=tls)
     if LDAP_USER_DN:
         user_search_dn = f"{LDAP_USER_DN},{LDAP_BASE_DN}"
     else:
