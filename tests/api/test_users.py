@@ -377,7 +377,8 @@ def test_delete_user_device_token(
     admin = user_factory(is_admin=True)
     assert user1.device_tokens == ["token1", "token2"]
     # Delete an existing token
-    response = client.delete(
+    response = client.request(
+        "DELETE",
         f"/api/v2/users/{user1.id}/device-token",
         headers=user_authorization_headers(admin.username),
         json={"device_token": "token2"},
@@ -385,7 +386,8 @@ def test_delete_user_device_token(
     assert response.status_code == 204
     assert user1.device_tokens == ["token1"]
     # Deleting a token that doesn't exist has no effect
-    response = client.delete(
+    response = client.request(
+        "DELETE",
         f"/api/v2/users/{user1.id}/device-token",
         headers=user_authorization_headers(admin.username),
         json={"device_token": "foo"},
@@ -393,7 +395,8 @@ def test_delete_user_device_token(
     assert response.status_code == 204
     assert user1.device_tokens == ["token1"]
     # Non admin can't delete tokens
-    response = client.delete(
+    response = client.request(
+        "DELETE",
         f"/api/v2/users/{user1.id}/device-token",
         headers=user_authorization_headers(user1.username),
         json={"device_token": "token1"},
@@ -407,7 +410,8 @@ def test_delete_user_device_token_invalid_user(
     user_factory,
 ):
     admin = user_factory(is_admin=True)
-    response = client.delete(
+    response = client.request(
+        "DELETE",
         f"/api/v2/users/{admin.id + 999}/device-token",
         headers=user_authorization_headers(admin.username),
         json={"device_token": "mytoken"},
