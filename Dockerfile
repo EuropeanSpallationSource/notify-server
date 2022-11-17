@@ -52,6 +52,7 @@ RUN apt-get update \
   && apt-get install -yq --no-install-recommends \
   libpq5 \
   git \
+  vim \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
