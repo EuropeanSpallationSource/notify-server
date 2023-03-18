@@ -15,4 +15,4 @@ repos:
           - 'pydantic'
           - 'PyJWT'
         exclude: (tests/|alembic/)
-        language_version: "3.10"
+        language_version: "3.11"
