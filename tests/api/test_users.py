@@ -16,7 +16,7 @@ def test_read_current_user_profile_v1(client: TestClient, user):
         "/api/v1/users/user/profile", headers=user_authorization_headers(user.username)
     )
     assert response.status_code == 200
-    assert response.json() == user.to_v1().dict()
+    assert response.json() == user.to_v1().model_dump()
 
 
 def test_read_current_user_profile(client: TestClient, user):
@@ -24,7 +24,7 @@ def test_read_current_user_profile(client: TestClient, user):
         "/api/v2/users/user/profile", headers=user_authorization_headers(user.username)
     )
     assert response.status_code == 200
-    assert response.json() == schemas.User.from_orm(user).dict()
+    assert response.json() == schemas.User.model_validate(user).model_dump()
 
 
 def test_read_current_user_profile_no_authorization_header(
@@ -257,7 +257,7 @@ def test_read_current_user_notifications(
             "is_read": False,
             "service_id": str(notification1.service_id),
             "subtitle": notification1.subtitle,
-            "timestamp": notification1.timestamp.isoformat(),
+            "timestamp": notification1.timestamp.isoformat().rstrip("0"),
             "title": notification1.title,
             "url": notification1.url,
         },
@@ -266,7 +266,7 @@ def test_read_current_user_notifications(
             "is_read": False,
             "service_id": str(notification2.service_id),
             "subtitle": notification2.subtitle,
-            "timestamp": notification2.timestamp.isoformat(),
+            "timestamp": notification2.timestamp.isoformat().rstrip("0"),
             "title": notification2.title,
             "url": notification2.url,
         },

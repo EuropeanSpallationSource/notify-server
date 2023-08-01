@@ -10,6 +10,7 @@ requirements = [
     "aiofiles",
     "cryptography",
     "fastapi",
+    "pydantic>=2.0",
     "fastapi-versioning",
     "google-auth",
     "requests",

@@ -45,7 +45,7 @@ async def send_push(
     logger.info(f"Send notification to {user.username} (apn: {apn[:10]}...)")
     try:
         response = await client.post(
-            f"https://{APPLE_SERVER}/3/device/{apn}", json=payload.dict()
+            f"https://{APPLE_SERVER}/3/device/{apn}", json=payload.model_dump()
         )
         response.raise_for_status()
     except httpx.RequestError as exc:

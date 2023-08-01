@@ -49,7 +49,7 @@ async def send_push(
     try:
         response = await client.post(
             f"https://fcm.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/messages:send",
-            json=payload.dict(),
+            json=payload.model_dump(),
         )
         response.raise_for_status()
     except httpx.RequestError as exc:
