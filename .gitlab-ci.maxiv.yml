@@ -42,7 +42,7 @@ test-python310:
   stage: test
   tags:
     - kubernetes
-  image: harbor.maxiv.lu.se/dockerhub/library/python:3.10
+  image: harbor.maxiv.lu.se/dockerhub/library/python:3.11
   before_script:
     - pip install -e .[tests]
   script:

@@ -4,7 +4,9 @@ import re
 import uuid
 from enum import Enum
 from typing import List, Optional
-from pydantic import BaseModel, validator
+from typing_extensions import Annotated
+from pydantic import ConfigDict, BaseModel
+from pydantic.functional_validators import AfterValidator
 
 RE_COLOR = re.compile(r"^[0-9a-fA-F]{6}$")
 
@@ -13,6 +15,9 @@ def validate_color(color: str) -> str:
     if RE_COLOR.match(color) is None:
         raise ValueError("Color should match [0-9a-fA-F]{6}")
     return color
+
+
+Color = Annotated[str, AfterValidator(validate_color)]
 
 
 class SortOrder(str, Enum):
@@ -42,22 +47,18 @@ class User(BaseModel):
     device_tokens: List[str]
     is_active: bool
     is_admin: bool
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserUpdate(BaseModel):
-    is_active: Optional[bool]
-    is_admin: Optional[bool]
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None
 
 
 class ServiceBase(BaseModel):
     category: str
-    color: str
+    color: Color
     owner: str
-
-    _validate_color = validator("color", allow_reuse=True)(validate_color)
 
 
 class ServiceCreate(ServiceBase):
@@ -66,17 +67,13 @@ class ServiceCreate(ServiceBase):
 
 class Service(ServiceBase):
     id: uuid.UUID
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServiceUpdate(BaseModel):
-    category: Optional[str]
-    color: Optional[str]
-    owner: Optional[str]
-
-    _validate_color = validator("color", allow_reuse=True)(validate_color)
+    category: Optional[str] = None
+    color: Optional[Color] = None
+    owner: Optional[str] = None
 
 
 class UserService(Service):
@@ -93,7 +90,7 @@ class UserServiceForm(UserService):
 
     @classmethod
     def from_user_service(cls, user_service: UserService):
-        return cls(**user_service.dict(), is_selected=user_service.is_subscribed)
+        return cls(**user_service.model_dump(), is_selected=user_service.is_subscribed)
 
 
 class NotificationBase(BaseModel):
@@ -110,9 +107,7 @@ class Notification(NotificationBase):
     id: int
     timestamp: datetime.datetime
     service_id: uuid.UUID
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserNotification(Notification):
