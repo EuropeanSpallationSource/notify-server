@@ -38,7 +38,7 @@ variables:
   HELM_SET_TEST_image_tag: "__from_env_var:REGISTRY_IMAGE_TAG"
   GITLAB_ENVIRONMENT_NAME: notify
 
-test-python310:
+test-python311:
   stage: test
   tags:
     - kubernetes
