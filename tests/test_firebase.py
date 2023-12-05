@@ -1,3 +1,4 @@
+import json
 import pytest
 import httpx
 import respx
@@ -41,7 +42,7 @@ async def test_send_push_to_android_success(db, user, android_payload):
         notification_sent = await firebase.send_push(client, android_payload, db, user)
     assert request.called
     req, _ = respx.calls[0]
-    assert req._content == android_payload.json().encode("utf-8")
+    assert json.loads(req._content.decode("utf-8")) == android_payload.model_dump()
     assert notification_sent
 
 

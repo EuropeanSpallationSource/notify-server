@@ -171,7 +171,8 @@ class Service(Base):
     def to_user_service(self, user: User) -> schemas.UserService:
         is_subscribed = user in self.subscribers
         return schemas.UserService(
-            **schemas.Service.from_orm(self).dict(), is_subscribed=is_subscribed
+            **schemas.Service.model_validate(self).model_dump(),
+            is_subscribed=is_subscribed,
         )
 
 
@@ -221,7 +222,7 @@ class UserNotification(Base):
 
     def to_user_notification(self) -> schemas.UserNotification:
         return schemas.UserNotification(
-            **schemas.Notification.from_orm(self.notification).dict(),
+            **schemas.Notification.model_validate(self.notification).model_dump(),
             is_read=self.is_read,
         )
 

@@ -15,7 +15,7 @@ def sample_notification():
 
 
 def db_service_to_dict(db_service: models.Service) -> dict:
-    return json.loads(schemas.Service.from_orm(db_service).json())
+    return json.loads(schemas.Service.model_validate(db_service).model_dump_json())
 
 
 def test_read_services(
@@ -49,16 +49,13 @@ def test_create_service_invalid_color(
         f"/api/{api_version}/services/", headers=admin_token_headers, json=data
     )
     assert response.status_code == 422
-    assert response.json()["detail"][0]["msg"] == "Color should match [0-9a-fA-F]{6}"
-    assert response.json() == {
-        "detail": [
-            {
-                "loc": ["body", "color"],
-                "msg": "Color should match [0-9a-fA-F]{6}",
-                "type": "value_error",
-            }
-        ],
-    }
+    assert (
+        response.json()["detail"][0]["msg"]
+        == "Value error, Color should match [0-9a-fA-F]{6}"
+    )
+    assert response.json()["detail"][0]["input"] == color
+    assert response.json()["detail"][0]["loc"] == ["body", "color"]
+    assert response.json()["detail"][0]["type"] == "value_error"
 
 
 def test_create_service(client: TestClient, db, admin_token_headers, api_version):
@@ -100,9 +97,12 @@ def test_update_service_invalid_color(
     assert response.json() == {
         "detail": [
             {
+                "ctx": {"error": {}},
                 "loc": ["body", "color"],
-                "msg": "Color should match [0-9a-fA-F]{6}",
+                "input": color,
+                "msg": "Value error, Color should match [0-9a-fA-F]{6}",
                 "type": "value_error",
+                "url": "https://errors.pydantic.dev/2.1/v/value_error",
             }
         ],
     }
@@ -153,7 +153,7 @@ def test_read_service_notifications(
             "id": notification1.id,
             "service_id": str(notification1.service_id),
             "subtitle": notification1.subtitle,
-            "timestamp": notification1.timestamp.isoformat(),
+            "timestamp": notification1.timestamp.isoformat().rstrip("0"),
             "title": notification1.title,
             "url": notification1.url,
         },
@@ -161,7 +161,7 @@ def test_read_service_notifications(
             "id": notification2.id,
             "service_id": str(notification2.service_id),
             "subtitle": notification2.subtitle,
-            "timestamp": notification2.timestamp.isoformat(),
+            "timestamp": notification2.timestamp.isoformat().rstrip("0"),
             "title": notification2.title,
             "url": notification2.url,
         },
@@ -178,9 +178,16 @@ def test_read_service_notifications_invalid_service_id(
     assert response.json() == {
         "detail": [
             {
+                "ctx": {
+                    "error": "invalid length: expected length 32 for simple "
+                    "format, found 4"
+                },
                 "loc": ["path", "service_id"],
-                "msg": "value is not a valid uuid",
-                "type": "type_error.uuid",
+                "input": "1234",
+                "msg": "Input should be a valid UUID, invalid length: expected "
+                "length 32 for simple format, found 4",
+                "type": "uuid_parsing",
+                "url": "https://errors.pydantic.dev/2.1/v/uuid_parsing",
             }
         ],
     }
@@ -253,7 +260,7 @@ def test_create_notification_for_service(
         "id": db_notification.id,
         "service_id": str(service.id),
         "subtitle": sample_notification["subtitle"],
-        "timestamp": db_notification.timestamp.isoformat(),
+        "timestamp": db_notification.timestamp.isoformat().rstrip("0"),
         "title": sample_notification["title"],
         "url": sample_notification["url"],
     }

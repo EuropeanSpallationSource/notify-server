@@ -1,3 +1,4 @@
+import json
 import pytest
 import httpx
 import respx
@@ -40,7 +41,7 @@ async def test_send_push_to_ios_success(db, user, apn_payload):
         notification_sent = await ios.send_push(client, apn, apn_payload, db, user)
     assert request.called
     req, _ = respx.calls[0]
-    assert req._content == apn_payload.json().encode("utf-8")
+    assert json.loads(req._content.decode("utf-8")) == apn_payload.model_dump()
     assert notification_sent
 
 

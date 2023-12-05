@@ -1,11 +1,11 @@
-FROM harbor.maxiv.lu.se/dockerhub/library/python:3.10-slim as base
+FROM harbor.maxiv.lu.se/dockerhub/library/python:3.11-slim as base
 
 # Install Python dependencies in an intermediate image
 # as some requires a compiler (psycopg2)
 FROM base as builder
 
 # Install dependencies required to compile some Python packages
-# Taken from https://github.com/docker-library/python/blob/master/3.10/slim-bullseye/Dockerfile
+# Taken from https://github.com/docker-library/python/blob/master/3.11/slim-bullseye/Dockerfile
 # For psycopg2: libpq-dev
 RUN apt-get update \
   && apt-get install -yq --no-install-recommends \

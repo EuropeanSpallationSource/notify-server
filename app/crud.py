@@ -27,7 +27,9 @@ def create_user(db: Session, username: str):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    logger.info(f"New user created: {schemas.User.from_orm(db_user).json()}")
+    logger.info(
+        f"New user created: {schemas.User.model_validate(db_user).model_dump_json()}"
+    )
     return db_user
 
 
@@ -43,7 +45,7 @@ def create_user_device_token(
 def update_user(
     db: Session, user: models.User, updated_info: schemas.UserUpdate
 ) -> models.User:
-    for key, value in updated_info.dict().items():
+    for key, value in updated_info.model_dump().items():
         if value is not None:
             logger.info(f"Update {key} to {value} for user {user.username}")
             setattr(user, key, value)
@@ -95,18 +97,20 @@ def get_services(db: Session, demo: bool = False):
 
 
 def create_service(db: Session, service: schemas.ServiceCreate):
-    db_service = models.Service(**service.dict())
+    db_service = models.Service(**service.model_dump())
     db.add(db_service)
     db.commit()
     db.refresh(db_service)
-    logger.info(f"New service created: {schemas.Service.from_orm(db_service).json()}")
+    logger.info(
+        f"New service created: {schemas.Service.model_validate(db_service).model_dump_json()}"
+    )
     return db_service
 
 
 def update_service(
     db: Session, service: models.Service, updated_info: schemas.ServiceUpdate
 ) -> models.Service:
-    for key, value in updated_info.dict().items():
+    for key, value in updated_info.model_dump().items():
         if value is not None:
             logger.info(f"Update {key} to {value} for service {service.id}")
             setattr(service, key, value)
@@ -164,14 +168,14 @@ def update_user_services(
 def create_service_notification(
     db: Session, notification: schemas.NotificationCreate, service: models.Service
 ):
-    db_notification = models.Notification(**notification.dict(), service=service)
+    db_notification = models.Notification(**notification.model_dump(), service=service)
     db.add(db_notification)
     for user in service.subscribers:
         user.notifications.append(db_notification)
     db.commit()
     db.refresh(db_notification)
     logger.info(
-        f"New notification created for '{service.category}': {schemas.Notification.from_orm(db_notification).json()}"
+        f"New notification created for '{service.category}': {schemas.Notification.model_validate(db_notification).model_dump_json()}"
     )
     return db_notification
 
