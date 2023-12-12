@@ -1,6 +1,8 @@
 import json
 import uuid
 import pytest
+import importlib.metadata
+import packaging.version
 from fastapi.testclient import TestClient
 from app import models, schemas
 
@@ -102,7 +104,7 @@ def test_update_service_invalid_color(
                 "input": color,
                 "msg": "Value error, Color should match [0-9a-fA-F]{6}",
                 "type": "value_error",
-                "url": "https://errors.pydantic.dev/2.1/v/value_error",
+                "url": f"{pydantic_errors_url()}/v/value_error",
             }
         ],
     }
@@ -153,7 +155,7 @@ def test_read_service_notifications(
             "id": notification1.id,
             "service_id": str(notification1.service_id),
             "subtitle": notification1.subtitle,
-            "timestamp": notification1.timestamp.isoformat().rstrip("0"),
+            "timestamp": notification1.timestamp.isoformat(),
             "title": notification1.title,
             "url": notification1.url,
         },
@@ -161,7 +163,7 @@ def test_read_service_notifications(
             "id": notification2.id,
             "service_id": str(notification2.service_id),
             "subtitle": notification2.subtitle,
-            "timestamp": notification2.timestamp.isoformat().rstrip("0"),
+            "timestamp": notification2.timestamp.isoformat(),
             "title": notification2.title,
             "url": notification2.url,
         },
@@ -187,7 +189,7 @@ def test_read_service_notifications_invalid_service_id(
                 "msg": "Input should be a valid UUID, invalid length: expected "
                 "length 32 for simple format, found 4",
                 "type": "uuid_parsing",
-                "url": "https://errors.pydantic.dev/2.1/v/uuid_parsing",
+                "url": f"{pydantic_errors_url()}/v/uuid_parsing",
             }
         ],
     }
@@ -260,7 +262,13 @@ def test_create_notification_for_service(
         "id": db_notification.id,
         "service_id": str(service.id),
         "subtitle": sample_notification["subtitle"],
-        "timestamp": db_notification.timestamp.isoformat().rstrip("0"),
+        "timestamp": db_notification.timestamp.isoformat(),
         "title": sample_notification["title"],
         "url": sample_notification["url"],
     }
+
+
+def pydantic_errors_url():
+    version_str = importlib.metadata.version("pydantic")
+    version = packaging.version.parse(version_str)
+    return f"https://errors.pydantic.dev/{version.major}.{version.minor}"
