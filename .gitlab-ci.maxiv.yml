@@ -38,6 +38,7 @@ variables:
   HELM_SET_TEST_image_tag: "__from_env_var:REGISTRY_IMAGE_TAG"
   GITLAB_ENVIRONMENT_NAME: notify
 
+# Test with latest versions of requirements
 test-python311:
   stage: test
   tags:
@@ -53,3 +54,14 @@ test-python311:
       - coverage.xml
     reports:
       junit: junit.xml
+
+# Test with frozen requirements
+test-docker-image:
+  stage: test
+  tags:
+    - kubernetes
+  image: "$REGISTRY_IMAGE_NAME:$REGISTRY_IMAGE_TAG"
+  before_script:
+    - pip install --no-cache-dir .[tests]
+  script:
+    - pytest -v
