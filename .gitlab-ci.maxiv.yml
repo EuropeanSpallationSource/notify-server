@@ -31,7 +31,7 @@ variables:
   HELM_RELEASE_NAMESPACE_TEST: notify
   HELM_RELEASE_NAMESPACE_PROD: notify
   PIPELINES_FF_TOKENIZER: "true"
-  PRODUCTION_BRANCH_NAME: "master"
+  PRODUCTION_BRANCH_NAME: "main"
   PRODUCTION_DEPLOY_ON_TAG: "true"
   HELM_SET_PROD_ingress_host: "notify.maxiv.lu.se"
   HELM_SET_TEST_ingress_host: "notify-test-${CI_COMMIT_BRANCH}.apps.okdev.maxiv.lu.se"
