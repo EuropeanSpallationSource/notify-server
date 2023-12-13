@@ -10,7 +10,7 @@ requirements = [
     "aiofiles",
     "cryptography",
     "fastapi",
-    "pydantic>=2.0",
+    "pydantic>=2.3",
     "fastapi-versioning",
     "google-auth",
     "requests",
@@ -28,6 +28,7 @@ requirements = [
     "typer",
 ]
 tests_requires = [
+    "packaging",
     "pytest",
     "pytest-cov",
     "pytest-asyncio",
