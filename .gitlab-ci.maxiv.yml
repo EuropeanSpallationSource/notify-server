@@ -4,7 +4,7 @@ include:
     file: "/PreCommit.gitlab-ci.yml"
   - project: kits-maxiv/kubernetes/k8s-gitlab-ci
     file: "/Docker-Helm-deploy.gitlab-ci.yml"
-    ref: "0.4"
+    ref: "0.6"
 
 # Override workflow rules to deploy on any branch
 workflow:
@@ -26,8 +26,11 @@ stages:
 
 variables:
   DOCKER_REGISTRY_URL: "harbor.maxiv.lu.se/notify-server"
-  HELM_CHART_REPO: https://harbor.maxiv.lu.se/chartrepo/notify-server
+  HELM_CHART_REPO: oci://harbor.maxiv.lu.se/notify-server/charts
   HELM_CHART_NAME: notify-server
+  HELM_RELEASE_NAMESPACE_TEST: notify
+  HELM_RELEASE_NAMESPACE_PROD: notify
+  PIPELINES_FF_TOKENIZER: "true"
   PRODUCTION_BRANCH_NAME: "master"
   PRODUCTION_DEPLOY_ON_TAG: "true"
   HELM_SET_PROD_ingress_host: "notify.maxiv.lu.se"
@@ -38,7 +41,8 @@ variables:
   HELM_SET_TEST_image_tag: "__from_env_var:REGISTRY_IMAGE_TAG"
   GITLAB_ENVIRONMENT_NAME: notify
 
-test-python310:
+# Test with latest versions of requirements
+test-python311:
   stage: test
   tags:
     - kubernetes
@@ -53,3 +57,14 @@ test-python310:
       - coverage.xml
     reports:
       junit: junit.xml
+
+# Test with frozen requirements
+test-docker-image:
+  stage: test
+  tags:
+    - kubernetes
+  image: "$REGISTRY_IMAGE_NAME:$REGISTRY_IMAGE_TAG"
+  before_script:
+    - pip install --no-cache-dir .[tests]
+  script:
+    - pytest -v
