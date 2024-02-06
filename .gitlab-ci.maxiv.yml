@@ -4,7 +4,7 @@ include:
     file: "/PreCommit.gitlab-ci.yml"
   - project: kits-maxiv/kubernetes/k8s-gitlab-ci
     file: "/Docker-Helm-deploy.gitlab-ci.yml"
-    ref: "0.6"
+    ref: "0.7"
 
 # Override workflow rules to deploy on any branch
 workflow:
@@ -25,8 +25,7 @@ stages:
   - .post
 
 variables:
-  DOCKER_REGISTRY_URL: "harbor.maxiv.lu.se/notify-server"
-  HELM_CHART_REPO: oci://harbor.maxiv.lu.se/notify-server/charts
+  BUILDAH_CACHE: "true"
   HELM_CHART_NAME: notify-server
   HELM_RELEASE_NAMESPACE_TEST: notify
   HELM_RELEASE_NAMESPACE_PROD: notify
