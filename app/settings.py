@@ -9,7 +9,10 @@ ytZPnlbWNLGGR7tKdB1eLzyBlIVFe9El4Wlvs19ACPRMtE7l75IlbOT+
 """
 
 # Config will be read from environment variables and/or ".env" files.
-config = Config(".env")
+try:
+    config = Config(".env")
+except FileNotFoundError:
+    config = Config()
 
 # Should be set to "ldap" or "url"
 AUTHENTICATION_METHOD = config("AUTHENTICATION_METHOD", cast=str, default="ldap")
