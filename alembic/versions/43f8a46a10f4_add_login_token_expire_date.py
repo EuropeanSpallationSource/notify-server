@@ -5,6 +5,7 @@ Revises: 06fd850a57c0
 Create Date: 2022-10-16 07:42:13.437968
 
 """
+
 from datetime import datetime, timedelta
 from alembic import op
 import sqlalchemy as sa
