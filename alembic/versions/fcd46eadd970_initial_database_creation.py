@@ -5,6 +5,7 @@ Revises:
 Create Date: 2020-11-16 16:27:09.423308
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from app.models import GUID
