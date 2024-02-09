@@ -1,4 +1,4 @@
-{% from "_helpers.html" import format_notification, format_datetime %}
+{% from "_helpers.html" import format_notification %}
 
 <table class="table table-striped table-sm" id="notifications-table">
   <thead>
@@ -12,7 +12,7 @@
     {% for notification in notifications %}
     <tr>
       <td>{{ categories[notification.service_id] }}</td>
-      <td>{{ format_datetime(notification.timestamp) }}</td>
+      <td>{{ notification.timestamp | format_datetime }}</td>
       <td>{{ format_notification(notification) }}</td>
     </tr>
     {% endfor %}
