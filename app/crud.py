@@ -240,7 +240,9 @@ def update_user_notifications(
 
 def delete_notifications(db: Session, keep_days: int) -> None:
     """Delete notifications older than X days"""
-    date_limit = datetime.datetime.utcnow() - datetime.timedelta(days=keep_days)
+    date_limit = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=keep_days
+    )
     # First retrieve all notifications id to delete
     old_notification_ids = db.query(models.Notification.id).filter(
         models.Notification.timestamp < date_limit

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.logger import logger
@@ -26,7 +26,7 @@ def login(
     if db_user is None:
         db_user = crud.create_user(db, form_data.username.lower())
         response.status_code = status.HTTP_201_CREATED
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = utils.create_access_token(db_user.username, expire=expire)
     crud.update_user_login_token_expire_date(db, db_user, expire)
     return {"access_token": access_token, "token_type": "bearer"}
