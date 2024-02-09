@@ -7,6 +7,7 @@ from typing import List, Optional
 from typing_extensions import Annotated
 from pydantic import ConfigDict, BaseModel
 from pydantic.functional_validators import AfterValidator
+from pydantic.functional_serializers import PlainSerializer
 
 RE_COLOR = re.compile(r"^[0-9a-fA-F]{6}$")
 
@@ -18,6 +19,16 @@ def validate_color(color: str) -> str:
 
 
 Color = Annotated[str, AfterValidator(validate_color)]
+# Pydantic serialization adds "Z" to timestamp in UTC timezone.
+# To not brake current mobile clients, we should continue returning
+# timestamp without timezone info and use a custom PlainSerializer.
+# Note that python isoformat() doesn't return "Z" but "+00:00".
+NoTZDateTime = Annotated[
+    datetime.datetime,
+    PlainSerializer(
+        lambda x: x.isoformat().replace("+00:00", ""), return_type=str, when_used="json"
+    ),
+]
 
 
 class SortOrder(str, Enum):
@@ -105,7 +116,7 @@ class NotificationCreate(NotificationBase):
 
 class Notification(NotificationBase):
     id: int
-    timestamp: datetime.datetime
+    timestamp: NoTZDateTime
     service_id: uuid.UUID
     model_config = ConfigDict(from_attributes=True)
 

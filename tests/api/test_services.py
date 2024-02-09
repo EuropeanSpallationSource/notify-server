@@ -5,6 +5,7 @@ import importlib.metadata
 import packaging.version
 from fastapi.testclient import TestClient
 from app import models, schemas
+from ..utils import no_tz_isoformat
 
 
 @pytest.fixture(scope="module")
@@ -155,7 +156,7 @@ def test_read_service_notifications(
             "id": notification1.id,
             "service_id": str(notification1.service_id),
             "subtitle": notification1.subtitle,
-            "timestamp": notification1.timestamp.isoformat(),
+            "timestamp": no_tz_isoformat(notification1.timestamp),
             "title": notification1.title,
             "url": notification1.url,
         },
@@ -163,7 +164,7 @@ def test_read_service_notifications(
             "id": notification2.id,
             "service_id": str(notification2.service_id),
             "subtitle": notification2.subtitle,
-            "timestamp": notification2.timestamp.isoformat(),
+            "timestamp": no_tz_isoformat(notification2.timestamp),
             "title": notification2.title,
             "url": notification2.url,
         },
@@ -262,7 +263,7 @@ def test_create_notification_for_service(
         "id": db_notification.id,
         "service_id": str(service.id),
         "subtitle": sample_notification["subtitle"],
-        "timestamp": db_notification.timestamp.isoformat(),
+        "timestamp": no_tz_isoformat(db_notification.timestamp),
         "title": sample_notification["title"],
         "url": sample_notification["url"],
     }

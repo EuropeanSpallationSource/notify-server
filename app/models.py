@@ -1,4 +1,5 @@
 from __future__ import annotations
+import datetime
 import uuid
 from typing import List
 from sqlalchemy import (
@@ -12,12 +13,39 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import relationship, backref, Session
-from datetime import datetime
 from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from .database import Base
 from . import schemas
+
+
+def utcnow():
+    # datetime.utcnow() is deprecated in 3.12
+    # as it returns a naive datetime
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
+class TZDateTime(TypeDecorator):
+    """DateTime with TimeZone
+
+    From https://docs.sqlalchemy.org/en/20/core/custom_types.html#store-timezone-aware-timestamps-as-timezone-naive-utc
+    """
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            if not value.tzinfo or value.tzinfo.utcoffset(value) is None:
+                raise TypeError("tzinfo is required")
+            value = value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            value = value.replace(tzinfo=datetime.timezone.utc)
+        return value
 
 
 class GUID(TypeDecorator):
@@ -75,7 +103,7 @@ class User(Base):
     _device_tokens = Column(String, default="")
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
-    login_token_expire_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    login_token_expire_date = Column(TZDateTime, default=utcnow, nullable=False)
 
     services = relationship(
         "Service",
@@ -119,7 +147,9 @@ class User(Base):
 
     @property
     def is_logged_in(self):
-        return datetime.utcnow() < self.login_token_expire_date
+        return (
+            datetime.datetime.now(datetime.timezone.utc) < self.login_token_expire_date
+        )
 
     def add_device_token(self, value: str):
         if value in self.device_tokens:
@@ -180,7 +210,7 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
-    timestamp = Column(DateTime, index=True, default=datetime.utcnow, nullable=False)
+    timestamp = Column(TZDateTime, index=True, default=utcnow, nullable=False)
     title = Column(String, nullable=False)
     subtitle = Column(String)
     url = Column(String)

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app import schemas
 
@@ -19,7 +19,7 @@ def test_user_is_logged_in(db: Session, user_factory) -> None:
     username = "johndoe"
     user = user_factory(username=username)
     assert not user.is_logged_in
-    user.login_token_expire_date = datetime.utcnow() + timedelta(minutes=5)
+    user.login_token_expire_date = datetime.now(timezone.utc) + timedelta(minutes=5)
     assert user.is_logged_in
 
 
