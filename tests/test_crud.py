@@ -210,7 +210,7 @@ def test_get_user_notifications_limit(db, user, service, limit, sort):
     user.subscribe(service)
     db.commit()
     notifications = []
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone.utc)
     for nb in range(20):
         notification = crud.create_service_notification(
             db, schemas.NotificationCreate(title=f"message{nb}"), service
@@ -253,7 +253,7 @@ def test_get_user_notifications_filter_services_id(db, user, service_factory):
     user.subscribe(service3)
     db.commit()
     notifications = []
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone.utc)
     for service_nb, service in enumerate((service1, service2, service3), start=1):
         for nb in range(10):
             notification = crud.create_service_notification(

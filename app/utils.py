@@ -3,7 +3,7 @@ import httpx
 import ipaddress
 import uuid
 import jwt
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict
 from sqlalchemy.orm import Session
 from . import models, ios, firebase
@@ -75,7 +75,7 @@ async def gather_with_concurrency(n: int, *tasks, return_exceptions=True):
 async def send_notification(db: Session, notification: models.Notification) -> None:
     """Send the notification to all subscribers"""
     tasks = []
-    ios_headers = ios.create_headers(datetime.utcnow())
+    ios_headers = ios.create_headers(datetime.now(timezone.utc))
     ios_client = httpx.AsyncClient(http2=True, headers=ios_headers)
     android_headers = await firebase.create_headers(str(uuid.uuid4()))
     android_client = httpx.AsyncClient(headers=android_headers)
