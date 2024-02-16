@@ -71,7 +71,8 @@ def client() -> Generator:
 def user_token_headers(user):
     token = create_access_token(
         user.username,
-        expire=datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+        expire=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(minutes=60),
     )
     return {"Authorization": f"Bearer {token}"}
 
@@ -81,7 +82,8 @@ def admin_token_headers(user_factory):
     admin = user_factory(is_admin=True)
     token = create_access_token(
         admin.username,
-        expire=datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+        expire=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(minutes=60),
     )
     return {"Authorization": f"Bearer {token}"}
 
@@ -102,6 +104,8 @@ def make_device_token():
 @pytest.fixture
 def notification_date():
     def _notification_date(days_old):
-        return datetime.datetime.utcnow() - datetime.timedelta(days=days_old)
+        return datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+            days=days_old
+        )
 
     return _notification_date

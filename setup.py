@@ -60,5 +60,5 @@ setuptools.setup(
     ],
     entry_points={"console_scripts": ["notify-server=app.command:cli"]},
     extras_require={"postgres": postgres_requires, "tests": tests_requires},
-    python_requires=">=3.8",
+    python_requires=">=3.9",
 )

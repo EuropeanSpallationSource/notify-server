@@ -1,12 +1,13 @@
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 from app import schemas, models, utils
+from ..utils import no_tz_isoformat
 
 
 def user_authorization_headers(username):
     token = utils.create_access_token(
-        username, expire=datetime.utcnow() + timedelta(minutes=60)
+        username, expire=datetime.now(timezone.utc) + timedelta(minutes=60)
     )
     return {"Authorization": f"Bearer {token}"}
 
@@ -55,7 +56,7 @@ def test_read_current_user_profile_invalid_username(client: TestClient, api_vers
 
 def test_read_current_user_profile_expired_token(client: TestClient, user, api_version):
     token = utils.create_access_token(
-        user.username, expire=datetime.utcnow() + timedelta(minutes=-5)
+        user.username, expire=datetime.now(timezone.utc) + timedelta(minutes=-5)
     )
     response = client.get(
         f"/api/{api_version}/users/user/profile",
@@ -257,7 +258,7 @@ def test_read_current_user_notifications(
             "is_read": False,
             "service_id": str(notification1.service_id),
             "subtitle": notification1.subtitle,
-            "timestamp": notification1.timestamp.isoformat(),
+            "timestamp": no_tz_isoformat(notification1.timestamp),
             "title": notification1.title,
             "url": notification1.url,
         },
@@ -266,7 +267,7 @@ def test_read_current_user_notifications(
             "is_read": False,
             "service_id": str(notification2.service_id),
             "subtitle": notification2.subtitle,
-            "timestamp": notification2.timestamp.isoformat(),
+            "timestamp": no_tz_isoformat(notification2.timestamp),
             "title": notification2.title,
             "url": notification2.url,
         },

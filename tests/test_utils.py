@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app import schemas, utils
 
 
@@ -58,7 +58,7 @@ async def test_send_notification(
     android_token3 = make_device_token(128)
     android_token4 = make_device_token(128)
     android_token5 = make_device_token(128)
-    expire_date = datetime.utcnow() + timedelta(minutes=60)
+    expire_date = datetime.now(timezone.utc) + timedelta(minutes=60)
     user1 = user_factory(
         device_tokens=[ios_token1, ios_token2], login_token_expire_date=expire_date
     )
@@ -71,7 +71,7 @@ async def test_send_notification(
     )
     user4 = user_factory(
         device_tokens=[ios_token5, android_token5],
-        login_token_expire_date=datetime.utcnow() + timedelta(minutes=-1),
+        login_token_expire_date=datetime.now(timezone.utc) + timedelta(minutes=-1),
     )
     user5 = user_factory(
         device_tokens=[ios_token5, android_token5],
@@ -167,7 +167,7 @@ async def test_send_notification(
 def test_create_and_decode_access_token():
     username = "johndoe"
     encoded_token = utils.create_access_token(
-        username, expire=datetime.utcnow() + timedelta(days=1)
+        username, expire=datetime.now(timezone.utc) + timedelta(days=1)
     )
     decoded_token = utils.decode_access_token(encoded_token)
     assert decoded_token["sub"] == username

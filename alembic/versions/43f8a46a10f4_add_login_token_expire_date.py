@@ -6,7 +6,7 @@ Create Date: 2022-10-16 07:42:13.437968
 
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from alembic import op
 import sqlalchemy as sa
 
@@ -26,7 +26,7 @@ def upgrade():
     # To avoid having to reset all tokens, we set the default value to the current date + 30 days
     # when running this migration. This ensures users will continue to receive notifications with
     # their current login token.
-    expire = datetime.utcnow() + timedelta(days=30)
+    expire = datetime.now(timezone.utc) + timedelta(days=30)
     users = sa.sql.table("users", sa.sql.column("login_token_expire_date"))
     op.execute(users.update().values(login_token_expire_date=expire))
     op.alter_column("users", "login_token_expire_date", nullable=False)

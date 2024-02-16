@@ -78,3 +78,6 @@ ESS_NOTIFY_SERVER_ENVIRONMENT = config(
 )
 
 APP_NAME = config("APP_NAME", cast=str, default="ESS Notify")
+
+# Local timezone used for timestamp in the web app
+LOCAL_TIMEZONE = config("LOCAL_TIMEZONE", cast=str, default="Europe/Stockholm")
