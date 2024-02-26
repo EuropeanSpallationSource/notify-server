@@ -180,6 +180,16 @@ def create_service_notification(
     return db_notification
 
 
+def get_notification(
+    db: Session, notification_id: int
+) -> Optional[models.Notification]:
+    return (
+        db.query(models.Notification)
+        .filter(models.Notification.id == notification_id)
+        .first()
+    )
+
+
 def get_user_notifications(
     db: Session,
     user: models.User,
