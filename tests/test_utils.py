@@ -48,6 +48,7 @@ async def test_send_notification(
     )
     notification1 = notification_factory()
     notification2 = notification_factory()
+    non_existing_id = notification1.id + notification2.id
     ios_token1 = make_device_token(64)
     ios_token2 = make_device_token(64)
     ios_token3 = make_device_token(64)
@@ -86,7 +87,7 @@ async def test_send_notification(
     user4.notifications.append(notification1)
     user5.notifications.append(notification1)
     db.commit()
-    await utils.send_notification(db, notification1)
+    await utils.send_notification(notification1.id)
     # Check that send_push_to_ios was called 3 times
     # - twice for user1 (2 APN tokens)
     # - once for user2 (1 APN tokens)
@@ -109,12 +110,13 @@ async def test_send_notification(
             badge=1,
         )
     )
-    # Remove the first arg (httpx client) from the list of calls
-    calls = [call.args[1:] for call in mock_send_push_to_ios.call_args_list]
+    # Only keep second and third arguments (token and payload)
+    # first arg is httpx client and others (db and user) are internal
+    calls = [call.args[1:3] for call in mock_send_push_to_ios.call_args_list]
     expected_calls_args = [
-        (ios_token1, user1_payload, db, user1),
-        (ios_token2, user1_payload, db, user1),
-        (ios_token3, user2_payload, db, user2),
+        (ios_token1, user1_payload),
+        (ios_token2, user1_payload),
+        (ios_token3, user2_payload),
     ]
     assert calls == expected_calls_args
     # Check that send_push_to_android was called 3 times
@@ -154,14 +156,25 @@ async def test_send_notification(
             ),
         )
     )
-    # Remove the first arg (httpx client) from the list of calls
-    calls = [call.args[1:] for call in mock_send_push_to_android.call_args_list]
+    # Only keep second argument (payload)
+    # first arg is httpx client and others (db and user) are internal
+    calls = [(call.args[1],) for call in mock_send_push_to_android.call_args_list]
     expected_calls_args = [
-        (user2_payload1, db, user2),
-        (user3_payload1, db, user3),
-        (user3_payload2, db, user3),
+        (user2_payload1,),
+        (user3_payload1,),
+        (user3_payload2,),
     ]
     assert calls == expected_calls_args
+
+    # Check with invalid notification id
+    # send_push_to_ios or android shouldn't be called
+    mock_send_push_to_ios.reset_mock()
+    mock_send_push_to_android.reset_mock()
+    mock_get_firebase_access_token.reset_mock()
+    await utils.send_notification(non_existing_id)
+    assert mock_get_firebase_access_token.called
+    assert not mock_send_push_to_ios.called
+    assert not mock_send_push_to_android.called
 
 
 def test_create_and_decode_access_token():
