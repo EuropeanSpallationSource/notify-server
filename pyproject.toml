@@ -56,3 +56,15 @@ Repository = "https://github.com/europeanspallationsource/notify-server"
 
 [project.scripts]
 notify-server = "app.command:cli"
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E4",  # Import
+    "E7",  # Statement
+    "E9",  # Runtime
+    # Pyflakes
+    "F",
+    # flake8-simplify
+    "SIM",
+]

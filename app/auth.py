@@ -37,10 +37,7 @@ def ldap_authenticate_user(username: str, password: str) -> bool:
         validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLSv1_2, ciphers="ALL"
     )
     server = ldap3.Server(LDAP_HOST, port=LDAP_PORT, use_ssl=LDAP_USE_SSL, tls=tls)
-    if LDAP_USER_DN:
-        user_search_dn = f"{LDAP_USER_DN},{LDAP_BASE_DN}"
-    else:
-        user_search_dn = LDAP_BASE_DN
+    user_search_dn = f"{LDAP_USER_DN},{LDAP_BASE_DN}" if LDAP_USER_DN else LDAP_BASE_DN
     bind_user = f"{LDAP_USER_RDN_ATTR}={username},{user_search_dn}"
     connection = ldap3.Connection(
         server=server,
