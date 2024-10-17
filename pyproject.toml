@@ -1,5 +1,58 @@
 [build-system]
-requires = ["setuptools >= 42", "wheel", "setuptools_scm[toml]>=3.4"]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
+version_file = "app/_version.py"
+
+[tool.setuptools]
+packages = ["app"]
+
+[project]
+name = "ess-notify"
+dynamic = ["version"]
+description = "ESS notification server"
+readme = "README.md"
+dependencies = [
+    "alembic",
+    "aiofiles",
+    "cryptography",
+    "fastapi",
+    "pydantic>=2.3",
+    "fastapi-versioning",
+    "google-auth",
+    "requests",
+    "h2",
+    "itsdangerous",
+    "jinja2",
+    "python-multipart",
+    "httpx",
+    "PyJWT",
+    "ldap3",
+    "SQLAlchemy<1.4",
+    "uvicorn[standard]",
+    "gunicorn",
+    "sentry-sdk",
+    "typer",
+]
+requires-python = ">= 3.9"
+license = { file = "LICENSE" }
+
+[project.optional-dependencies]
+postgres = ["psycopg2"]
+tests = [
+    "packaging",
+    "pytest",
+    "pytest-cov",
+    "pytest-asyncio",
+    "pytest-mock",
+    "pytest-factoryboy",
+    "respx",
+    "Faker",
+]
+
+[project.urls]
+Repository = "https://github.com/europeanspallationsource/notify-server"
+
+[project.scripts]
+notify-server = "app.command:cli"
