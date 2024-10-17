@@ -53,7 +53,7 @@ async def notifications_post(
     current_user: models.User = Depends(deps.get_current_user_from_cookie),
 ):
     form = await request.form()
-    selected_categories = [key for key in form.keys() if key != "notifications_limit"]
+    selected_categories = [key for key in form if key != "notifications_limit"]
     request.session["selected_categories"] = selected_categories
     request.session["notifications_limit"] = notifications_limit
     user_services = crud.get_user_services(db, current_user)
