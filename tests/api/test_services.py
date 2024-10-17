@@ -1,8 +1,6 @@
 import json
 import uuid
 import pytest
-import importlib.metadata
-import packaging.version
 from fastapi.testclient import TestClient
 from app import models, schemas
 from ..utils import no_tz_isoformat
@@ -105,7 +103,6 @@ def test_update_service_invalid_color(
                 "input": color,
                 "msg": "Value error, Color should match [0-9a-fA-F]{6}",
                 "type": "value_error",
-                "url": f"{pydantic_errors_url()}/v/value_error",
             }
         ],
     }
@@ -190,7 +187,6 @@ def test_read_service_notifications_invalid_service_id(
                 "msg": "Input should be a valid UUID, invalid length: expected "
                 "length 32 for simple format, found 4",
                 "type": "uuid_parsing",
-                "url": f"{pydantic_errors_url()}/v/uuid_parsing",
             }
         ],
     }
@@ -267,9 +263,3 @@ def test_create_notification_for_service(
         "title": sample_notification["title"],
         "url": sample_notification["url"],
     }
-
-
-def pydantic_errors_url():
-    version_str = importlib.metadata.version("pydantic")
-    version = packaging.version.parse(version_str)
-    return f"https://errors.pydantic.dev/{version.major}.{version.minor}"

@@ -14,9 +14,7 @@ environ["SQLALCHEMY_DATABASE_URL"] = "sqlite://"
 environ["LDAP_SERVER"] = "ldap.example.org"
 environ["APNS_KEY_ID"] = "UB40ZXKCDZ"
 environ["AUTHENTICATION_URL"] = "https://auth.example.org/login"
-environ[
-    "APNS_AUTH_KEY"
-] = """-----BEGIN PRIVATE KEY-----
+environ["APNS_AUTH_KEY"] = """-----BEGIN PRIVATE KEY-----
 MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgtAParbMemenK/+8T
 JYWanX1jzKaFcgmupVALPHyaKKKhRANCAARVmMAXI+WPS/vjIsFBHb3B5dQKqgT8
 ytZPnlbWNLGGR7tKdB1eLzyBlIVFe9El4Wlvs19ACPRMtE7l75IlbOT+
