@@ -16,6 +16,7 @@ readme = "README.md"
 dependencies = [
     "alembic",
     "aiofiles",
+    "authlib",
     "cryptography",
     "fastapi",
     "pydantic>=2.3",

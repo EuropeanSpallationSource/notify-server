@@ -12,7 +12,7 @@ router = APIRouter()
 async def settings_get(
     request: Request,
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user_from_cookie),
+    current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
     services = crud.get_user_services(db, current_user)
     return templates.TemplateResponse(
@@ -25,7 +25,7 @@ async def settings_get(
 async def settings_post(
     request: Request,
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user_from_cookie),
+    current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
     form = await request.form()
     selected_categories = list(form.keys())
