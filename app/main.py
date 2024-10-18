@@ -11,7 +11,12 @@ from starlette.middleware.sessions import SessionMiddleware
 from . import monitoring
 from .api import login, users, services
 from .views import exceptions, account, notifications, settings
-from .settings import SENTRY_DSN, ESS_NOTIFY_SERVER_ENVIRONMENT, SECRET_KEY
+from .settings import (
+    SENTRY_DSN,
+    ESS_NOTIFY_SERVER_ENVIRONMENT,
+    SECRET_KEY,
+    SESSION_MAX_AGE,
+)
 
 
 # The following logging setup assumes the app is run with gunicorn
@@ -24,7 +29,10 @@ logger.setLevel(gunicorn_error_logger.level)
 # Main application to serve HTML
 middleware = [
     Middleware(
-        SessionMiddleware, secret_key=SECRET_KEY, session_cookie="notify_session"
+        SessionMiddleware,
+        secret_key=SECRET_KEY,
+        session_cookie="notify_session",
+        max_age=SESSION_MAX_AGE,
     )
 ]
 app = FastAPI(exception_handlers=exceptions.exception_handlers, middleware=middleware)
