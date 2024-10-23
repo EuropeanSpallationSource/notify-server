@@ -3,6 +3,7 @@ from fastapi.logger import logger
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.requests import Request
 from sqlalchemy.orm import Session
+from authlib.integrations.base_client.errors import OAuthError
 from . import templates
 from .. import deps, crud, auth, models
 from ..settings import APP_NAME, AUTHENTICATION_METHOD
@@ -76,7 +77,11 @@ async def oidc_auth(
     request: Request,
     db: Session = Depends(deps.get_db),
 ):
-    token = await deps.oauth.keycloak.authorize_access_token(request)
+    try:
+        token = await deps.oauth.keycloak.authorize_access_token(request)
+    except OAuthError as e:
+        logger.warning(f"OAuthError on OpenID Connect redirect: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     user_info = token["userinfo"]
     if user_info:
         username = user_info["preferred_username"].lower()
