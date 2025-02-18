@@ -1,6 +1,10 @@
+import contextlib
 import logging
+import httpx
+import jwt
 import sentry_sdk
 from pathlib import Path
+from typing import AsyncIterator, TypedDict
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from fastapi import FastAPI
 from fastapi_versioning import VersionedFastAPI
@@ -16,6 +20,8 @@ from .settings import (
     ESS_NOTIFY_SERVER_ENVIRONMENT,
     SECRET_KEY,
     SESSION_MAX_AGE,
+    OIDC_SERVER_URL,
+    AUTHENTICATION_METHOD,
 )
 
 
@@ -26,6 +32,25 @@ uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
 logger.handlers = gunicorn_error_logger.handlers
 logger.setLevel(gunicorn_error_logger.level)
 
+
+class State(TypedDict):
+    oidc_config: dict[str, str]
+    jwks_client: jwt.PyJWKClient | None
+
+
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[State]:
+    if AUTHENTICATION_METHOD == "oidc":
+        async with httpx.AsyncClient() as client:
+            r = await client.get(OIDC_SERVER_URL)
+            oidc_config = r.json()
+            jwks_client = jwt.PyJWKClient(oidc_config["jwks_uri"])
+    else:
+        oidc_config = {}
+        jwks_client = None
+    yield {"oidc_config": oidc_config, "jwks_client": jwks_client}
+
+
 # Main application to serve HTML
 middleware = [
     Middleware(
@@ -35,7 +60,11 @@ middleware = [
         max_age=SESSION_MAX_AGE,
     )
 ]
-app = FastAPI(exception_handlers=exceptions.exception_handlers, middleware=middleware)
+app = FastAPI(
+    exception_handlers=exceptions.exception_handlers,
+    middleware=middleware,
+    lifespan=lifespan,
+)
 app.include_router(account.router)
 app.include_router(notifications.router, prefix="/notifications")
 app.include_router(settings.router, prefix="/settings")

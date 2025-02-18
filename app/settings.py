@@ -34,6 +34,20 @@ OIDC_SERVER_URL = config(
 OIDC_CLIENT_ID = config("OIDC_CLIENT_ID", cast=str, default="notify")
 OIDC_CLIENT_SECRET = config("OIDC_CLIENT_SECRET", cast=Secret, default="!secret")
 OIDC_SCOPE = config("OIDC_SCOPE", cast=str, default="openid email profile")
+OIDC_ANDROID_CLIENT_ID = config(
+    "OIDC_ANDROID_CLIENT_ID", cast=str, default="notify.android.maxiv.lu.se"
+)
+OIDC_ANDROID_CLIENT_SECRET = config(
+    "OIDC_ANDROID_CLIENT_SECRET",
+    cast=Secret,
+    default="!secret",
+)
+OIDC_IOS_CLIENT_ID = config(
+    "OIDC_IOS_CLIENT_ID", cast=str, default="notify.ios.maxiv.lu.se"
+)
+OIDC_IOS_CLIENT_SECRET = config(
+    "OIDC_IOS_CLIENT_SECRET", cast=Secret, default="!secret"
+)
 
 # URL to use when AUTHENTICATION_METHOD is set to "url"
 AUTHENTICATION_URL = config(
