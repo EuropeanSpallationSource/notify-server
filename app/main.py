@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import AsyncIterator, TypedDict
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from fastapi import FastAPI
-from fastapi_versioning import VersionedFastAPI
+from ._vendor.fastapi_versioning import VersionedFastAPI
 from fastapi.logger import logger
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware import Middleware

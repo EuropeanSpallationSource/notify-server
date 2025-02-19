@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Response, HTTPException, status
-from fastapi_versioning import version
+from .._vendor.fastapi_versioning import version
 from sqlalchemy.orm import Session
 from typing import List
 from .. import deps, crud, models, schemas

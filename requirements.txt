@@ -9,7 +9,6 @@ charset-normalizer==3.4.0
 click==8.1.7
 cryptography==43.0.1
 fastapi==0.115.2
-fastapi-versioning==0.10.0
 google-auth==2.35.0
 gunicorn==23.0.0
 h11==0.14.0
