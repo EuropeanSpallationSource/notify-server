@@ -14,7 +14,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 from . import monitoring
 from .api import login, users, services
-from .views import exceptions, account, notifications, settings
+from .views import exceptions, account, notifications, settings, docs
 from .settings import (
     SENTRY_DSN,
     ESS_NOTIFY_SERVER_ENVIRONMENT,
@@ -66,17 +66,21 @@ app = FastAPI(
     exception_handlers=exceptions.exception_handlers,
     middleware=middleware,
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
 )
 app.include_router(account.router)
 app.include_router(notifications.router, prefix="/notifications")
 app.include_router(settings.router, prefix="/settings")
+app.include_router(docs.router)
+
 
 # Serve static files
 app_dir = Path(__file__).parent.resolve()
 app.mount("/static", StaticFiles(directory=str(app_dir / "static")), name="static")
 
 # API mounted under /api
-original_api = FastAPI()
+original_api = FastAPI(docs_url=None, redoc_url=None)
 original_api.include_router(monitoring.router, prefix="/-", tags=["monitoring"])
 original_api.include_router(login.router, tags=["login"])
 original_api.include_router(users.router, prefix="/users", tags=["users"])
@@ -90,9 +94,12 @@ versioned_api = VersionedFastAPI(
     original_api,
     version_format="{major}",
     prefix_format="/v{major}",
+    docs_url=None,
+    redoc_url=None,
 )
 
 app.mount("/api", versioned_api)
+
 
 if SENTRY_DSN:
     sentry_sdk.init(dsn=SENTRY_DSN, environment=ESS_NOTIFY_SERVER_ENVIRONMENT)

@@ -35,7 +35,7 @@ def get_db():
 
 
 def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+    request: Request, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> models.User:
     """Return the current user based on the bearer token from the header"""
     credentials_exception = HTTPException(
@@ -43,6 +43,14 @@ def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    # Special case for swagger UI
+    # To avoid implementing OpenId Connect flow with the Authorize button,
+    # we use the cookie from the session that should be present if the user
+    # already logged in via the web UI
+    # We inject a dummy bearer token as one is expected by the oauth2_scheme
+    # If the user isn't logged in, this will return a 401
+    if token == "swagger-ui":
+        return get_current_user_from_session(request, db)
     try:
         payload = utils.decode_access_token(token)
     except ExpiredSignatureError:
