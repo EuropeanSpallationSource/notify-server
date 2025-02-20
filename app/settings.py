@@ -14,7 +14,8 @@ try:
 except FileNotFoundError:
     config = Config()
 
-# Should be set to "ldap", "url" or "oidc"
+# Should be set to "ldap" or "url"
+# This is still supported for the API even when OIDC is enabled
 AUTHENTICATION_METHOD = config("AUTHENTICATION_METHOD", cast=str, default="ldap")
 # LDAP configuration
 LDAP_HOST = config("LDAP_HOST", cast=str, default="ldap.example.org")
@@ -25,6 +26,10 @@ LDAP_USER_DN = config("LDAP_USER_DN", cast=str, default="")
 LDAP_USER_RDN_ATTR = config("LDAP_USER_RDN_ATTR", cast=str, default="uid")
 
 # OpenID Connect configuration
+# When enabled OIDC will be used for:
+# - web login (only method supported)
+# - API login (old authentication method still supported as well)
+OIDC_ENABLED = config("OIDC_ENABLED", cast=bool, default=False)
 OIDC_NAME = config("OIDC_NAME", cast=str, default="keycloak")
 OIDC_SERVER_URL = config(
     "OIDC_SERVER_URL",

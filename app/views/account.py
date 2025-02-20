@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from authlib.integrations.base_client.errors import OAuthError
 from . import templates
 from .. import deps, crud, auth, models
-from ..settings import APP_NAME, AUTHENTICATION_METHOD
+from ..settings import APP_NAME, OIDC_ENABLED
 
 router = APIRouter()
 
@@ -21,7 +21,7 @@ async def index(
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request):
-    if AUTHENTICATION_METHOD == "oidc":
+    if OIDC_ENABLED:
         redirect_uri = request.url_for("oidc_auth")
         return await deps.oauth.keycloak.authorize_redirect(request, redirect_uri)
     else:
@@ -41,7 +41,7 @@ async def login_post(
     request: Request,
     db: Session = Depends(deps.get_db),
 ):
-    if AUTHENTICATION_METHOD == "oidc":
+    if OIDC_ENABLED:
         raise HTTPException(
             status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid method"
         )
