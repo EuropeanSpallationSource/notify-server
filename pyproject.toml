@@ -27,7 +27,7 @@ dependencies = [
     "jinja2",
     "python-multipart",
     "httpx",
-    "PyJWT",
+    "PyJWT>=2.10",
     "ldap3",
     "SQLAlchemy<1.4",
     "uvicorn[standard]",
