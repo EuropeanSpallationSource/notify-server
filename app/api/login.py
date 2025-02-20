@@ -7,10 +7,7 @@ from sqlalchemy.orm import Session
 from .. import deps, crud, utils, auth, schemas
 from ..settings import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    OIDC_ANDROID_CLIENT_ID,
-    OIDC_ANDROID_CLIENT_SECRET,
-    OIDC_IOS_CLIENT_ID,
-    OIDC_IOS_CLIENT_SECRET,
+    OIDC_CLIENT_SECRET,
     OIDC_SCOPE,
 )
 
@@ -53,20 +50,11 @@ async def open_id_connect(
     request: Request,
     db: Session = Depends(deps.get_db),
 ):
-    """Login using OpenID Connect Authentication Code flow"""
-    if oidc_auth.client_id == OIDC_ANDROID_CLIENT_ID:
-        client_secret = OIDC_ANDROID_CLIENT_SECRET
-    elif oidc_auth.client_id == OIDC_IOS_CLIENT_ID:
-        client_secret = OIDC_IOS_CLIENT_SECRET
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Unknown client_id {oidc_auth.client_id}",
-        )
+    """Login using OpenID Connect Authentication Code flow from mobile client"""
     oidc_config = request.state.oidc_config
     data = {
         "client_id": oidc_auth.client_id,
-        "client_secret": client_secret,
+        "client_secret": OIDC_CLIENT_SECRET,
         "code": oidc_auth.code,
         "code_verifier": oidc_auth.code_verifier,
         "grant_type": "authorization_code",
@@ -117,7 +105,7 @@ async def open_id_connect(
         headers = {"Authorization": f"Bearer {access_token}"}
         data = {
             "client_id": oidc_auth.client_id,
-            "client_secret": client_secret,
+            "client_secret": OIDC_CLIENT_SECRET,
             "scope": OIDC_SCOPE,
         }
         logger.info("Retrieving user info.")
