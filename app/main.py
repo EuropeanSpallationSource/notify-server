@@ -21,7 +21,7 @@ from .settings import (
     SECRET_KEY,
     SESSION_MAX_AGE,
     OIDC_SERVER_URL,
-    AUTHENTICATION_METHOD,
+    OIDC_ENABLED,
 )
 
 
@@ -40,7 +40,7 @@ class State(TypedDict):
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[State]:
-    if AUTHENTICATION_METHOD == "oidc":
+    if OIDC_ENABLED:
         async with httpx.AsyncClient() as client:
             r = await client.get(OIDC_SERVER_URL)
             oidc_config = r.json()
