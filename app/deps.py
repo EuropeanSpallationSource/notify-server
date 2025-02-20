@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, status
 from starlette.requests import Request
-from fastapi.security import OAuth2PasswordBearer, APIKeyCookie
+from fastapi.security import OAuth2PasswordBearer
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
 from jwt import PyJWTError, ExpiredSignatureError
@@ -8,7 +8,6 @@ from authlib.integrations.starlette_client import OAuth
 from . import crud, models, utils
 from .database import SessionLocal
 from .settings import (
-    AUTH_COOKIE_NAME,
     OIDC_NAME,
     OIDC_SERVER_URL,
     OIDC_CLIENT_ID,
@@ -17,7 +16,6 @@ from .settings import (
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-cookie_sec = APIKeyCookie(name=AUTH_COOKIE_NAME)
 oauth = OAuth()
 oauth.register(
     OIDC_NAME,
