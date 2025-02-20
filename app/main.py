@@ -58,6 +58,8 @@ middleware = [
         secret_key=SECRET_KEY,
         session_cookie="notify_session",
         max_age=SESSION_MAX_AGE,
+        same_site="strict",
+        https_only=True,
     )
 ]
 app = FastAPI(
