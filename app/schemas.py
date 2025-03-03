@@ -164,3 +164,10 @@ class Aps(BaseModel):
 
 class ApnPayload(BaseModel):
     aps: Aps
+
+
+class OpenIdConnectAuth(BaseModel):
+    code: str
+    code_verifier: str
+    client_id: str
+    redirect_uri: str

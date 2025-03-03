@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.logger import logger
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.requests import Request
 from sqlalchemy.orm import Session
+from authlib.integrations.base_client.errors import OAuthError
 from . import templates
-from .. import deps, cookie_auth, crud, auth, models
-from ..settings import APP_NAME
+from .. import deps, crud, auth, models
+from ..settings import APP_NAME, OIDC_ENABLED
 
 router = APIRouter()
 
@@ -13,22 +14,26 @@ router = APIRouter()
 @router.get("/", response_class=HTMLResponse, name="index")
 async def index(
     request: Request,
-    current_user: models.User = Depends(deps.get_current_user_from_cookie),
+    current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
     return RedirectResponse(url="/notifications")
 
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request):
-    return templates.TemplateResponse(
-        "login.html",
-        {
-            "request": request,
-            "username": "",
-            "password": "",
-            "error": "",
-        },
-    )
+    if OIDC_ENABLED:
+        redirect_uri = request.url_for("oidc_auth")
+        return await deps.oauth.keycloak.authorize_redirect(request, redirect_uri)
+    else:
+        return templates.TemplateResponse(
+            "login.html",
+            {
+                "request": request,
+                "username": "",
+                "password": "",
+                "error": "",
+            },
+        )
 
 
 @router.post("/login", response_class=HTMLResponse)
@@ -36,6 +41,10 @@ async def login_post(
     request: Request,
     db: Session = Depends(deps.get_db),
 ):
+    if OIDC_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid method"
+        )
     form = await request.form()
     username = form.get("username", "").lower().strip()
     password = form.get("password", "").strip()
@@ -59,14 +68,35 @@ async def login_post(
         db_user = crud.create_user(db, username.lower())
 
     resp = RedirectResponse("/", status_code=status.HTTP_302_FOUND)
-    cookie_auth.set_auth(resp, db_user.id)
+    request.session["user_id"] = db_user.id
     return resp
 
 
+@router.get("/auth")
+async def oidc_auth(
+    request: Request,
+    db: Session = Depends(deps.get_db),
+):
+    try:
+        token = await deps.oauth.keycloak.authorize_access_token(request)
+    except OAuthError as e:
+        logger.warning(f"OAuthError on OpenID Connect redirect: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    user_info = token["userinfo"]
+    if user_info:
+        username = user_info["preferred_username"].lower()
+        db_user = crud.get_user_by_username(db, username)
+        if db_user is None:
+            db_user = crud.create_user(db, username)
+        request.session["user_id"] = db_user.id
+        return RedirectResponse(url=request.session.pop("next", "/"))
+    return RedirectResponse(url="/login")
+
+
 @router.get("/logout")
-def logout():
+def logout(request: Request):
     response = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
-    cookie_auth.logout(response)
+    request.session.pop("user_id", None)
     return response
 
 

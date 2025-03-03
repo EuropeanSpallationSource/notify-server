@@ -1,5 +1,70 @@
 [build-system]
-requires = ["setuptools >= 42", "wheel", "setuptools_scm[toml]>=3.4"]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
+version_file = "app/_version.py"
+
+[tool.setuptools]
+packages = ["app"]
+
+[project]
+name = "ess-notify"
+dynamic = ["version"]
+description = "ESS notification server"
+readme = "README.md"
+dependencies = [
+    "alembic",
+    "aiofiles",
+    "authlib",
+    "cryptography",
+    "fastapi",
+    "pydantic>=2.3",
+    "google-auth",
+    "requests",
+    "h2",
+    "itsdangerous",
+    "jinja2",
+    "python-multipart",
+    "httpx",
+    "PyJWT>=2.10",
+    "ldap3",
+    "SQLAlchemy<1.4",
+    "uvicorn[standard]",
+    "gunicorn",
+    "sentry-sdk",
+    "typer",
+]
+requires-python = ">= 3.11"
+license = { text = "BSD-2-Clause AND MIT" }
+
+[project.optional-dependencies]
+postgres = ["psycopg2"]
+tests = [
+    "packaging",
+    "pytest",
+    "pytest-cov",
+    "pytest-asyncio",
+    "pytest-mock",
+    "pytest-factoryboy",
+    "respx",
+    "Faker",
+]
+
+[project.urls]
+Repository = "https://github.com/europeanspallationsource/notify-server"
+
+[project.scripts]
+notify-server = "app.command:cli"
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E4",  # Import
+    "E7",  # Statement
+    "E9",  # Runtime
+    # Pyflakes
+    "F",
+    # flake8-simplify
+    "SIM",
+]

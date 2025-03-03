@@ -12,7 +12,7 @@ router = APIRouter()
 async def notifications_get(
     request: Request,
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user_from_cookie),
+    current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
     try:
         notifications_limit = request.session["notifications_limit"]
@@ -50,10 +50,10 @@ async def notifications_post(
     request: Request,
     notifications_limit: int = Form(50),
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user_from_cookie),
+    current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
     form = await request.form()
-    selected_categories = [key for key in form.keys() if key != "notifications_limit"]
+    selected_categories = [key for key in form if key != "notifications_limit"]
     request.session["selected_categories"] = selected_categories
     request.session["notifications_limit"] = notifications_limit
     user_services = crud.get_user_services(db, current_user)
@@ -95,7 +95,7 @@ async def notifications_post(
 async def notifications_update(
     request: Request,
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user_from_cookie),
+    current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
     user_services = crud.get_user_services(db, current_user)
     categories = {service.id: service.category for service in user_services}

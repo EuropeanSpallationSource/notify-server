@@ -15,6 +15,7 @@ except FileNotFoundError:
     config = Config()
 
 # Should be set to "ldap" or "url"
+# This is still supported for the API even when OIDC is enabled
 AUTHENTICATION_METHOD = config("AUTHENTICATION_METHOD", cast=str, default="ldap")
 # LDAP configuration
 LDAP_HOST = config("LDAP_HOST", cast=str, default="ldap.example.org")
@@ -23,6 +24,21 @@ LDAP_USE_SSL = config("LDAP_USE_SSL", cast=bool, default=True)
 LDAP_BASE_DN = config("LDAP_BASE_DN", cast=str, default="DC=esss,DC=lu,DC=se")
 LDAP_USER_DN = config("LDAP_USER_DN", cast=str, default="")
 LDAP_USER_RDN_ATTR = config("LDAP_USER_RDN_ATTR", cast=str, default="uid")
+
+# OpenID Connect configuration
+# When enabled OIDC will be used for:
+# - web login (only method supported)
+# - API login (old authentication method still supported as well)
+OIDC_ENABLED = config("OIDC_ENABLED", cast=bool, default=False)
+OIDC_NAME = config("OIDC_NAME", cast=str, default="keycloak")
+OIDC_SERVER_URL = config(
+    "OIDC_SERVER_URL",
+    cast=str,
+    default="https://keycloak.example.org/auth/realms/myrealm/.well-known/openid-configuration",
+)
+OIDC_CLIENT_ID = config("OIDC_CLIENT_ID", cast=str, default="notify")
+OIDC_CLIENT_SECRET = config("OIDC_CLIENT_SECRET", cast=Secret, default="!secret")
+OIDC_SCOPE = config("OIDC_SCOPE", cast=str, default="openid email profile")
 
 # URL to use when AUTHENTICATION_METHOD is set to "url"
 AUTHENTICATION_URL = config(
@@ -36,6 +52,8 @@ SQLALCHEMY_DATABASE_URL = config(
     "SQLALCHEMY_DATABASE_URL", cast=str, default="sqlite:///./sql_app.db"
 )
 SQLALCHEMY_DEBUG = config("SQLALCHEMY_DEBUG", cast=bool, default=False)
+# Session expiry time in seconds: 12 hours (12 * 60 * 60 = 43200)
+SESSION_MAX_AGE = config("SESSION_MAX_AGE", cast=int, default=43200)
 APNS_ALGORITHM = "ES256"
 APNS_KEY_ID = config("APNS_KEY_ID", cast=Secret, default="key-id")
 APNS_AUTH_KEY = config("APNS_AUTH_KEY", cast=Secret, default=DUMMY_PRIVATE_KEY)
@@ -63,8 +81,6 @@ JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = config(
     "ACCESS_TOKEN_EXPIRE_MINUTES", cast=int, default=43200
 )
-# Cookie name
-AUTH_COOKIE_NAME = config("AUTH_COOKIE_NAME", cast=str, default="notify_token")
 
 # Number of push notifications sent in parallel
 NB_PARALLEL_PUSH = config("NB_PARALLEL_PUSH", cast=int, default=50)
