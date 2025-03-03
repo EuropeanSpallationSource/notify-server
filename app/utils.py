@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import httpx
 import ipaddress
 import uuid
@@ -119,3 +120,39 @@ async def send_notification(notification_id: int) -> None:
         await android_client.aclose()
     finally:
         db.close()
+
+
+def validate_id_token(
+    id_token: str,
+    access_token: str,
+    jwks_client: jwt.PyJWKClient,
+    signing_algos: list[str],
+    client_id: str,
+) -> None:
+    """Raise an exception if the validation of the id token fails"""
+    # See https://pyjwt.readthedocs.io/en/stable/usage.html#oidc-login-flow
+    signing_key = jwks_client.get_signing_key_from_jwt(id_token)
+    # Decode and verify id_token claims
+    # expiration, issued at, not before, audience and issuer
+    data = jwt.decode_complete(
+        id_token,
+        key=signing_key,
+        audience=client_id,
+        algorithms=signing_algos,
+        require=["exp", "iat", "nbf", "aud", "iss"],
+        verify_signature=True,
+    )
+    payload, header = data["payload"], data["header"]
+    alg_obj = jwt.get_algorithm_by_name(header["alg"])
+    # compute at_hash, then validate
+    # access_token must be bytes (not str)
+    digest = alg_obj.compute_hash_digest(access_token.encode("utf-8"))
+    at_hash = (
+        base64.urlsafe_b64encode(digest[: (len(digest) // 2)])
+        .rstrip(b"=")
+        .decode("utf-8")
+    )
+    if at_hash != payload["at_hash"]:
+        raise ValueError(
+            f"at_hash value {payload['at_hash']} doesn't match computed {at_hash}"
+        )

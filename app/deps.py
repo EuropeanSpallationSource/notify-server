@@ -1,16 +1,29 @@
 from fastapi import Depends, HTTPException, status
 from starlette.requests import Request
-from fastapi.security import OAuth2PasswordBearer, APIKeyCookie
+from fastapi.security import OAuth2PasswordBearer
 from fastapi.logger import logger
-from itsdangerous.exc import BadSignature
 from sqlalchemy.orm import Session
 from jwt import PyJWTError, ExpiredSignatureError
-from . import crud, models, utils, cookie_auth
+from authlib.integrations.starlette_client import OAuth
+from . import crud, models, utils
 from .database import SessionLocal
-from .settings import AUTH_COOKIE_NAME
+from .settings import (
+    OIDC_NAME,
+    OIDC_SERVER_URL,
+    OIDC_CLIENT_ID,
+    OIDC_CLIENT_SECRET,
+    OIDC_SCOPE,
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-cookie_sec = APIKeyCookie(name=AUTH_COOKIE_NAME)
+oauth = OAuth()
+oauth.register(
+    OIDC_NAME,
+    client_id=OIDC_CLIENT_ID,
+    client_secret=str(OIDC_CLIENT_SECRET),
+    server_metadata_url=OIDC_SERVER_URL,
+    client_kwargs={"scope": OIDC_SCOPE},
+)
 
 
 def get_db():
@@ -22,7 +35,7 @@ def get_db():
 
 
 def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+    request: Request, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> models.User:
     """Return the current user based on the bearer token from the header"""
     credentials_exception = HTTPException(
@@ -30,6 +43,14 @@ def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    # Special case for swagger UI
+    # To avoid implementing OpenId Connect flow with the Authorize button,
+    # we use the cookie from the session that should be present if the user
+    # already logged in via the web UI
+    # We inject a dummy bearer token as one is expected by the oauth2_scheme
+    # If the user isn't logged in, this will return a 401
+    if token == "swagger-ui":
+        return get_current_user_from_session(request, db)
     try:
         payload = utils.decode_access_token(token)
     except ExpiredSignatureError:
@@ -73,21 +94,16 @@ def get_current_admin_user(
     return current_user
 
 
-def get_current_user_from_cookie(
+def get_current_user_from_session(
     request: Request, db: Session = Depends(get_db)
 ) -> models.User:
     unauthorized_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication"
     )
-    if AUTH_COOKIE_NAME not in request.cookies:
+    user_id = request.session.get("user_id")
+    if user_id is None:
         raise unauthorized_exception
-    cookie = request.cookies[AUTH_COOKIE_NAME]
-    try:
-        user_id = cookie_auth.serializer.loads(cookie)
-    except BadSignature as e:
-        logger.warning(f"Bad Signature, invalid cookie value: {e}")
-        raise unauthorized_exception
-    user = crud.get_user(db, user_id)
+    user = crud.get_user(db, int(user_id))
     if user is None:
         logger.warning(f"Unknown user id {user_id}")
         raise unauthorized_exception

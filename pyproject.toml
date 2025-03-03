@@ -16,10 +16,10 @@ readme = "README.md"
 dependencies = [
     "alembic",
     "aiofiles",
+    "authlib",
     "cryptography",
     "fastapi",
     "pydantic>=2.3",
-    "fastapi-versioning",
     "google-auth",
     "requests",
     "h2",
@@ -27,7 +27,7 @@ dependencies = [
     "jinja2",
     "python-multipart",
     "httpx",
-    "PyJWT",
+    "PyJWT>=2.10",
     "ldap3",
     "SQLAlchemy<1.4",
     "uvicorn[standard]",
@@ -36,7 +36,7 @@ dependencies = [
     "typer",
 ]
 requires-python = ">= 3.9"
-license = { file = "LICENSE" }
+license = { text = "BSD-2-Clause AND MIT" }
 
 [project.optional-dependencies]
 postgres = ["psycopg2"]
