@@ -11,9 +11,9 @@ anyio==4.8.0
     #   httpx
     #   starlette
     #   watchfiles
-authlib==1.4.1
+authlib==1.5.1
     # via ess-notify (pyproject.toml)
-cachetools==5.5.1
+cachetools==5.5.2
     # via google-auth
 certifi==2025.1.31
     # via
@@ -29,11 +29,11 @@ click==8.1.8
     # via
     #   typer
     #   uvicorn
-cryptography==44.0.1
+cryptography==44.0.2
     # via
     #   ess-notify (pyproject.toml)
     #   authlib
-fastapi==0.115.8
+fastapi==0.115.11
     # via ess-notify (pyproject.toml)
 google-auth==2.38.0
     # via ess-notify (pyproject.toml)
@@ -119,9 +119,9 @@ sqlalchemy==1.3.24
     # via
     #   ess-notify (pyproject.toml)
     #   alembic
-starlette==0.45.3
+starlette==0.46.0
     # via fastapi
-typer==0.15.1
+typer==0.15.2
     # via ess-notify (pyproject.toml)
 typing-extensions==4.12.2
     # via
