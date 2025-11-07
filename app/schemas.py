@@ -171,3 +171,37 @@ class OpenIdConnectAuth(BaseModel):
     code_verifier: str
     client_id: str
     redirect_uri: str
+
+
+class RealmType(str, Enum):
+    real = "real"
+    demo = "demo"
+    sandbox = "sandbox"
+    unknown = "unknown"
+
+
+class RealmDiscoveryResponse(BaseModel):
+    username: str
+    realm: str
+    issuer: str
+    authorization_endpoint: str
+    token_endpoint: str
+    client_id: str
+    scope: str
+    type: RealmType = RealmType.real
+    demo_instructions: Optional[str] = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "username": "user",
+                "realm": "company-realm",
+                "issuer": "https://keycloak.example.org/auth/realms/company-realm",
+                "authorization_endpoint": "https://keycloak.example.org/auth/realms/company-realm/protocol/openid-connect/auth",
+                "token_endpoint": "https://keycloak.example.org/auth/realms/company-realm/protocol/openid-connect/token",
+                "client_id": "notify",
+                "scope": "openid email profile",
+                "type": "real",
+            }
+        }
+    )

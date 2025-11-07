@@ -1,17 +1,22 @@
 import httpx
+import time
 from datetime import datetime, timedelta, timezone
+from urllib.parse import unquote
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
-from .. import deps, crud, utils, auth, schemas
+from .. import deps, crud, utils, auth, schemas, realm_discovery
 from ..settings import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     OIDC_CLIENT_SECRET,
     OIDC_SCOPE,
+    OIDC_ENABLED,
+    OIDC_REALM_DISCOVERY_TTL_SECONDS,
 )
 
 router = APIRouter()
+_DISCOVERY_CACHE: dict[str, dict] = {}
 
 
 def create_access_token(db, username, response) -> dict[str, str]:
@@ -131,3 +136,73 @@ async def open_id_connect(
             )
         username = response.json()["preferred_username"].lower()
     return create_access_token(db, username, response)
+
+
+@router.get(
+    "/realm-discovery/",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.RealmDiscoveryResponse,
+)
+def get_realm_for_username(username: str) -> schemas.RealmDiscoveryResponse:
+    """
+    Discover the appropriate Keycloak realm for a username/email.
+
+    Mobile apps should call this endpoint first to determine which realm to authenticate against.
+    The response includes all necessary OIDC endpoints and configuration for the discovered realm.
+
+    Note: If using email addresses, URL-encode them (e.g., alice%40example.com)
+    """
+    if not OIDC_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="OIDC is not enabled",
+        )
+
+    try:
+        normalized = unquote(username).lower().strip()
+    except Exception:
+        normalized = username.lower().strip()
+
+    if not normalized:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Username is required"
+        )
+
+    # Check cache first
+    now = time.time()
+    cached = _DISCOVERY_CACHE.get(normalized)
+    if cached and cached["expires_at"] > now:
+        return cached["value"]
+
+    # Discover realm
+    try:
+        realm = realm_discovery.discover_realm_for_username(normalized)
+    except Exception as e:
+        logger.error("Failed to discover realm for %s: %s", normalized, e)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail="Realm discovery failed"
+        )
+
+    # Build response with all OIDC endpoints
+    issuer = realm_discovery.get_keycloak_issuer(realm)
+
+    response = schemas.RealmDiscoveryResponse(
+        username=normalized,
+        realm=realm,
+        issuer=issuer,
+        authorization_endpoint=realm_discovery.get_keycloak_authorization_endpoint(
+            realm
+        ),
+        token_endpoint=realm_discovery.get_keycloak_token_endpoint(realm),
+        client_id=realm_discovery.OIDC_CLIENT_ID,
+        scope=realm_discovery.OIDC_SCOPE,
+        type=schemas.RealmType.real,  # Could be enhanced to detect demo/sandbox realms
+    )
+
+    # Cache the response
+    _DISCOVERY_CACHE[normalized] = {
+        "value": response,
+        "expires_at": now + OIDC_REALM_DISCOVERY_TTL_SECONDS,
+    }
+
+    return response

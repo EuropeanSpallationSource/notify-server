@@ -37,6 +37,91 @@ To be able to login, at least the following variables shall be overwritten:
 - LDAP_HOST
 - LDAP_USER_DN
 
+### OpenID Connect with Automatic Realm Discovery for Mobile Apps
+
+The application supports automatic Keycloak realm discovery for mobile applications while maintaining standard web authentication.
+
+**Web Interface**: Uses standard OIDC authentication with a single configured realm.
+**Mobile Apps**: Can discover and authenticate against different realms automatically based on username patterns.
+
+#### Configuration
+
+```bash
+# Enable OIDC authentication
+OIDC_ENABLED=true
+
+# Standard web authentication (single realm)
+OIDC_SERVER_URL=https://keycloak.maxiv.lu.se/auth/realms/main/maxiv
+OIDC_CLIENT_ID=notify
+OIDC_CLIENT_SECRET=your-client-secret
+
+# Mobile app realm discovery configuration
+OIDC_BASE_URL=https://keycloak.maxiv.lu.se/auth
+OIDC_DEFAULT_REALM=maxiv
+OIDC_REALM_MAPPING="demo:demo-realm"
+OIDC_REALM_DISCOVERY_TTL_SECONDS=300  # Cache responses for 5 minutes
+```
+
+#### How It Works
+
+**For Web Users:**
+- Standard OIDC authentication flow
+- Single configured realm via `OIDC_SERVER_URL`
+- Traditional login redirect to Keycloak
+
+**For Mobile Apps:**
+1. App calls `/api/v1/realm-discovery/?username=<username>` to get realm information
+2. App receives realm-specific OIDC endpoints and configuration
+3. App initiates OIDC flow with the appropriate realm
+4. App exchanges authorization code for tokens using `/api/v1/open_id_connect`
+
+#### API Endpoints for Mobile Apps
+
+**Realm Discovery:**
+```http
+GET /api/v1/realm-discovery/{username}
+```
+
+Returns:
+```json
+{
+  "username": "user",
+  "realm": "realm",
+  "issuer": "https://keycloak.maxiv.lu.se/auth/realms/company-realm",
+  "authorization_endpoint": "https://keycloak.maxiv.lu.se/auth/realms/company-realm/protocol/openid-connect/auth",
+  "token_endpoint": "https://keycloak.maxiv.lu.se/auth/realms/company-realm/protocol/openid-connect/token",
+  "client_id": "notify",
+  "scope": "openid email profile",
+  "type": "real"
+}
+```
+
+**Response Fields:**
+- `username`: The normalized username (lowercased, trimmed)
+- `realm`: The discovered Keycloak realm name
+- `issuer`: The OIDC issuer URL for the realm
+- `authorization_endpoint`: OAuth2 authorization endpoint
+- `token_endpoint`: OAuth2 token endpoint for code exchange
+- `client_id`: OIDC client ID to use
+- `scope`: OAuth2 scopes to request
+- `type`: Realm type (`real`, `demo`, `sandbox`, `unknown`)
+- `demo_instructions`: Optional instructions for demo/testing realms
+
+**OIDC Authentication:**
+```http
+POST /api/v1/open_id_connect
+```
+
+Body:
+```json
+{
+  "code": "authorization_code",
+  "code_verifier": "pkce_verifier", 
+  "client_id": "notify",
+  "redirect_uri": "app://callback"
+}
+```
+
 Refer to the default values defined in the [Ansible role](https://gitlab.esss.lu.se/ics-ansible-galaxy/ics-ans-role-ess-notify-server/-/blob/master/defaults/main.yml)
 and in the [ess_notify_servers](https://csentry.esss.lu.se/network/groups/view/ess_notify_servers) group in CSEntry.
 
@@ -51,7 +136,7 @@ Create a virtual environment and install the requirements:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-pip install -e .[tests]
+pip install -e ".[tests]"
 ```
 
 When using sqlite, it's not possible to run `alembic` for database migration
