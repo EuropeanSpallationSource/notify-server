@@ -4,7 +4,7 @@ include:
     file: "/PreCommit.gitlab-ci.yml"
   - project: kits-maxiv/kubernetes/k8s-gitlab-ci
     file: "/Docker-Helm-deploy.gitlab-ci.yml"
-    ref: "0.7"
+    ref: "0.8"
 
 # Override workflow rules to deploy on any branch
 workflow:
