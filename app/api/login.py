@@ -63,7 +63,7 @@ async def open_id_connect(
         "code": oidc_auth.code,
         "code_verifier": oidc_auth.code_verifier,
         "grant_type": "authorization_code",
-        "redirect_uri": oidc_auth.redirect_uri,
+        "redirect_uri": "https://notify.maxiv.lu.seß/auth",
     }
     logger.info(
         "Login via OIDC Authentication Code flow. "
