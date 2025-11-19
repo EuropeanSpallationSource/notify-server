@@ -11,19 +11,19 @@ from .settings import (
     OIDC_SCOPE,
     OIDC_REALM_MAPPING,
 )
+from .schemas import RealmType
 
 
-def discover_realm_for_username(username: str) -> str:
+def discover_realm(realm_type: RealmType) -> str:
     """
     Discover the appropriate Keycloak realm for a given username.
 
     Args:
-        username: The username to check for realm mapping
+        realm_type: The realm type to check for realm mapping
 
     Returns:
-        The realm name to use for this username
+        The realm name to use for this realm type
     """
-    username = username.lower().strip()
 
     # Check realm mapping configuration
     for mapping in OIDC_REALM_MAPPING:
@@ -32,8 +32,8 @@ def discover_realm_for_username(username: str) -> str:
             pattern = pattern.strip().lower()
             realm = realm.strip()
 
-            # Check if pattern matches username
-            if pattern == username:
+            # Check if pattern matches realm_type
+            if pattern == realm_type.lower().strip():
                 return realm
 
     # Default realm fallback

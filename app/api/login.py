@@ -2,7 +2,7 @@ import httpx
 import time
 from datetime import datetime, timedelta, timezone
 from urllib.parse import unquote
-from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Response, Request, status, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
@@ -143,14 +143,15 @@ async def open_id_connect(
     status_code=status.HTTP_200_OK,
     response_model=schemas.RealmDiscoveryResponse,
 )
-def get_realm_for_username(username: str) -> schemas.RealmDiscoveryResponse:
+def get_realm(
+    realm_type: str = Query(..., alias="type"),
+) -> schemas.RealmDiscoveryResponse:
     """
-    Discover the appropriate Keycloak realm for a username/email.
+    Discover the appropriate Keycloak realm for a realm type.
 
     Mobile apps should call this endpoint first to determine which realm to authenticate against.
     The response includes all necessary OIDC endpoints and configuration for the discovered realm.
 
-    Note: If using email addresses, URL-encode them (e.g., alice%40example.com)
     """
     if not OIDC_ENABLED:
         raise HTTPException(
@@ -159,13 +160,10 @@ def get_realm_for_username(username: str) -> schemas.RealmDiscoveryResponse:
         )
 
     try:
-        normalized = unquote(username).lower().strip()
+        normalized = schemas.RealmType(unquote(realm_type).lower().strip())
     except Exception:
-        normalized = username.lower().strip()
-
-    if not normalized:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Username is required"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Valid type is required"
         )
 
     # Check cache first
@@ -176,9 +174,9 @@ def get_realm_for_username(username: str) -> schemas.RealmDiscoveryResponse:
 
     # Discover realm
     try:
-        realm = realm_discovery.discover_realm_for_username(normalized)
+        realm = realm_discovery.discover_realm(normalized)
     except Exception as e:
-        logger.error("Failed to discover realm for %s: %s", normalized, e)
+        logger.error("Failed to discover realm of type %s: %s", normalized, e)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY, detail="Realm discovery failed"
         )
@@ -187,7 +185,6 @@ def get_realm_for_username(username: str) -> schemas.RealmDiscoveryResponse:
     issuer = realm_discovery.get_keycloak_issuer(realm)
 
     response = schemas.RealmDiscoveryResponse(
-        username=normalized,
         realm=realm,
         issuer=issuer,
         authorization_endpoint=realm_discovery.get_keycloak_authorization_endpoint(
@@ -196,7 +193,7 @@ def get_realm_for_username(username: str) -> schemas.RealmDiscoveryResponse:
         token_endpoint=realm_discovery.get_keycloak_token_endpoint(realm),
         client_id=realm_discovery.OIDC_CLIENT_ID,
         scope=realm_discovery.OIDC_SCOPE,
-        type=schemas.RealmType.real,  # Could be enhanced to detect demo/sandbox realms
+        type=normalized,
     )
 
     # Cache the response

@@ -176,12 +176,10 @@ class OpenIdConnectAuth(BaseModel):
 class RealmType(str, Enum):
     real = "real"
     demo = "demo"
-    sandbox = "sandbox"
     unknown = "unknown"
 
 
 class RealmDiscoveryResponse(BaseModel):
-    username: str
     realm: str
     issuer: str
     authorization_endpoint: str
@@ -194,7 +192,6 @@ class RealmDiscoveryResponse(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "username": "user",
                 "realm": "company-realm",
                 "issuer": "https://keycloak.example.org/auth/realms/company-realm",
                 "authorization_endpoint": "https://keycloak.example.org/auth/realms/company-realm/protocol/openid-connect/auth",
