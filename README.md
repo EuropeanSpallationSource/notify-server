@@ -70,7 +70,7 @@ OIDC_REALM_DISCOVERY_TTL_SECONDS=300  # Cache responses for 5 minutes
 - Traditional login redirect to Keycloak
 
 **For Mobile Apps:**
-1. App calls `/api/v1/realm-discovery/?username=<username>` to get realm information
+1. App calls `/api/v1/realm-discovery/type?=<real/demo/unknown>` to get realm information
 2. App receives realm-specific OIDC endpoints and configuration
 3. App initiates OIDC flow with the appropriate realm
 4. App exchanges authorization code for tokens using `/api/v1/open_id_connect`

@@ -186,7 +186,7 @@ class RealmDiscoveryResponse(BaseModel):
     token_endpoint: str
     client_id: str
     scope: str
-    type: RealmType = RealmType.real
+    type: RealmType
     demo_instructions: Optional[str] = None
 
     model_config = ConfigDict(

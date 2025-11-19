@@ -162,13 +162,11 @@ def get_realm(
     try:
         normalized = schemas.RealmType(unquote(realm_type).lower().strip())
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Valid type is required"
-        )
+        normalized = schemas.RealmType("unknown")
 
     # Check cache first
     now = time.time()
-    cached = _DISCOVERY_CACHE.get(normalized)
+    cached = _DISCOVERY_CACHE.get(normalized.value)
     if cached and cached["expires_at"] > now:
         return cached["value"]
 
@@ -197,7 +195,7 @@ def get_realm(
     )
 
     # Cache the response
-    _DISCOVERY_CACHE[normalized] = {
+    _DISCOVERY_CACHE[normalized.value] = {
         "value": response,
         "expires_at": now + OIDC_REALM_DISCOVERY_TTL_SECONDS,
     }
