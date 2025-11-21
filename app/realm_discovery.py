@@ -11,10 +11,10 @@ from .settings import (
     OIDC_SCOPE,
     OIDC_REALM_MAPPING,
 )
-from .schemas import RealmType
+from . import schemas
 
 
-def discover_realm(realm_type: RealmType) -> str:
+def discover_realm(realm_type: schemas.RealmType) -> str:
     """
     Discover the appropriate Keycloak realm for a given username.
 

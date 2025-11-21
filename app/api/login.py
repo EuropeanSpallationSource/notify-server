@@ -2,7 +2,7 @@ import httpx
 import time
 from datetime import datetime, timedelta, timezone
 from urllib.parse import unquote
-from fastapi import APIRouter, Depends, HTTPException, Response, Request, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
@@ -144,7 +144,7 @@ async def open_id_connect(
     response_model=schemas.RealmDiscoveryResponse,
 )
 def get_realm(
-    realm_type: str = Query(..., alias="type"),
+    type: str,
 ) -> schemas.RealmDiscoveryResponse:
     """
     Discover the appropriate Keycloak realm for a realm type.
@@ -153,6 +153,7 @@ def get_realm(
     The response includes all necessary OIDC endpoints and configuration for the discovered realm.
 
     """
+    realm_type = type
     if not OIDC_ENABLED:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
