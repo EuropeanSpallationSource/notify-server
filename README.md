@@ -42,7 +42,7 @@ To be able to login, at least the following variables shall be overwritten:
 The application supports automatic Keycloak realm discovery for mobile applications while maintaining standard web authentication.
 
 **Web Interface**: Uses standard OIDC authentication with a single configured realm.
-**Mobile Apps**: Can discover and authenticate against different realms automatically based on username patterns.
+**Mobile Apps**: Can discover and authenticate against different realms depending on type.
 
 #### Configuration
 
@@ -85,7 +85,6 @@ GET /api/v1/realm-discovery/{username}
 Returns:
 ```json
 {
-  "username": "user",
   "realm": "realm",
   "issuer": "https://keycloak.maxiv.lu.se/auth/realms/company-realm",
   "authorization_endpoint": "https://keycloak.maxiv.lu.se/auth/realms/company-realm/protocol/openid-connect/auth",
@@ -97,14 +96,13 @@ Returns:
 ```
 
 **Response Fields:**
-- `username`: The normalized username (lowercased, trimmed)
 - `realm`: The discovered Keycloak realm name
 - `issuer`: The OIDC issuer URL for the realm
 - `authorization_endpoint`: OAuth2 authorization endpoint
 - `token_endpoint`: OAuth2 token endpoint for code exchange
 - `client_id`: OIDC client ID to use
 - `scope`: OAuth2 scopes to request
-- `type`: Realm type (`real`, `demo`, `sandbox`, `unknown`)
+- `type`: Realm type (`real`, `demo`, `unknown`)
 - `demo_instructions`: Optional instructions for demo/testing realms
 
 **OIDC Authentication:**
