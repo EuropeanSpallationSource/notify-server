@@ -9,10 +9,11 @@ from . import crud, models, utils
 from .database import SessionLocal
 from .settings import (
     OIDC_NAME,
-    OIDC_SERVER_URL,
+    OIDC_BASE_URL,
     OIDC_CLIENT_ID,
     OIDC_CLIENT_SECRET,
     OIDC_SCOPE,
+    OIDC_DEFAULT_REALM,
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -21,7 +22,7 @@ oauth.register(
     OIDC_NAME,
     client_id=OIDC_CLIENT_ID,
     client_secret=str(OIDC_CLIENT_SECRET),
-    server_metadata_url=OIDC_SERVER_URL,
+    server_metadata_url=f"{OIDC_BASE_URL}/realms/{OIDC_DEFAULT_REALM}/.well-known/openid-configuration",
     client_kwargs={"scope": OIDC_SCOPE},
 )
 

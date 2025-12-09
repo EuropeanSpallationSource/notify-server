@@ -1,22 +1,21 @@
 import httpx
-import time
 from datetime import datetime, timedelta, timezone
-from urllib.parse import unquote
-from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Response, Request, status, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
-from .. import deps, crud, utils, auth, schemas, realm_discovery
+from .. import deps, crud, utils, auth, schemas
 from ..settings import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     OIDC_CLIENT_SECRET,
     OIDC_SCOPE,
     OIDC_ENABLED,
-    OIDC_REALM_DISCOVERY_TTL_SECONDS,
+    OIDC_BASE_URL,
+    OIDC_REALM_MAPPING,
+    OIDC_DEFAULT_REALM,
 )
 
 router = APIRouter()
-_DISCOVERY_CACHE: dict[str, dict] = {}
 
 
 def create_access_token(db, username, response) -> dict[str, str]:
@@ -53,10 +52,11 @@ async def open_id_connect(
     oidc_auth: schemas.OpenIdConnectAuth,
     response: Response,
     request: Request,
+    realm: schemas.RealmType,
     db: Session = Depends(deps.get_db),
 ):
     """Login using OpenID Connect Authentication Code flow from mobile client"""
-    oidc_config = request.state.oidc_config
+    oidc_config = request.state.oidc_config[realm]
     data = {
         "client_id": oidc_auth.client_id,
         "client_secret": OIDC_CLIENT_SECRET,
@@ -144,7 +144,7 @@ async def open_id_connect(
     response_model=schemas.RealmDiscoveryResponse,
 )
 def get_realm(
-    type: str,
+    realm_type: str = Query(..., alias="type"),
 ) -> schemas.RealmDiscoveryResponse:
     """
     Discover the appropriate Keycloak realm for a realm type.
@@ -153,52 +153,58 @@ def get_realm(
     The response includes all necessary OIDC endpoints and configuration for the discovered realm.
 
     """
-    realm_type = type
     if not OIDC_ENABLED:
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
             detail="OIDC is not enabled",
         )
 
     try:
-        normalized = schemas.RealmType(unquote(realm_type).lower().strip())
-    except Exception:
-        normalized = schemas.RealmType("unknown")
-
-    # Check cache first
-    now = time.time()
-    cached = _DISCOVERY_CACHE.get(normalized.value)
-    if cached and cached["expires_at"] > now:
-        return cached["value"]
-
+        normalized = schemas.RealmType(realm_type.lower().strip())
+    except Exception as e:
+        logger.error("Failed to discover realm of type %s: %s", realm_type, e)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail="Realm discovery failed"
+        )
     # Discover realm
     try:
-        realm = realm_discovery.discover_realm(normalized)
+        realm = discover_realm(normalized)
     except Exception as e:
         logger.error("Failed to discover realm of type %s: %s", normalized, e)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY, detail="Realm discovery failed"
         )
 
-    # Build response with all OIDC endpoints
-    issuer = realm_discovery.get_keycloak_issuer(realm)
-
     response = schemas.RealmDiscoveryResponse(
         realm=realm,
-        issuer=issuer,
-        authorization_endpoint=realm_discovery.get_keycloak_authorization_endpoint(
-            realm
-        ),
-        token_endpoint=realm_discovery.get_keycloak_token_endpoint(realm),
-        client_id=realm_discovery.OIDC_CLIENT_ID,
-        scope=realm_discovery.OIDC_SCOPE,
+        discovery_uri=f"{OIDC_BASE_URL}/realms/{realm}/.well-known/openid-configuration",
         type=normalized,
     )
 
-    # Cache the response
-    _DISCOVERY_CACHE[normalized.value] = {
-        "value": response,
-        "expires_at": now + OIDC_REALM_DISCOVERY_TTL_SECONDS,
-    }
-
     return response
+
+
+def discover_realm(realm_type: schemas.RealmType) -> str:
+    """
+    Discover the appropriate Keycloak realm for a given username.
+
+    Args:
+        realm_type: The realm type to check for realm mapping
+
+    Returns:
+        The realm name to use for this realm type
+    """
+
+    # Check realm mapping configuration
+    for mapping in OIDC_REALM_MAPPING:
+        if ":" in mapping:
+            pattern, realm = mapping.split(":", 1)
+            pattern = pattern.strip().lower()
+            realm = realm.strip()
+
+            # Check if pattern matches realm_type
+            if pattern == realm_type.lower().strip():
+                return realm
+
+    # Default realm fallback
+    return OIDC_DEFAULT_REALM

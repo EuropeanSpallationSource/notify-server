@@ -59,7 +59,6 @@ OIDC_CLIENT_SECRET=your-client-secret
 OIDC_BASE_URL=https://keycloak.maxiv.lu.se/auth
 OIDC_DEFAULT_REALM=maxiv
 OIDC_REALM_MAPPING="demo:demo-realm"
-OIDC_REALM_DISCOVERY_TTL_SECONDS=300  # Cache responses for 5 minutes
 ```
 
 #### How It Works
@@ -71,7 +70,7 @@ OIDC_REALM_DISCOVERY_TTL_SECONDS=300  # Cache responses for 5 minutes
 
 **For Mobile Apps:**
 1. App calls `/api/v1/realm-discovery/type?=<real/demo/unknown>` to get realm information
-2. App receives realm-specific OIDC endpoints and configuration
+2. App receives realm-specific OIDC discovery URI
 3. App initiates OIDC flow with the appropriate realm
 4. App exchanges authorization code for tokens using `/api/v1/open_id_connect`
 
@@ -79,31 +78,22 @@ OIDC_REALM_DISCOVERY_TTL_SECONDS=300  # Cache responses for 5 minutes
 
 **Realm Discovery:**
 ```http
-GET /api/v1/realm-discovery/{username}
+GET /api/v1/realm-discovery/{type}
 ```
 
 Returns:
 ```json
 {
   "realm": "realm",
-  "issuer": "https://keycloak.maxiv.lu.se/auth/realms/company-realm",
-  "authorization_endpoint": "https://keycloak.maxiv.lu.se/auth/realms/company-realm/protocol/openid-connect/auth",
-  "token_endpoint": "https://keycloak.maxiv.lu.se/auth/realms/company-realm/protocol/openid-connect/token",
-  "client_id": "notify",
-  "scope": "openid email profile",
+  "discovery_uri": "https://keycloak.example.org/auth/realms/company-realm/.well-known/openid-configuratio",
   "type": "real"
 }
 ```
 
 **Response Fields:**
 - `realm`: The discovered Keycloak realm name
-- `issuer`: The OIDC issuer URL for the realm
-- `authorization_endpoint`: OAuth2 authorization endpoint
-- `token_endpoint`: OAuth2 token endpoint for code exchange
-- `client_id`: OIDC client ID to use
-- `scope`: OAuth2 scopes to request
+- `discovery_uri`: The OIDC URI for the discovery endpoint
 - `type`: Realm type (`real`, `demo`, `unknown`)
-- `demo_instructions`: Optional instructions for demo/testing realms
 
 **OIDC Authentication:**
 ```http

@@ -40,20 +40,12 @@ OIDC_BASE_URL = config(
 # Default realm when no specific mapping matches
 OIDC_DEFAULT_REALM = config("OIDC_DEFAULT_REALM", cast=str, default="maxiv")
 # Legacy single realm URL (for backward compatibility)
-OIDC_SERVER_URL = config(
-    "OIDC_SERVER_URL",
-    cast=str,
-    default="https://keycloak.example.org/auth/realms/myrealm/.well-known/openid-configuration",
-)
 OIDC_CLIENT_ID = config("OIDC_CLIENT_ID", cast=str, default="notify")
 OIDC_CLIENT_SECRET = config("OIDC_CLIENT_SECRET", cast=Secret, default="!secret")
 OIDC_SCOPE = config("OIDC_SCOPE", cast=str, default="openid email profile")
 # Realm mapping: comma-separated "pattern:realm" pairs
 OIDC_REALM_MAPPING = config(
     "OIDC_REALM_MAPPING", cast=CommaSeparatedStrings, default=""
-)
-OIDC_REALM_DISCOVERY_TTL_SECONDS = config(
-    "OIDC_REALM_DISCOVERY_TTL_SECONDS", cast=int, default=300
 )
 
 # URL to use when AUTHENTICATION_METHOD is set to "url"
