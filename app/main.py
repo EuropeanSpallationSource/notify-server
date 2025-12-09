@@ -45,10 +45,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
     if OIDC_ENABLED:
         async with httpx.AsyncClient() as client:
             for realm in schemas.RealmType:
-                url = f"{OIDC_BASE_URL}/realms/{login.discover_realm(realm)}"
+                url = f"{OIDC_BASE_URL}/realms/{login.discover_realm(realm)}/.well-known/openid-configuration"
                 r = await client.get(url)
-                oidc_config[realm] = r.json()
-                jwks_client[realm] = jwt.PyJWKClient(oidc_config[realm]["jwks_uri"])
+                try:
+                    if r.status_code == 200:
+                        oidc_config[realm] = r.json()
+                        jwks_uri = oidc_config[realm]["jwks_uri"]
+                        jwks_client[realm] = jwt.PyJWKClient(jwks_uri)
+                except Exception:
+                    raise Exception(f"{url}: {r.status_code}: {r.json()}")
     yield {"oidc_config": oidc_config, "jwks_client": jwks_client}
 
 
