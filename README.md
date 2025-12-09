@@ -93,7 +93,7 @@ Returns:
 **Response Fields:**
 - `realm`: The discovered Keycloak realm name
 - `discovery_uri`: The OIDC URI for the discovery endpoint
-- `type`: Realm type (`real`, `demo`, `unknown`)
+- `type`: Realm type (`real`, `demo`)
 
 **OIDC Authentication:**
 ```http
