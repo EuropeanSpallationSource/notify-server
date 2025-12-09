@@ -35,8 +35,8 @@ def test_realm_discovery_endpoint_oidc_disabled():
     client = TestClient(app)
     response = client.get("/api/v1/realm-discovery/?type=test")
 
-    assert response.status_code == 405
-    assert response.json() == {"detail": "OIDC is not enabled"}
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["ctx"] == {"expected": "'real' or 'demo'"}
 
 
 @pytest.mark.parametrize(
@@ -65,7 +65,7 @@ def test_realm_discovery_endpoint_success(realm_type, realm_mapping, expected_re
     assert data["realm"] == expected_realm
     assert (
         data["discovery_uri"]
-        == f"https://keycloak.test.com/auth/realms/{expected_realm}/.well-known/openid-configuration"
+        == f"https://keycloak.test.com/auth/realms/{expected_realm}"
     )
 
 

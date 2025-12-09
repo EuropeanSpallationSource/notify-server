@@ -97,8 +97,10 @@ async def open_id_connect(
             utils.validate_id_token(
                 id_token,
                 access_token,
-                request.state.jwks_client,
-                request.state.oidc_config["id_token_signing_alg_values_supported"],
+                request.state.jwks_client[realm],
+                request.state.oidc_config[realm][
+                    "id_token_signing_alg_values_supported"
+                ],
                 oidc_auth.client_id,
             )
         except Exception as e:
@@ -144,7 +146,7 @@ async def open_id_connect(
     response_model=schemas.RealmDiscoveryResponse,
 )
 def get_realm(
-    realm_type: str = Query(..., alias="type"),
+    realm_type: schemas.RealmType = Query(..., alias="type"),
 ) -> schemas.RealmDiscoveryResponse:
     """
     Discover the appropriate Keycloak realm for a realm type.
@@ -159,26 +161,19 @@ def get_realm(
             detail="OIDC is not enabled",
         )
 
-    try:
-        normalized = schemas.RealmType(realm_type.lower().strip())
-    except Exception as e:
-        logger.error("Failed to discover realm of type %s: %s", realm_type, e)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY, detail="Realm discovery failed"
-        )
     # Discover realm
     try:
-        realm = discover_realm(normalized)
+        realm = discover_realm(realm_type)
     except Exception as e:
-        logger.error("Failed to discover realm of type %s: %s", normalized, e)
+        logger.error("Failed to discover realm of type %s: %s", realm_type, e)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY, detail="Realm discovery failed"
         )
 
     response = schemas.RealmDiscoveryResponse(
         realm=realm,
-        discovery_uri=f"{OIDC_BASE_URL}/realms/{realm}/.well-known/openid-configuration",
-        type=normalized,
+        discovery_uri=f"{OIDC_BASE_URL}/realms/{realm}",
+        type=realm_type,
     )
 
     return response
@@ -186,7 +181,7 @@ def get_realm(
 
 def discover_realm(realm_type: schemas.RealmType) -> str:
     """
-    Discover the appropriate Keycloak realm for a given username.
+    Discover the appropriate Keycloak realm for a given type.
 
     Args:
         realm_type: The realm type to check for realm mapping

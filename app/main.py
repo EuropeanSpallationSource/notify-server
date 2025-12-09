@@ -35,20 +35,20 @@ logger.setLevel(gunicorn_error_logger.level)
 
 class State(TypedDict):
     oidc_config: dict[schemas.RealmType, dict[str, str]]
-    jwks_client: jwt.PyJWKClient | None
+    jwks_client: dict[schemas.RealmType, jwt.PyJWKClient] | None
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[State]:
     oidc_config = {}
-    jwks_client = None
+    jwks_client = {}
     if OIDC_ENABLED:
         async with httpx.AsyncClient() as client:
             for realm in schemas.RealmType:
-                url = f"{OIDC_BASE_URL}/realms/{login.discover_realm(realm)}/.well-known/openid-configuration"
+                url = f"{OIDC_BASE_URL}/realms/{login.discover_realm(realm)}"
                 r = await client.get(url)
                 oidc_config[realm] = r.json()
-                jwks_client = jwt.PyJWKClient(oidc_config[realm]["jwks_uri"])
+                jwks_client[realm] = jwt.PyJWKClient(oidc_config[realm]["jwks_uri"])
     yield {"oidc_config": oidc_config, "jwks_client": jwks_client}
 
 
