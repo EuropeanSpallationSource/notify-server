@@ -55,6 +55,7 @@ AUTHENTICATION_URL = config(
 ADMIN_USERS = config("ADMIN_USERS", cast=CommaSeparatedStrings, default="")
 # Demo account with "demo" username has access only to service defined in DEMO_ACCOUNT_SERVICE
 DEMO_ACCOUNT_SERVICE = config("DEMO_ACCOUNT_SERVICE", cast=str, default="demo")
+DEMO_ACCOUNT_USERNAME = config("DEMO_ACCOUNT_USERNAME", cast=str, default="demo")
 DEMO_ACCOUNT_PASSWORD = config("DEMO_ACCOUNT_PASSWORD", cast=Secret, default="demo")
 SQLALCHEMY_DATABASE_URL = config(
     "SQLALCHEMY_DATABASE_URL", cast=str, default="sqlite:///./sql_app.db"
