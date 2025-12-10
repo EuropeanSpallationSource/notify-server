@@ -180,5 +180,7 @@ class RealmType(str, Enum):
 
 class RealmDiscoveryResponse(BaseModel):
     realm: str
-    discovery_uri: str
+    authorization_endpoint: str
+    token_endpoint: str
+    client_id: str
     type: RealmType

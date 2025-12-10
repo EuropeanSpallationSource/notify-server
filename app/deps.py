@@ -15,6 +15,8 @@ from .settings import (
     OIDC_SCOPE,
     OIDC_DEFAULT_REALM,
     OIDC_DEMO_REALM,
+    OIDC_DEMO_CLIENT_ID,
+    OIDC_DEMO_CLIENT_SECRET,
 )
 from . import schemas
 
@@ -22,6 +24,16 @@ from . import schemas
 REALM_BY_TYPE = {
     schemas.RealmType.demo: OIDC_DEMO_REALM,
     schemas.RealmType.real: OIDC_DEFAULT_REALM,
+}
+CLIENT_BY_REALM = {
+    OIDC_DEMO_REALM: {
+        "client_id": OIDC_DEMO_CLIENT_ID,
+        "client_secret": OIDC_DEMO_CLIENT_SECRET,
+    },
+    OIDC_DEFAULT_REALM: {
+        "client_id": OIDC_CLIENT_ID,
+        "client_secret": OIDC_CLIENT_SECRET,
+    },
 }
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")

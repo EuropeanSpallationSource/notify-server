@@ -56,9 +56,10 @@ async def open_id_connect(
 ):
     """Login using OpenID Connect Authentication Code flow from mobile client"""
     oidc_config = request.state.oidc_config[realm]
+    jwks_client = request.state.jwks_client[realm]
     data = {
         "client_id": oidc_auth.client_id,
-        "client_secret": OIDC_CLIENT_SECRET,
+        "client_secret": deps.CLIENT_BY_REALM[realm]["client_secret"],
         "code": oidc_auth.code,
         "code_verifier": oidc_auth.code_verifier,
         "grant_type": "authorization_code",
@@ -96,10 +97,8 @@ async def open_id_connect(
             utils.validate_id_token(
                 id_token,
                 access_token,
-                request.state.jwks_client[realm],
-                request.state.oidc_config[realm][
-                    "id_token_signing_alg_values_supported"
-                ],
+                jwks_client,
+                oidc_config["id_token_signing_alg_values_supported"],
                 oidc_auth.client_id,
             )
         except Exception as e:
@@ -171,7 +170,9 @@ def get_realm(
 
     response = schemas.RealmDiscoveryResponse(
         realm=realm,
-        discovery_uri=f"{OIDC_BASE_URL}/realms/{realm}",
+        authorization_endpoint=f"{OIDC_BASE_URL}/realms/{realm}/protocol/openid-connect/auth",
+        token_endpoint=f"{OIDC_BASE_URL}/realms/{realm}/protocol/openid-connect/token",
+        client_id=deps.CLIENT_BY_REALM[realm]["client_id"],
         type=realm_type,
     )
 
