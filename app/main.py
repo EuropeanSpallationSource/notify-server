@@ -12,7 +12,7 @@ from fastapi.logger import logger
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
-from . import monitoring, schemas
+from . import monitoring, schemas, deps
 from .api import login, users, services
 from .views import exceptions, account, notifications, settings, docs
 from .settings import (
@@ -22,6 +22,7 @@ from .settings import (
     SESSION_MAX_AGE,
     OIDC_BASE_URL,
     OIDC_ENABLED,
+    OIDC_DEFAULT_REALM,
 )
 
 
@@ -44,8 +45,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
     jwks_client = {}
     if OIDC_ENABLED:
         async with httpx.AsyncClient() as client:
-            for realm in schemas.RealmType:
-                url = f"{OIDC_BASE_URL}/realms/{login.discover_realm(realm)}/.well-known/openid-configuration"
+            for realm_type in schemas.RealmType:
+                realm = deps.REALM_BY_TYPE.get(realm_type, OIDC_DEFAULT_REALM)
+                url = f"{OIDC_BASE_URL}/realms/{realm}/.well-known/openid-configuration"
                 r = await client.get(url)
                 if r.status_code == 200:
                     oidc_config[realm] = r.json()

@@ -11,7 +11,6 @@ from ..settings import (
     OIDC_SCOPE,
     OIDC_ENABLED,
     OIDC_BASE_URL,
-    OIDC_REALM_MAPPING,
     OIDC_DEFAULT_REALM,
 )
 
@@ -163,7 +162,7 @@ def get_realm(
 
     # Discover realm
     try:
-        realm = discover_realm(realm_type)
+        realm = deps.REALM_BY_TYPE.get(realm_type, OIDC_DEFAULT_REALM)
     except Exception as e:
         logger.error("Failed to discover realm of type %s: %s", realm_type, e)
         raise HTTPException(
@@ -177,29 +176,3 @@ def get_realm(
     )
 
     return response
-
-
-def discover_realm(realm_type: schemas.RealmType) -> str:
-    """
-    Discover the appropriate Keycloak realm for a given type.
-
-    Args:
-        realm_type: The realm type to check for realm mapping
-
-    Returns:
-        The realm name to use for this realm type
-    """
-
-    # Check realm mapping configuration
-    for mapping in OIDC_REALM_MAPPING:
-        if ":" in mapping:
-            pattern, realm = mapping.split(":", 1)
-            pattern = pattern.strip().lower()
-            realm = realm.strip()
-
-            # Check if pattern matches realm_type
-            if pattern == realm_type.lower().strip():
-                return realm
-
-    # Default realm fallback
-    return OIDC_DEFAULT_REALM

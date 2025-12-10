@@ -44,9 +44,7 @@ OIDC_CLIENT_ID = config("OIDC_CLIENT_ID", cast=str, default="notify")
 OIDC_CLIENT_SECRET = config("OIDC_CLIENT_SECRET", cast=Secret, default="!secret")
 OIDC_SCOPE = config("OIDC_SCOPE", cast=str, default="openid email profile")
 # Realm mapping: comma-separated "pattern:realm" pairs
-OIDC_REALM_MAPPING = config(
-    "OIDC_REALM_MAPPING", cast=CommaSeparatedStrings, default=""
-)
+OIDC_DEMO_REALM = config("OIDC_DEMO_REALM", cast=str, default="demo")
 
 # URL to use when AUTHENTICATION_METHOD is set to "url"
 AUTHENTICATION_URL = config(
