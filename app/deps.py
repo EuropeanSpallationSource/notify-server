@@ -25,12 +25,12 @@ REALM_BY_TYPE = {
     schemas.RealmType.demo: OIDC_DEMO_REALM,
     schemas.RealmType.real: OIDC_DEFAULT_REALM,
 }
-CLIENT_BY_REALM = {
-    OIDC_DEMO_REALM: {
+CLIENT_BY_REALM_TYPE = {
+    schemas.RealmType.demo: {
         "client_id": OIDC_DEMO_CLIENT_ID,
         "client_secret": OIDC_DEMO_CLIENT_SECRET,
     },
-    OIDC_DEFAULT_REALM: {
+    schemas.RealmType.real: {
         "client_id": OIDC_CLIENT_ID,
         "client_secret": OIDC_CLIENT_SECRET,
     },

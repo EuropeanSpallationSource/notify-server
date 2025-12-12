@@ -51,7 +51,7 @@ Exact environment variables used by the implementation
 
 - `OIDC_ENABLED` (bool) — enable OIDC features
 - `OIDC_BASE_URL` (string) — base Keycloak URL (e.g. https://keycloak.example.org/auth)
-- `OIDC_DEFAULT_REALM` (string) — default realm used when no mapping applies
+- `OIDC_DEFAULT_REALM` (string) — default realm used
 - `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` — default client credentials
 - `OIDC_SCOPE` — scope used when requesting userinfo
 - `OIDC_DEMO_REALM`, `OIDC_DEMO_CLIENT_ID`, `OIDC_DEMO_CLIENT_SECRET` — demo realm/client values
@@ -106,7 +106,7 @@ Behavior
 - The server posts the code to the realm's token endpoint and validates the
   returned id_token (using the realm's JWKS).
 - Client secrets for token exchanges are looked up server-side from
-  `deps.CLIENT_BY_REALM`; mobile apps MUST NOT embed client secrets.
+  `deps.CLIENT_BY_REALM_TYPE`; mobile apps MUST NOT embed client secrets.
 
 
 ## Development

@@ -10,8 +10,6 @@ from ..settings import (
     OIDC_CLIENT_SECRET,
     OIDC_SCOPE,
     OIDC_ENABLED,
-    OIDC_BASE_URL,
-    OIDC_DEFAULT_REALM,
 )
 
 router = APIRouter()
@@ -59,7 +57,7 @@ async def open_id_connect(
     jwks_client = request.state.jwks_client[realm]
     data = {
         "client_id": oidc_auth.client_id,
-        "client_secret": deps.CLIENT_BY_REALM[realm]["client_secret"],
+        "client_secret": deps.CLIENT_BY_REALM_TYPE[realm]["client_secret"],
         "code": oidc_auth.code,
         "code_verifier": oidc_auth.code_verifier,
         "grant_type": "authorization_code",
@@ -144,6 +142,7 @@ async def open_id_connect(
     response_model=schemas.RealmDiscoveryResponse,
 )
 def get_realm(
+    request: Request,
     realm_type: schemas.RealmType = Query(..., alias="type"),
 ) -> schemas.RealmDiscoveryResponse:
     """
@@ -160,19 +159,14 @@ def get_realm(
         )
 
     # Discover realm
-    try:
-        realm = deps.REALM_BY_TYPE.get(realm_type, OIDC_DEFAULT_REALM)
-    except Exception as e:
-        logger.error("Failed to discover realm of type %s: %s", realm_type, e)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY, detail="Realm discovery failed"
-        )
+    realm = deps.REALM_BY_TYPE[realm_type]
+    oidc_config = request.state.oidc_config[realm_type]
 
     response = schemas.RealmDiscoveryResponse(
         realm=realm,
-        authorization_endpoint=f"{OIDC_BASE_URL}/realms/{realm}/protocol/openid-connect/auth",
-        token_endpoint=f"{OIDC_BASE_URL}/realms/{realm}/protocol/openid-connect/token",
-        client_id=deps.CLIENT_BY_REALM[realm]["client_id"],
+        authorization_endpoint=oidc_config["authorization_endpoint"],
+        token_endpoint=oidc_config["token_endpoint"],
+        client_id=deps.CLIENT_BY_REALM_TYPE[realm_type]["client_id"],
         type=realm_type,
     )
 

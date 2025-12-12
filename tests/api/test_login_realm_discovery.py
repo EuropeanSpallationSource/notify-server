@@ -9,35 +9,108 @@ from app.main import app
 from app.schemas import RealmType
 
 
+# Test-only middleware: inject request.state.oidc_config and jwks_client so
+# handlers that expect those attributes can run without needing the full
+# application lifespan to execute.
+from starlette.middleware.base import BaseHTTPMiddleware
+
+
+class _InjectStateMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app):
+        super().__init__(app)
+
+    async def dispatch(self, request, call_next):
+        # Build a small, predictable oidc_config mapping based on the current
+        # deps.REALM_BY_TYPE. Tests mutate that mapping, so build it at request
+        # time to reflect test changes.
+        from app import deps
+        from app.settings import OIDC_BASE_URL
+
+        oidc = {}
+        jwks = {}
+        # deps.REALM_BY_TYPE maps RealmType -> realm string. Build entries for
+        # both the RealmType key and the realm string so handlers can look up
+        # by either.
+        for realm_type, realm in deps.REALM_BY_TYPE.items():
+            cfg = {
+                "authorization_endpoint": f"{OIDC_BASE_URL}/realms/{realm}/protocol/openid-connect/auth",
+                "token_endpoint": f"{OIDC_BASE_URL}/realms/{realm}/protocol/openid-connect/token",
+                "userinfo_endpoint": f"{OIDC_BASE_URL}/realms/{realm}/protocol/openid-connect/userinfo",
+                "id_token_signing_alg_values_supported": ["RS256"],
+            }
+            oidc[realm_type] = cfg
+            jwks[realm_type] = None
+
+        request.state.oidc_config = oidc
+        request.state.jwks_client = jwks
+        return await call_next(request)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _inject_state_middleware():
+    """Add middleware to the app used by these tests. Kept module-scoped so
+    middleware is added once for the test module."""
+    # Import here to avoid circular imports at module import time
+    from app.main import app as _original_app
+    from fastapi import FastAPI
+
+    # Create a fresh wrapper app and add the middleware to it before the
+    # application is started. Mount the original app under the wrapper so the
+    # wrapper's middleware runs first and injects the request.state values.
+    wrapper = FastAPI(docs_url=None, redoc_url=None)
+    wrapper.add_middleware(_InjectStateMiddleware)
+    wrapper.mount("/", _original_app)
+
+    # Replace the module-level `app` so tests that do `TestClient(app)` get
+    # the wrapped app with our middleware.
+    globals()["app"] = wrapper
+    yield
+
+
 @pytest.fixture(autouse=True)
 def reset_realm_discovery_state():
     """Reset realm discovery module state between tests."""
     import app.api.login as login_api
     import app.deps as deps  # Store original values
 
-    original_default = login_api.OIDC_DEFAULT_REALM
-    original_base_url = login_api.OIDC_BASE_URL
     original_oidc_enabled = login_api.OIDC_ENABLED
+    original_default = deps.OIDC_DEFAULT_REALM
+    original_base_url = deps.OIDC_BASE_URL
     original_demo_realm = deps.OIDC_DEMO_REALM
     # store mappings built at import time so tests can mutate them safely
     original_realm_by_type = dict(deps.REALM_BY_TYPE)
-    original_client_by_realm = dict(deps.CLIENT_BY_REALM)
+    original_client_by_realm_type = dict(deps.CLIENT_BY_REALM_TYPE)
 
     yield  # Run the test
 
     # Restore original values after test
-    login_api.OIDC_DEFAULT_REALM = original_default
-    login_api.OIDC_BASE_URL = original_base_url
     login_api.OIDC_ENABLED = original_oidc_enabled
+    deps.OIDC_DEFAULT_REALM = original_default
+    deps.OIDC_BASE_URL = original_base_url
     deps.OIDC_DEMO_REALM = original_demo_realm
     deps.OIDC_DEFAULT_REALM = original_default
     deps.REALM_BY_TYPE = original_realm_by_type
-    deps.CLIENT_BY_REALM = original_client_by_realm
+    deps.CLIENT_BY_REALM_TYPE = original_client_by_realm_type
 
 
 @patch("app.api.login.OIDC_ENABLED", False)
 def test_realm_discovery_endpoint_oidc_disabled():
     """Test realm discovery endpoint when OIDC is disabled."""
+    import app.api.login as login_api
+
+    # Set up test configuration directly on modules
+    login_api.OIDC_ENABLED = False
+
+    client = TestClient(app)
+    response = client.get("/api/v1/realm-discovery/?type=real")
+
+    assert response.status_code == 405
+    assert response.json()["detail"] == "OIDC is not enabled"
+
+
+@patch("app.api.login.OIDC_ENABLED", False)
+def test_invalid_realm_type():
+    """Test realm discovery endpoint when realm type is invalid."""
     client = TestClient(app)
     response = client.get("/api/v1/realm-discovery/?type=test")
 
@@ -48,19 +121,19 @@ def test_realm_discovery_endpoint_oidc_disabled():
 @pytest.mark.parametrize(
     "realm_type,demo_realm,expected_realm",
     [
-        ("demo", "demo-realm", "demo-realm"),
-        ("real", "demo", "default"),
-        ("demo", "", "default"),
+        (RealmType.demo, "demo-realm", "demo-realm"),
+        (RealmType.real, "demo", "default"),
+        (RealmType.demo, "", "default"),
     ],
 )
 def test_realm_discovery_endpoint_success(realm_type, demo_realm, expected_realm):
     """Test realm discovery with various pattern matching (domain, prefix, exact)."""
     import app.api.login as login_api
     import app.deps as deps
+    from app.settings import OIDC_BASE_URL
 
     # Set up test configuration directly on modules
     login_api.OIDC_ENABLED = True
-    login_api.OIDC_BASE_URL = "https://keycloak.test.com/auth"
     login_api.OIDC_DEFAULT_REALM = "default"
     deps.OIDC_DEFAULT_REALM = "default"
     deps.OIDC_DEMO_REALM = demo_realm
@@ -70,38 +143,35 @@ def test_realm_discovery_endpoint_success(realm_type, demo_realm, expected_realm
         RealmType.real: login_api.OIDC_DEFAULT_REALM,
     }
     # set predictable client ids for assertion
-    deps.CLIENT_BY_REALM = {
-        demo_realm: {"client_id": "demo-client"},
-        deps.OIDC_DEFAULT_REALM: {"client_id": "real-client"},
+    deps.CLIENT_BY_REALM_TYPE = {
+        RealmType.demo: {"client_id": "demo-client"},
+        RealmType.real: {"client_id": "real-client"},
     }
-    expected_client_id = deps.CLIENT_BY_REALM[
-        deps.REALM_BY_TYPE[RealmType(realm_type)]
-    ]["client_id"]
+    expected_client_id = deps.CLIENT_BY_REALM_TYPE[realm_type]["client_id"]
     client = TestClient(app)
-    response = client.get(f"/api/v1/realm-discovery/?type={realm_type}")
+    response = client.get(f"/api/v1/realm-discovery/?type={realm_type.value}")
 
     assert response.status_code == 200
     data = response.json()
-    assert data["type"] == realm_type
+    assert data["type"] == realm_type.value
     assert data["realm"] == expected_realm
     # Response must expose the OIDC endpoints for the discovered realm
     assert (
         data["authorization_endpoint"]
-        == f"https://keycloak.test.com/auth/realms/{expected_realm}/protocol/openid-connect/auth"
+        == f"{OIDC_BASE_URL}/realms/{expected_realm}/protocol/openid-connect/auth"
     )
     assert (
         data["token_endpoint"]
-        == f"https://keycloak.test.com/auth/realms/{expected_realm}/protocol/openid-connect/token"
+        == f"{OIDC_BASE_URL}/realms/{expected_realm}/protocol/openid-connect/token"
     )
     assert data["client_id"] == expected_client_id
 
 
 @pytest.mark.parametrize(
     "realm_type,expected_realm",
-    [("demo", "demo-realm"), ("real", "admin-realm")],
+    [(RealmType.demo, "demo-realm"), (RealmType.real, "admin-realm")],
 )
 @patch("app.api.login.OIDC_ENABLED", True)
-@patch("app.api.login.OIDC_BASE_URL", "https://keycloak.test.com/auth")
 @patch("app.deps.OIDC_DEMO_REALM", "demo")
 @patch("app.api.login.OIDC_DEFAULT_REALM", "default")
 def test_realm_discovery_multiple_mappings(realm_type, expected_realm):
@@ -110,12 +180,12 @@ def test_realm_discovery_multiple_mappings(realm_type, expected_realm):
 
     # create explicit mapping for this test
     deps.REALM_BY_TYPE = {RealmType.demo: "demo-realm", RealmType.real: "admin-realm"}
-    deps.CLIENT_BY_REALM = {
-        "demo-realm": {"client_id": "demo-client"},
-        "admin-realm": {"client_id": "real-client"},
+    deps.CLIENT_BY_REALM_TYPE = {
+        RealmType.demo: {"client_id": "demo-client"},
+        RealmType.real: {"client_id": "real-client"},
     }
     client = TestClient(app)
-    response = client.get(f"/api/v1/realm-discovery/?type={realm_type}")
+    response = client.get(f"/api/v1/realm-discovery/?type={realm_type.value}")
 
     assert response.status_code == 200
     data = response.json()
@@ -123,11 +193,11 @@ def test_realm_discovery_multiple_mappings(realm_type, expected_realm):
 
 
 @patch("app.api.login.OIDC_ENABLED", True)
-@patch("app.api.login.OIDC_BASE_URL", "https://keycloak.test.com/auth")
 @patch("app.deps.OIDC_DEMO_REALM", "")
 @patch("app.api.login.OIDC_DEFAULT_REALM", "master")
 def test_realm_discovery_response_structure():
     """Test that response contains all required fields with correct types."""
+
     client = TestClient(app)
     response = client.get("/api/v1/realm-discovery/?type=demo")
 
@@ -175,9 +245,7 @@ def test_realm_discovery_response_structure():
     ],
 )
 @patch("app.api.login.OIDC_ENABLED", True)
-@patch("app.api.login.OIDC_BASE_URL", "https://keycloak.test.com/auth")
 @patch("app.deps.OIDC_DEMO_REALM", "")
-@patch("app.api.login.OIDC_DEFAULT_REALM", "master")
 def test_realm_discovery_response_field_values(field_name, field_value):
     """Test that response fields contain expected values."""
     import app.deps as deps
@@ -188,9 +256,9 @@ def test_realm_discovery_response_field_values(field_name, field_value):
         RealmType.real: "master",
         RealmType.demo: login_api.OIDC_DEFAULT_REALM,
     }
-    deps.CLIENT_BY_REALM = {
-        login_api.OIDC_DEFAULT_REALM: {"client_id": "demo-client"},
-        "master": {"client_id": "real-client"},
+    deps.CLIENT_BY_REALM_TYPE = {
+        RealmType.demo: {"client_id": "demo-client"},
+        RealmType.real: {"client_id": "real-client"},
     }
     client = TestClient(app)
     response = client.get("/api/v1/realm-discovery/?type=real")

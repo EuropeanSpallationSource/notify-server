@@ -31,19 +31,15 @@ LDAP_USER_RDN_ATTR = config("LDAP_USER_RDN_ATTR", cast=str, default="uid")
 # - API login (old authentication method still supported as well)
 OIDC_ENABLED = config("OIDC_ENABLED", cast=bool, default=False)
 OIDC_NAME = config("OIDC_NAME", cast=str, default="keycloak")
-# Base Keycloak server URL (without realm path)
 OIDC_BASE_URL = config(
     "OIDC_BASE_URL",
     cast=str,
     default="https://keycloak.example.org/auth",
 )
-# Default realm when no specific mapping matches
 OIDC_DEFAULT_REALM = config("OIDC_DEFAULT_REALM", cast=str, default="maxiv")
-# Legacy single realm URL (for backward compatibility)
 OIDC_CLIENT_ID = config("OIDC_CLIENT_ID", cast=str, default="notify")
 OIDC_CLIENT_SECRET = config("OIDC_CLIENT_SECRET", cast=Secret, default="!secret")
 OIDC_SCOPE = config("OIDC_SCOPE", cast=str, default="openid email profile")
-# Realm mapping: comma-separated "pattern:realm" pairs
 OIDC_DEMO_REALM = config("OIDC_DEMO_REALM", cast=str, default="demo")
 OIDC_DEMO_CLIENT_ID = config("OIDC_DEMO_CLIENT_ID", cast=str, default="notify")
 OIDC_DEMO_CLIENT_SECRET = config(
