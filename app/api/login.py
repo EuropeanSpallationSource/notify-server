@@ -108,7 +108,7 @@ async def open_id_connect(
         headers = {"Authorization": f"Bearer {access_token}"}
         data = {
             "client_id": oidc_auth.client_id,
-            "client_secret": OIDC_CLIENT_SECRET,
+            "client_secret": deps.CLIENT_BY_REALM_TYPE[realm]["client_secret"]
             "scope": OIDC_SCOPE,
         }
         logger.info("Retrieving user info.")

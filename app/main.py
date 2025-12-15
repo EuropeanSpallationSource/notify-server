@@ -36,7 +36,7 @@ logger.setLevel(gunicorn_error_logger.level)
 
 class State(TypedDict):
     oidc_config: dict[schemas.RealmType, dict[str, str]]
-    jwks_client: dict[schemas.RealmType, jwt.PyJWKClient] | None
+    jwks_client: dict[schemas.RealmType, jwt.PyJWKClient]
 
 
 @contextlib.asynccontextmanager
