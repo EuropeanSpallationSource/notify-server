@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from .. import deps, crud, utils, auth, schemas
 from ..settings import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    OIDC_CLIENT_SECRET,
     OIDC_SCOPE,
     OIDC_ENABLED,
 )
@@ -108,7 +107,7 @@ async def open_id_connect(
         headers = {"Authorization": f"Bearer {access_token}"}
         data = {
             "client_id": oidc_auth.client_id,
-            "client_secret": deps.CLIENT_BY_REALM_TYPE[realm]["client_secret"]
+            "client_secret": deps.CLIENT_BY_REALM_TYPE[realm]["client_secret"],
             "scope": OIDC_SCOPE,
         }
         logger.info("Retrieving user info.")

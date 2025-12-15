@@ -33,7 +33,7 @@ variables:
   PRODUCTION_BRANCH_NAME: "main"
   PRODUCTION_DEPLOY_ON_TAG: "true"
   HELM_SET_PROD_ingress_host: "notify.maxiv.lu.se"
-  HELM_SET_TEST_ingress_host: "notify-test.apps.okdev.maxiv.lu.se"
+  HELM_SET_TEST_ingress_host: "notify-test.apps.okdev.maxiv.lu.se" # This URL needs to be registered on the OIDC provider as valid redirect URI
   HELM_SET_PROD_image_repository: "__from_env_var:REGISTRY_IMAGE_NAME"
   HELM_SET_PROD_image_tag: "__from_env_var:REGISTRY_IMAGE_TAG"
   HELM_SET_TEST_image_repository: "__from_env_var:REGISTRY_IMAGE_NAME"

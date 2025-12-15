@@ -108,7 +108,7 @@ def test_realm_discovery_endpoint_oidc_disabled():
     assert response.json()["detail"] == "OIDC is not enabled"
 
 
-@patch("app.api.login.OIDC_ENABLED", False)
+@patch("app.api.login.OIDC_ENABLED", True)
 def test_invalid_realm_type():
     """Test realm discovery endpoint when realm type is invalid."""
     client = TestClient(app)
