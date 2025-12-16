@@ -48,10 +48,10 @@ async def open_id_connect(
     oidc_auth: schemas.OpenIdConnectAuth,
     response: Response,
     request: Request,
-    realm: schemas.RealmType,
     db: Session = Depends(deps.get_db),
 ):
     """Login using OpenID Connect Authentication Code flow from mobile client"""
+    realm = oidc_auth.realm
     oidc_config = request.state.oidc_config[realm]
     jwks_client = request.state.jwks_client[realm]
     data = {

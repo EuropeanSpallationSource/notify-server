@@ -171,6 +171,7 @@ class OpenIdConnectAuth(BaseModel):
     code_verifier: str
     client_id: str
     redirect_uri: str
+    realm: RealmType
 
 
 class RealmType(str, Enum):
