@@ -1,14 +1,14 @@
 import httpx
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Response, Request, status, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
 from .. import deps, crud, utils, auth, schemas
 from ..settings import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    OIDC_CLIENT_SECRET,
     OIDC_SCOPE,
+    OIDC_ENABLED,
 )
 
 router = APIRouter()
@@ -51,10 +51,12 @@ async def open_id_connect(
     db: Session = Depends(deps.get_db),
 ):
     """Login using OpenID Connect Authentication Code flow from mobile client"""
-    oidc_config = request.state.oidc_config
+    realm = oidc_auth.realm
+    oidc_config = request.state.oidc_config[realm]
+    jwks_client = request.state.jwks_client[realm]
     data = {
         "client_id": oidc_auth.client_id,
-        "client_secret": OIDC_CLIENT_SECRET,
+        "client_secret": deps.CLIENT_BY_REALM_TYPE[realm]["client_secret"],
         "code": oidc_auth.code,
         "code_verifier": oidc_auth.code_verifier,
         "grant_type": "authorization_code",
@@ -92,8 +94,8 @@ async def open_id_connect(
             utils.validate_id_token(
                 id_token,
                 access_token,
-                request.state.jwks_client,
-                request.state.oidc_config["id_token_signing_alg_values_supported"],
+                jwks_client,
+                oidc_config["id_token_signing_alg_values_supported"],
                 oidc_auth.client_id,
             )
         except Exception as e:
@@ -105,7 +107,7 @@ async def open_id_connect(
         headers = {"Authorization": f"Bearer {access_token}"}
         data = {
             "client_id": oidc_auth.client_id,
-            "client_secret": OIDC_CLIENT_SECRET,
+            "client_secret": deps.CLIENT_BY_REALM_TYPE[realm]["client_secret"],
             "scope": OIDC_SCOPE,
         }
         logger.info("Retrieving user info.")
@@ -131,3 +133,40 @@ async def open_id_connect(
             )
         username = response.json()["preferred_username"].lower()
     return create_access_token(db, username, response)
+
+
+@router.get(
+    "/realm-discovery/",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.RealmDiscoveryResponse,
+)
+def get_realm(
+    request: Request,
+    realm_type: schemas.RealmType = Query(..., alias="type"),
+) -> schemas.RealmDiscoveryResponse:
+    """
+    Discover the appropriate Keycloak realm for a realm type.
+
+    Mobile apps should call this endpoint first to determine which realm to authenticate against.
+    The response includes all necessary OIDC endpoints and configuration for the discovered realm.
+
+    """
+    if not OIDC_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+            detail="OIDC is not enabled",
+        )
+
+    # Discover realm
+    realm = deps.REALM_BY_TYPE[realm_type]
+    oidc_config = request.state.oidc_config[realm_type]
+
+    response = schemas.RealmDiscoveryResponse(
+        realm=realm,
+        authorization_endpoint=oidc_config["authorization_endpoint"],
+        token_endpoint=oidc_config["token_endpoint"],
+        client_id=deps.CLIENT_BY_REALM_TYPE[realm_type]["client_id"],
+        type=realm_type,
+    )
+
+    return response

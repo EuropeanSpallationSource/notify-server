@@ -31,15 +31,20 @@ LDAP_USER_RDN_ATTR = config("LDAP_USER_RDN_ATTR", cast=str, default="uid")
 # - API login (old authentication method still supported as well)
 OIDC_ENABLED = config("OIDC_ENABLED", cast=bool, default=False)
 OIDC_NAME = config("OIDC_NAME", cast=str, default="keycloak")
-OIDC_SERVER_URL = config(
-    "OIDC_SERVER_URL",
+OIDC_BASE_URL = config(
+    "OIDC_BASE_URL",
     cast=str,
-    default="https://keycloak.example.org/auth/realms/myrealm/.well-known/openid-configuration",
+    default="https://keycloak.example.org/auth",
 )
+OIDC_DEFAULT_REALM = config("OIDC_DEFAULT_REALM", cast=str, default="maxiv")
 OIDC_CLIENT_ID = config("OIDC_CLIENT_ID", cast=str, default="notify")
 OIDC_CLIENT_SECRET = config("OIDC_CLIENT_SECRET", cast=Secret, default="!secret")
 OIDC_SCOPE = config("OIDC_SCOPE", cast=str, default="openid email profile")
-
+OIDC_DEMO_REALM = config("OIDC_DEMO_REALM", cast=str, default="demo")
+OIDC_DEMO_CLIENT_ID = config("OIDC_DEMO_CLIENT_ID", cast=str, default="notify")
+OIDC_DEMO_CLIENT_SECRET = config(
+    "OIDC_DEMO_CLIENT_SECRET", cast=Secret, default="!secret"
+)
 # URL to use when AUTHENTICATION_METHOD is set to "url"
 AUTHENTICATION_URL = config(
     "AUTHENTICATION_URL", cast=str, default="https//auth.example.org/login"
@@ -47,6 +52,7 @@ AUTHENTICATION_URL = config(
 ADMIN_USERS = config("ADMIN_USERS", cast=CommaSeparatedStrings, default="")
 # Demo account with "demo" username has access only to service defined in DEMO_ACCOUNT_SERVICE
 DEMO_ACCOUNT_SERVICE = config("DEMO_ACCOUNT_SERVICE", cast=str, default="demo")
+DEMO_ACCOUNT_USERNAME = config("DEMO_ACCOUNT_USERNAME", cast=str, default="demo")
 DEMO_ACCOUNT_PASSWORD = config("DEMO_ACCOUNT_PASSWORD", cast=Secret, default="demo")
 SQLALCHEMY_DATABASE_URL = config(
     "SQLALCHEMY_DATABASE_URL", cast=str, default="sqlite:///./sql_app.db"

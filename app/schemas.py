@@ -171,3 +171,17 @@ class OpenIdConnectAuth(BaseModel):
     code_verifier: str
     client_id: str
     redirect_uri: str
+    realm: RealmType
+
+
+class RealmType(str, Enum):
+    real = "real"
+    demo = "demo"
+
+
+class RealmDiscoveryResponse(BaseModel):
+    realm: str
+    authorization_endpoint: str
+    token_endpoint: str
+    client_id: str
+    type: RealmType
