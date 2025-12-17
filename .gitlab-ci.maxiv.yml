@@ -41,11 +41,11 @@ variables:
   GITLAB_ENVIRONMENT_NAME: notify
 
 # Test with latest versions of requirements
-test-python311:
+test-python314:
   stage: test
   tags:
     - kubernetes
-  image: harbor.maxiv.lu.se/dockerhub/library/python:3.11
+  image: harbor.maxiv.lu.se/dockerhub/library/python:3.14
   before_script:
     - pip install -e .[tests]
   script:
