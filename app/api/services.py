@@ -12,6 +12,7 @@ from fastapi.logger import logger
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from .. import deps, crud, models, schemas, utils
+from ..settings import DEMO_ACCOUNT_USERNAME
 
 router = APIRouter()
 
@@ -22,7 +23,7 @@ def read_services(
     current_user: models.User = Depends(deps.get_current_user),
 ):
     """Read all services"""
-    if current_user.username == "demo":
+    if current_user.username == DEMO_ACCOUNT_USERNAME:
         db_services = crud.get_services(db, demo=True)
     else:
         db_services = crud.get_services(db)

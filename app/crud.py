@@ -5,7 +5,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from . import models, schemas
-from .settings import ADMIN_USERS, DEMO_ACCOUNT_SERVICE
+from .settings import ADMIN_USERS, DEMO_ACCOUNT_SERVICE, DEMO_ACCOUNT_USERNAME
 
 
 def get_users(db: Session):
@@ -136,7 +136,7 @@ def delete_service(db: Session, service: models.Service) -> None:
 
 def get_user_services(db: Session, user: models.User) -> List[schemas.UserService]:
     """Return all services for the user sorted by category"""
-    if user.username == "demo":
+    if user.username == DEMO_ACCOUNT_USERNAME:
         services = get_services(db, demo=True)
     else:
         services = get_services(db)

@@ -12,7 +12,7 @@ from fastapi.logger import logger
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
-from . import monitoring
+from . import monitoring, schemas, deps
 from .api import login, users, services
 from .views import exceptions, account, notifications, settings, docs
 from .settings import (
@@ -20,8 +20,9 @@ from .settings import (
     ESS_NOTIFY_SERVER_ENVIRONMENT,
     SECRET_KEY,
     SESSION_MAX_AGE,
-    OIDC_SERVER_URL,
+    OIDC_BASE_URL,
     OIDC_ENABLED,
+    OIDC_DEFAULT_REALM,
 )
 
 
@@ -34,20 +35,24 @@ logger.setLevel(gunicorn_error_logger.level)
 
 
 class State(TypedDict):
-    oidc_config: dict[str, str]
-    jwks_client: jwt.PyJWKClient | None
+    oidc_config: dict[schemas.RealmType, dict[str, str]]
+    jwks_client: dict[schemas.RealmType, jwt.PyJWKClient]
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[State]:
+    oidc_config = {}
+    jwks_client = {}
     if OIDC_ENABLED:
         async with httpx.AsyncClient() as client:
-            r = await client.get(OIDC_SERVER_URL)
-            oidc_config = r.json()
-            jwks_client = jwt.PyJWKClient(oidc_config["jwks_uri"])
-    else:
-        oidc_config = {}
-        jwks_client = None
+            for realm_type in schemas.RealmType:
+                realm = deps.REALM_BY_TYPE.get(realm_type, OIDC_DEFAULT_REALM)
+                url = f"{OIDC_BASE_URL}/realms/{realm}/.well-known/openid-configuration"
+                r = await client.get(url)
+                if r.status_code == 200:
+                    oidc_config[realm_type] = r.json()
+                    jwks_uri = oidc_config[realm_type]["jwks_uri"]
+                    jwks_client[realm_type] = jwt.PyJWKClient(jwks_uri)
     yield {"oidc_config": oidc_config, "jwks_client": jwks_client}
 
 

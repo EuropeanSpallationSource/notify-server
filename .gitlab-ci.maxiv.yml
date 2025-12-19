@@ -4,7 +4,7 @@ include:
     file: "/PreCommit.gitlab-ci.yml"
   - project: kits-maxiv/kubernetes/k8s-gitlab-ci
     file: "/Docker-Helm-deploy.gitlab-ci.yml"
-    ref: "0.6"
+    ref: "0.8"
 
 # Override workflow rules to deploy on any branch
 workflow:
@@ -25,16 +25,15 @@ stages:
   - .post
 
 variables:
-  DOCKER_REGISTRY_URL: "harbor.maxiv.lu.se/notify-server"
-  HELM_CHART_REPO: oci://harbor.maxiv.lu.se/notify-server/charts
+  BUILDAH_CACHE: "true"
   HELM_CHART_NAME: notify-server
   HELM_RELEASE_NAMESPACE_TEST: notify
   HELM_RELEASE_NAMESPACE_PROD: notify
   PIPELINES_FF_TOKENIZER: "true"
-  PRODUCTION_BRANCH_NAME: "master"
+  PRODUCTION_BRANCH_NAME: "main"
   PRODUCTION_DEPLOY_ON_TAG: "true"
   HELM_SET_PROD_ingress_host: "notify.maxiv.lu.se"
-  HELM_SET_TEST_ingress_host: "notify-test-${CI_COMMIT_BRANCH}.apps.okdev.maxiv.lu.se"
+  HELM_SET_TEST_ingress_host: "notify-test.apps.okdev.maxiv.lu.se" # This URL needs to be registered on the OIDC provider as valid redirect URI
   HELM_SET_PROD_image_repository: "__from_env_var:REGISTRY_IMAGE_NAME"
   HELM_SET_PROD_image_tag: "__from_env_var:REGISTRY_IMAGE_TAG"
   HELM_SET_TEST_image_repository: "__from_env_var:REGISTRY_IMAGE_NAME"
@@ -42,11 +41,11 @@ variables:
   GITLAB_ENVIRONMENT_NAME: notify
 
 # Test with latest versions of requirements
-test-python311:
+test-python314:
   stage: test
   tags:
     - kubernetes
-  image: harbor.maxiv.lu.se/dockerhub/library/python:3.11
+  image: harbor.maxiv.lu.se/dockerhub/library/python:3.14
   before_script:
     - pip install -e .[tests]
   script:
