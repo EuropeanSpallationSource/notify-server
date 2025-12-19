@@ -1,4 +1,4 @@
-FROM dockerhub/library/python:3.14-slim as base
+FROM docker.io/library/python:3.14-slim as base
 
 # Install Python dependencies in an intermediate image
 # as some requires a compiler (psycopg2)
