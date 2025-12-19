@@ -12,12 +12,12 @@ from .settings import (
     LDAP_BASE_DN,
     LDAP_USER_DN,
 )
-from .settings import DEMO_ACCOUNT_PASSWORD
+from .settings import DEMO_ACCOUNT_PASSWORD, DEMO_ACCOUNT_USERNAME
 
 
 def authenticate_user(username: str, password: str) -> bool:
     """Return True if the authentication is successful, False otherwise"""
-    if username == "demo" and password == str(DEMO_ACCOUNT_PASSWORD):
+    if username == DEMO_ACCOUNT_USERNAME and password == str(DEMO_ACCOUNT_PASSWORD):
         return True
     if AUTHENTICATION_METHOD == "ldap":
         return ldap_authenticate_user(username, password)

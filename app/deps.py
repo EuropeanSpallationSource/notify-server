@@ -9,11 +9,32 @@ from . import crud, models, utils
 from .database import SessionLocal
 from .settings import (
     OIDC_NAME,
-    OIDC_SERVER_URL,
+    OIDC_BASE_URL,
     OIDC_CLIENT_ID,
     OIDC_CLIENT_SECRET,
     OIDC_SCOPE,
+    OIDC_DEFAULT_REALM,
+    OIDC_DEMO_REALM,
+    OIDC_DEMO_CLIENT_ID,
+    OIDC_DEMO_CLIENT_SECRET,
 )
+from . import schemas
+
+
+REALM_BY_TYPE = {
+    schemas.RealmType.demo: OIDC_DEMO_REALM,
+    schemas.RealmType.real: OIDC_DEFAULT_REALM,
+}
+CLIENT_BY_REALM_TYPE = {
+    schemas.RealmType.demo: {
+        "client_id": OIDC_DEMO_CLIENT_ID,
+        "client_secret": OIDC_DEMO_CLIENT_SECRET,
+    },
+    schemas.RealmType.real: {
+        "client_id": OIDC_CLIENT_ID,
+        "client_secret": OIDC_CLIENT_SECRET,
+    },
+}
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 oauth = OAuth()
@@ -21,7 +42,7 @@ oauth.register(
     OIDC_NAME,
     client_id=OIDC_CLIENT_ID,
     client_secret=str(OIDC_CLIENT_SECRET),
-    server_metadata_url=OIDC_SERVER_URL,
+    server_metadata_url=f"{OIDC_BASE_URL}/realms/{OIDC_DEFAULT_REALM}/.well-known/openid-configuration",
     client_kwargs={"scope": OIDC_SCOPE},
 )
 

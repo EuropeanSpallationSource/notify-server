@@ -37,21 +37,90 @@ To be able to login, at least the following variables shall be overwritten:
 - LDAP_HOST
 - LDAP_USER_DN
 
-Refer to the default values defined in the [Ansible role](https://gitlab.esss.lu.se/ics-ansible-galaxy/ics-ans-role-ess-notify-server/-/blob/master/defaults/main.yml)
-and in the [ess_notify_servers](https://csentry.esss.lu.se/network/groups/view/ess_notify_servers) group in CSEntry.
+### OpenID Connect with Automatic Realm Discovery for Mobile Apps
+
+The implementation provides two OIDC-related endpoints used by mobile clients:
+
+- GET /api/v1/realm-discovery/?type=<real|demo> — discover which realm and
+  client to use for a given app "type".
+- POST /api/v1/open_id_connect?realm=<realm> — exchange an OIDC authorization
+  code (server performs token/userinfo calls, validates id_token and issues a
+  local access token).
+
+Exact environment variables used by the implementation
+
+- `OIDC_ENABLED` (bool) — enable OIDC features
+- `OIDC_BASE_URL` (string) — base Keycloak URL (e.g. https://keycloak.example.org/auth)
+- `OIDC_DEFAULT_REALM` (string) — default realm used
+- `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` — default client credentials
+- `OIDC_SCOPE` — scope used when requesting userinfo
+- `OIDC_DEMO_REALM`, `OIDC_DEMO_CLIENT_ID`, `OIDC_DEMO_CLIENT_SECRET` — demo realm/client values
+
+Realm discovery (mobile client)
+
+Request
+```http
+GET /api/v1/realm-discovery/?type=real
+```
+
+Response (implemented schema)
+```json
+{
+  "realm": "company-realm",
+  "authorization_endpoint": "https://keycloak.example.org/auth/realms/company-realm/protocol/openid-connect/auth",
+  "token_endpoint": "https://keycloak.example.org/auth/realms/company-realm/protocol/openid-connect/token",
+  "client_id": "notify",
+  "type": "real"
+}
+```
+
+Notes
+- The endpoint expects the query parameter `type` (alias for the internal
+  `RealmType` enum). The implementation maps types to realms using
+  `deps.REALM_BY_TYPE` and exposes client IDs from `deps.CLIENT_BY_REALM`.
+- The discovery response provides `authorization_endpoint` and `token_endpoint`
+  (not a single discovery URI), and the `client_id` the mobile app should
+  include in the initial authorization request.
+
+OpenID Connect token exchange (mobile -> server)
+
+After the mobile app completes the OIDC authorization code flow (using the
+`client_id` provided and PKCE), the app should POST the authorization code to
+the server which will perform the token/userinfo exchange and create a local
+access token for the app.
+
+Request
+```http
+POST /api/v1/open_id_connect?realm=company-realm
+Content-Type: application/json
+
+{
+  "code": "authorization_code",
+  "code_verifier": "pkce_verifier",
+  "client_id": "notify",
+  "redirect_uri": "app://callback"
+}
+```
+
+Behavior
+- The server posts the code to the realm's token endpoint and validates the
+  returned id_token (using the realm's JWKS).
+- Client secrets for token exchanges are looked up server-side from
+  `deps.CLIENT_BY_REALM_TYPE`; mobile apps MUST NOT embed client secrets.
+
 
 ## Development
 
 ### Virtual environment
 
-Python >= 3.6 is required.
+Python >= 3.11 is required.
 Create a virtual environment and install the requirements:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-pip install -e .[tests]
+pip install -e ".[tests]"
 ```
 
 When using sqlite, it's not possible to run `alembic` for database migration
