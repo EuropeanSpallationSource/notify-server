@@ -1,7 +1,7 @@
 import datetime
 import uuid
 from fastapi.logger import logger
-from sqlalchemy import desc
+from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from . import models, schemas
@@ -204,6 +204,8 @@ def get_user_notifications(
     If a list of services id is given, only notifcations part of those are returned.
     The newest notifications are always returned. Sorting by ascending order
     will just reverse that list.
+    
+    Notifications are filtered based on user's service exclude_keywords settings.
     """
     query = (
         db.query(models.UserNotification)
@@ -211,16 +213,66 @@ def get_user_notifications(
             models.UserNotification.user_id == user.id,
         )
         .join(models.Notification)
+        .outerjoin(
+            models.UserServiceFilter,
+            and_(
+                models.UserServiceFilter.user_id == user.id,
+                models.UserServiceFilter.service_id == models.Notification.service_id
+            )
+        )
     )
     if filter_services_id is not None:
         query = query.filter(models.Notification.service_id.in_(filter_services_id))
+    
     query = query.order_by(desc(models.Notification.timestamp))
     query = query.limit(limit) if limit > 0 else query.all()
-    notifications = [un.to_user_notification() for un in query]
+    
+    # Convert to user notifications
+    user_notifications = []
+    for un in query:
+        notification_dict = un.to_user_notification()
+        
+        # Apply include/exclude keywords filter
+        # Get the UserServiceFilter for this notification's service
+        user_filter = db.query(models.UserServiceFilter).filter(
+            models.UserServiceFilter.user_id == user.id,
+            models.UserServiceFilter.service_id == un.notification.service_id
+        ).first()
+        
+        # Check if notification should be included
+        should_include = True
+        
+        if user_filter:
+            notification_title = notification_dict.title.lower()
+            notification_subtitle = notification_dict.subtitle.lower() if notification_dict.subtitle else ''
+            notification_url = notification_dict.url.lower() if notification_dict.url else ''
+            
+            # Check exclude_keywords first (takes priority)
+            if user_filter.exclude_keywords:
+                exclude_list = [kw.strip().lower() for kw in user_filter.exclude_keywords.split(';') if kw.strip()]
+                for keyword in exclude_list:
+                    if keyword in notification_title or keyword in notification_subtitle or keyword in notification_url:
+                        should_include = False
+                        break
+            
+            # If not excluded, check include_keywords (if set, must match at least one)
+            if should_include and user_filter.include_keywords:
+                include_list = [kw.strip().lower() for kw in user_filter.include_keywords.split(';') if kw.strip()]
+                has_match = False
+                for keyword in include_list:
+                    if keyword in notification_title or keyword in notification_subtitle or keyword in notification_url:
+                        has_match = True
+                        break
+                should_include = has_match
+        
+        if should_include:
+            user_notifications.append(notification_dict)
+    
     # Sorting in ascending order is mostly for backward compatibility
     if sort == schemas.SortOrder.asc:
-        notifications.reverse()
-    return notifications
+        user_notifications.reverse()
+    
+    return user_notifications
 
 
 def update_user_notifications(
@@ -261,3 +313,62 @@ def delete_notifications(db: Session, keep_days: int) -> None:
     # Delete the notifications themselves
     old_notification_ids.delete(synchronize_session=False)
     db.commit()
+
+
+def get_user_service_filter(
+    db: Session, user_id: int, service_id: uuid.UUID
+) -> Optional[models.UserServiceFilter]:
+    """Get filter configuration for a user's service subscription"""
+    return (
+        db.query(models.UserServiceFilter)
+        .filter(
+            models.UserServiceFilter.user_id == user_id,
+            models.UserServiceFilter.service_id == service_id,
+        )
+        .first()
+    )
+
+
+def create_or_update_user_service_filter(
+    db: Session,
+    user: models.User,
+    service_id: uuid.UUID,
+    filter_update: schemas.UserServiceFilterUpdate,
+) -> models.UserServiceFilter:
+    """Create or update filter settings for a user's service subscription"""
+    filter_record = get_user_service_filter(db, user.id, service_id)
+
+    if filter_record is None:
+        # Create new filter
+        filter_record = models.UserServiceFilter(
+            user_id=user.id,
+            service_id=service_id,
+            include_keywords=filter_update.include_keywords or "",
+            exclude_keywords=filter_update.exclude_keywords or "",
+        )
+        db.add(filter_record)
+    else:
+        # Update existing filter
+        if filter_update.include_keywords is not None:
+            filter_record.include_keywords = filter_update.include_keywords
+        if filter_update.exclude_keywords is not None:
+            filter_record.exclude_keywords = filter_update.exclude_keywords
+
+    db.commit()
+    db.refresh(filter_record)
+    logger.info(
+        f"Filter updated for user {user.username} on service {service_id}: "
+        f"include={filter_record.include_keywords}, exclude={filter_record.exclude_keywords}"
+    )
+    return filter_record
+
+
+def delete_user_service_filter(
+    db: Session, user_id: int, service_id: uuid.UUID
+) -> None:
+    """Delete filter for a user's service subscription"""
+    filter_record = get_user_service_filter(db, user_id, service_id)
+    if filter_record:
+        db.delete(filter_record)
+        db.commit()
+        logger.info(f"Filter deleted for user {user_id} on service {service_id}")
