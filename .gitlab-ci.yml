@@ -8,6 +8,8 @@ include:
 test-python311:
   stage: test
   image: python:3.11
+  tags:
+    - docker
   before_script:
     - pip install -e .[tests]
   script:
@@ -23,6 +25,8 @@ test-python311:
 test-docker-image:
   stage: test
   image: "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME"
+  tags:
+    - docker
   before_script:
     - pip install --no-cache-dir .[tests]
   script:
@@ -31,6 +35,8 @@ test-docker-image:
 deploy-staging:
   stage: deploy
   image: registry.esss.lu.se/ics-docker/awxkit
+  tags:
+    - docker
   dependencies: []
   script:
     - >
@@ -48,6 +54,8 @@ deploy-staging:
 deploy-production:
   stage: deploy
   image: registry.esss.lu.se/ics-docker/awxkit
+  tags:
+    - docker
   dependencies: []
   script:
     - >
