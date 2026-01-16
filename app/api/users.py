@@ -209,7 +209,9 @@ def update_current_user_service_filter(
     return filter_record
 
 
-@router.delete("/user/services/{service_id}/filter", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/user/services/{service_id}/filter", status_code=status.HTTP_204_NO_CONTENT
+)
 @version(2)
 def delete_current_user_service_filter(
     service_id: str,

@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
     cleanup_task = asyncio.create_task(
         background_tasks.cleanup_old_notifications_task(NOTIFICATION_RETENTION_DAYS)
     )
-    
+
     if OIDC_ENABLED:
         async with httpx.AsyncClient() as client:
             r = await client.get(OIDC_SERVER_URL)
@@ -55,15 +55,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
     else:
         oidc_config = {}
         jwks_client = None
-    
+
     yield {"oidc_config": oidc_config, "jwks_client": jwks_client}
-    
+
     # Cancel cleanup task on shutdown
     cleanup_task.cancel()
-    try:
+    with contextlib.suppress(asyncio.CancelledError):
         await cleanup_task
-    except asyncio.CancelledError:
-        pass
 
 
 # Main application to serve HTML

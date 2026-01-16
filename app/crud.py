@@ -204,7 +204,7 @@ def get_user_notifications(
     If a list of services id is given, only notifcations part of those are returned.
     The newest notifications are always returned. Sorting by ascending order
     will just reverse that list.
-    
+
     Notifications are filtered based on user's service exclude_keywords settings.
     """
     query = (
@@ -217,61 +217,85 @@ def get_user_notifications(
             models.UserServiceFilter,
             and_(
                 models.UserServiceFilter.user_id == user.id,
-                models.UserServiceFilter.service_id == models.Notification.service_id
-            )
+                models.UserServiceFilter.service_id == models.Notification.service_id,
+            ),
         )
     )
     if filter_services_id is not None:
         query = query.filter(models.Notification.service_id.in_(filter_services_id))
-    
+
     query = query.order_by(desc(models.Notification.timestamp))
     query = query.limit(limit) if limit > 0 else query.all()
-    
+
     # Convert to user notifications
     user_notifications = []
     for un in query:
         notification_dict = un.to_user_notification()
-        
+
         # Apply include/exclude keywords filter
         # Get the UserServiceFilter for this notification's service
-        user_filter = db.query(models.UserServiceFilter).filter(
-            models.UserServiceFilter.user_id == user.id,
-            models.UserServiceFilter.service_id == un.notification.service_id
-        ).first()
-        
+        user_filter = (
+            db.query(models.UserServiceFilter)
+            .filter(
+                models.UserServiceFilter.user_id == user.id,
+                models.UserServiceFilter.service_id == un.notification.service_id,
+            )
+            .first()
+        )
+
         # Check if notification should be included
         should_include = True
-        
+
         if user_filter:
             notification_title = notification_dict.title.lower()
-            notification_subtitle = notification_dict.subtitle.lower() if notification_dict.subtitle else ''
-            notification_url = notification_dict.url.lower() if notification_dict.url else ''
-            
+            notification_subtitle = (
+                notification_dict.subtitle.lower() if notification_dict.subtitle else ""
+            )
+            notification_url = (
+                notification_dict.url.lower() if notification_dict.url else ""
+            )
+
             # Check exclude_keywords first (takes priority)
             if user_filter.exclude_keywords:
-                exclude_list = [kw.strip().lower() for kw in user_filter.exclude_keywords.split(';') if kw.strip()]
+                exclude_list = [
+                    kw.strip().lower()
+                    for kw in user_filter.exclude_keywords.split(";")
+                    if kw.strip()
+                ]
                 for keyword in exclude_list:
-                    if keyword in notification_title or keyword in notification_subtitle or keyword in notification_url:
+                    if (
+                        keyword in notification_title
+                        or keyword in notification_subtitle
+                        or keyword in notification_url
+                    ):
                         should_include = False
                         break
-            
+
             # If not excluded, check include_keywords (if set, must match at least one)
             if should_include and user_filter.include_keywords:
-                include_list = [kw.strip().lower() for kw in user_filter.include_keywords.split(';') if kw.strip()]
+                include_list = [
+                    kw.strip().lower()
+                    for kw in user_filter.include_keywords.split(";")
+                    if kw.strip()
+                ]
                 has_match = False
                 for keyword in include_list:
-                    if keyword in notification_title or keyword in notification_subtitle or keyword in notification_url:
+                    if (
+                        keyword in notification_title
+                        or keyword in notification_subtitle
+                        or keyword in notification_url
+                    ):
                         has_match = True
                         break
                 should_include = has_match
-        
+
         if should_include:
             user_notifications.append(notification_dict)
-    
+
     # Sorting in ascending order is mostly for backward compatibility
     if sort == schemas.SortOrder.asc:
         user_notifications.reverse()
-    
+
     return user_notifications
 
 
