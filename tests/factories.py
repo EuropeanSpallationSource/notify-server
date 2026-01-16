@@ -24,6 +24,17 @@ class ServiceFactory(factory.alchemy.SQLAlchemyModelFactory):
     owner = factory.Faker("name")
 
 
+class UserServiceFilterFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.UserServiceFilter
+        sqlalchemy_session_persistence = "commit"
+
+    user = factory.SubFactory(UserFactory)
+    service = factory.SubFactory(ServiceFactory)
+    include_keywords = ""
+    exclude_keywords = ""
+
+
 class NotificationFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.Notification

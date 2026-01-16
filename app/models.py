@@ -94,6 +94,22 @@ users_services_table = Table(
 )
 
 
+class UserServiceFilter(Base):
+    """Keyword filters for user service subscriptions"""
+
+    __tablename__ = "users_services_filters"
+
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    service_id = Column(GUID, ForeignKey("services.id"), primary_key=True)
+    # Semicolon-separated keywords to include (empty = include all)
+    include_keywords = Column(String, default="", nullable=False)
+    # Semicolon-separated keywords to exclude (checked first)
+    exclude_keywords = Column(String, default="", nullable=False)
+
+    user = relationship("User", backref="service_filters")
+    service = relationship("Service", backref="user_filters")
+
+
 class User(Base):
     __tablename__ = "users"
 
