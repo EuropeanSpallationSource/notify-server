@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.requests import Request
 from sqlalchemy.orm import Session
+from fastapi.logger import logger
 from . import templates
 from .. import crud, deps, models, schemas
 
@@ -17,14 +18,25 @@ async def settings_get(
     services = crud.get_user_services(db, current_user)
 
     # Get filters for each service
-    service_filters = {}
+    service_filters: dict[str, dict[str, str]] = {}
     for service in services:
-        filter_record = crud.get_user_service_filter(db, current_user.id, service.id)
-        if filter_record:
-            # Use the model directly with from_attributes
-            service_filters[str(service.id)] = filter_record
-        else:
-            # Create empty filter for services without filters
+        try:
+            filter_record = crud.get_user_service_filter(db, current_user.id, service.id)
+            if filter_record:
+                # Convert model to dict for template
+                service_filters[str(service.id)] = {
+                    "include_keywords": filter_record.include_keywords or "",
+                    "exclude_keywords": filter_record.exclude_keywords or "",
+                }
+            else:
+                # Create empty filter for services without filters
+                service_filters[str(service.id)] = {
+                    "include_keywords": "",
+                    "exclude_keywords": "",
+                }
+        except Exception as e:
+            logger.error(f"Error getting filter for service {service.id}: {e}")
+            # Provide empty filter on error
             service_filters[str(service.id)] = {
                 "include_keywords": "",
                 "exclude_keywords": "",
