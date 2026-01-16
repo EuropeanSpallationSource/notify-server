@@ -1,5 +1,6 @@
 import contextlib
 import logging
+import asyncio
 import httpx
 import jwt
 import sentry_sdk
@@ -12,7 +13,7 @@ from fastapi.logger import logger
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
-from . import monitoring
+from . import monitoring, background_tasks
 from .api import login, users, services
 from .views import exceptions, account, notifications, settings, docs
 from .settings import (
@@ -22,6 +23,7 @@ from .settings import (
     SESSION_MAX_AGE,
     OIDC_SERVER_URL,
     OIDC_ENABLED,
+    NOTIFICATION_RETENTION_DAYS,
 )
 
 
@@ -40,6 +42,11 @@ class State(TypedDict):
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[State]:
+    # Start background cleanup task
+    cleanup_task = asyncio.create_task(
+        background_tasks.cleanup_old_notifications_task(NOTIFICATION_RETENTION_DAYS)
+    )
+    
     if OIDC_ENABLED:
         async with httpx.AsyncClient() as client:
             r = await client.get(OIDC_SERVER_URL)
@@ -48,7 +55,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
     else:
         oidc_config = {}
         jwks_client = None
+    
     yield {"oidc_config": oidc_config, "jwks_client": jwks_client}
+    
+    # Cancel cleanup task on shutdown
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
 
 
 # Main application to serve HTML
