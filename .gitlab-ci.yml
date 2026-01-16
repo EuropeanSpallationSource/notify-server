@@ -2,11 +2,8 @@
 include:
   - remote: 'https://gitlab.esss.lu.se/ics-infrastructure/gitlab-ci-yml/raw/master/PreCommit.gitlab-ci.yml'
   - remote: 'https://gitlab.esss.lu.se/ics-infrastructure/gitlab-ci-yml/raw/master/SonarScanner.gitlab-ci.yml'
-  - remote: 'https://gitlab.esss.lu.se/ics-infrastructure/gitlab-ci-yml/raw/master/Docker.gitlab-ci.yml'
-
-# Override the Docker image in the shared Docker template to fix API compatibility
-.docker-build:
-  image: docker:20.10
+  # Disabled due to Docker API compatibility issue (client v1.52 vs daemon v1.41)
+  # - remote: 'https://gitlab.esss.lu.se/ics-infrastructure/gitlab-ci-yml/raw/master/Docker.gitlab-ci.yml'
 
 test-python311:
   stage: test
