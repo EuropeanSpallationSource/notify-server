@@ -8,6 +8,7 @@ Create Date: 2025-12-09 14:43:51.163279
 
 from alembic import op
 import sqlalchemy as sa
+from app.models import GUID
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     op.create_table(
         "users_services_filters",
         sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("service_id", sa.CHAR(32), nullable=False),
+        sa.Column("service_id", GUID(), nullable=False),
         sa.Column("include_keywords", sa.String(), nullable=False),
         sa.Column("exclude_keywords", sa.String(), nullable=False),
         sa.ForeignKeyConstraint(
