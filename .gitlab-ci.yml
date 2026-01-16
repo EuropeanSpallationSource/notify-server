@@ -4,6 +4,9 @@ include:
   - remote: 'https://gitlab.esss.lu.se/ics-infrastructure/gitlab-ci-yml/raw/master/SonarScanner.gitlab-ci.yml'
   - remote: 'https://gitlab.esss.lu.se/ics-infrastructure/gitlab-ci-yml/raw/master/Docker.gitlab-ci.yml'
 
+variables:
+  # Override Docker version to fix API compatibility (runner daemon is v1.41)
+  DOCKER_VERSION: "20.10"
 
 test-python311:
   stage: test
