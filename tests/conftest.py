@@ -35,6 +35,7 @@ from . import factories  # noqa E402
 Session = sessionmaker()
 register(factories.UserFactory)
 register(factories.ServiceFactory)
+register(factories.UserServiceFilterFactory)
 register(factories.NotificationFactory)
 
 

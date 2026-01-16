@@ -74,6 +74,46 @@ async def gather_with_concurrency(n: int, *tasks, return_exceptions=True):
     )
 
 
+def matches_user_filter(
+    notification, user, db
+) -> bool:
+    """Check if notification matches user's filter for this service
+    
+    Returns True if notification should be sent to user
+    """
+    filter_record = crud.get_user_service_filter(db, user.id, notification.service_id)
+    if not filter_record:
+        return True  # No filter = send all
+    
+    text = f"{notification.title} {notification.subtitle}".lower()
+    
+    # Check exclusions first (highest priority)
+    if filter_record.exclude_keywords:
+        for keyword in filter_record.exclude_keywords.split(";"):
+            keyword = keyword.strip()
+            if keyword and keyword.lower() in text:
+                logger.debug(
+                    f"Notification {notification.id} excluded for user {user.username} "
+                    f"(matched exclude keyword: '{keyword}')"
+                )
+                return False
+    
+    # Check inclusions (empty = include all)
+    if filter_record.include_keywords:
+        for keyword in filter_record.include_keywords.split(";"):
+            keyword = keyword.strip()
+            if keyword and keyword.lower() in text:
+                return True
+        # Has include list but no match
+        logger.debug(
+            f"Notification {notification.id} filtered for user {user.username} "
+            f"(no include keywords matched)"
+        )
+        return False
+    
+    return True
+
+
 async def send_notification(notification_id: int) -> None:
     """Send the notification to all subscribers"""
     tasks = []
@@ -93,6 +133,14 @@ async def send_notification(notification_id: int) -> None:
             user = user_notification.user
             if not user.is_logged_in or not user.is_active:
                 continue
+            
+            # Check user's filter settings
+            if not matches_user_filter(notification, user, db):
+                logger.info(
+                    f"Notification {notification.id} filtered for user {user.username}"
+                )
+                continue
+            
             ios_tokens = user.ios_tokens
             if ios_tokens:
                 apn_payload = user_notification.to_apn_payload()

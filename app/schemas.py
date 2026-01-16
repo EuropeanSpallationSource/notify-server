@@ -96,6 +96,21 @@ class UserUpdateService(BaseModel):
     is_subscribed: bool
 
 
+class UserServiceFilter(BaseModel):
+    """Filter configuration for a user's service subscription"""
+
+    include_keywords: str = ""  # Semicolon-separated keywords
+    exclude_keywords: str = ""  # Semicolon-separated keywords
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserServiceFilterUpdate(BaseModel):
+    """Update filter settings for a service"""
+
+    include_keywords: Optional[str] = None
+    exclude_keywords: Optional[str] = None
+
+
 class UserServiceForm(UserService):
     is_selected: bool
 

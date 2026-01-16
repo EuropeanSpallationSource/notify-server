@@ -97,3 +97,7 @@ APP_NAME = config("APP_NAME", cast=str, default="ESS Notify")
 
 # Local timezone used for timestamp in the web app
 LOCAL_TIMEZONE = config("LOCAL_TIMEZONE", cast=str, default="Europe/Stockholm")
+
+# Notification retention period in days (default: 7 days)
+# Notifications older than this will be automatically deleted daily
+NOTIFICATION_RETENTION_DAYS = config("NOTIFICATION_RETENTION_DAYS", cast=int, default=7)

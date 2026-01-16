@@ -157,6 +157,73 @@ def update_current_user_services(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.get(
+    "/user/services/{service_id}/filter", response_model=schemas.UserServiceFilter
+)
+@version(2)
+def read_current_user_service_filter(
+    service_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+):
+    """Get filter settings for a specific service subscription"""
+    import uuid
+
+    service_uuid = uuid.UUID(service_id)
+    filter_record = crud.get_user_service_filter(db, current_user.id, service_uuid)
+    if filter_record is None:
+        # Return empty filter if none exists
+        return schemas.UserServiceFilter(include_keywords="", exclude_keywords="")
+    return filter_record
+
+
+@router.put(
+    "/user/services/{service_id}/filter", response_model=schemas.UserServiceFilter
+)
+@version(2)
+def update_current_user_service_filter(
+    service_id: str,
+    filter_update: schemas.UserServiceFilterUpdate,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+):
+    """Update filter settings for a specific service subscription"""
+    import uuid
+
+    service_uuid = uuid.UUID(service_id)
+    # Verify service exists and user is subscribed
+    service = crud.get_service(db, service_uuid)
+    if service is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Service not found"
+        )
+    if service not in current_user.services:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not subscribed to this service",
+        )
+
+    filter_record = crud.create_or_update_user_service_filter(
+        db, current_user, service_uuid, filter_update
+    )
+    return filter_record
+
+
+@router.delete("/user/services/{service_id}/filter", status_code=status.HTTP_204_NO_CONTENT)
+@version(2)
+def delete_current_user_service_filter(
+    service_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+):
+    """Delete filter settings for a specific service subscription"""
+    import uuid
+
+    service_uuid = uuid.UUID(service_id)
+    crud.delete_user_service_filter(db, current_user.id, service_uuid)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get("/user/notifications", response_model=List[schemas.UserNotification])
 def read_current_user_notifications(
     limit: int = 50,
