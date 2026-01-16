@@ -4,18 +4,57 @@
 
 {% block main %}
 <main class="row justify-content-center">
-  <div class="form-settings col-6">
+  <div class="form-settings col-8">
     <h2>My services</h2>
     <form action="" method="POST">
       {% for service in services %}
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" value="" id="{{ service.category }}" name="{{ service.category }}" {% if service.is_subscribed %}checked{% endif %}>
-        <label class="form-check-label" for="{{ service.category }}">
-          {{ service.category }}
-        </label>
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="{{ service.category }}" name="{{ service.category }}" {% if service.is_subscribed %}checked{% endif %}>
+            <label class="form-check-label fw-bold" for="{{ service.category }}">
+              <span class="badge" style="background-color: #{{ service.color }};">{{ service.category }}</span>
+            </label>
+          </div>
+          
+          {% if service.is_subscribed %}
+          <div class="mt-3 ps-4 border-start border-3">
+            <h6 class="text-muted mb-2">Notification Filters</h6>
+            <p class="small text-muted mb-2">Filter notifications for this service using keywords (semicolon-separated)</p>
+            
+            <div class="mb-2">
+              <label for="filter_include_{{ service.id }}" class="form-label small">
+                <strong>Include keywords</strong> <span class="text-muted">(only show notifications with these words)</span>
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                id="filter_include_{{ service.id }}" 
+                name="filter_include_{{ service.id }}"
+                value="{{ service_filters[service.id|string].include_keywords }}"
+                placeholder="e.g., alert;critical;error">
+              <div class="form-text">Leave empty to show all (unless excluded below)</div>
+            </div>
+            
+            <div class="mb-2">
+              <label for="filter_exclude_{{ service.id }}" class="form-label small">
+                <strong>Exclude keywords</strong> <span class="text-muted">(hide notifications with these words)</span>
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                id="filter_exclude_{{ service.id }}" 
+                name="filter_exclude_{{ service.id }}"
+                value="{{ service_filters[service.id|string].exclude_keywords }}"
+                placeholder="e.g., test;debug;maintenance">
+              <div class="form-text">Separate multiple keywords with semicolons (;)</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
       </div>
       {% endfor %}
-      <button class="btn btn-primary" type="submit">Save</button>
+      <button class="btn btn-primary" type="submit">Save Settings</button>
     </form>
   </div>
 </main>
