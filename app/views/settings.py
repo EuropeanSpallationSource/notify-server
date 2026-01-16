@@ -21,17 +21,14 @@ async def settings_get(
     for service in services:
         filter_record = crud.get_user_service_filter(db, current_user.id, service.id)
         if filter_record:
-            # Convert model to schema for type consistency
-            service_filters[str(service.id)] = schemas.UserServiceFilter(
-                include_keywords=filter_record.include_keywords or "",
-                exclude_keywords=filter_record.exclude_keywords or "",
-            )
+            # Use the model directly with from_attributes
+            service_filters[str(service.id)] = filter_record
         else:
-            # Create empty filter object if none exists
-            service_filters[str(service.id)] = schemas.UserServiceFilter(
-                include_keywords="",
-                exclude_keywords="",
-            )
+            # Create empty filter for services without filters
+            service_filters[str(service.id)] = {
+                "include_keywords": "",
+                "exclude_keywords": "",
+            }
 
     return templates.TemplateResponse(
         "settings.html",
