@@ -21,7 +21,9 @@ async def settings_get(
     service_filters: dict[str, dict[str, str]] = {}
     for service in services:
         try:
-            filter_record = crud.get_user_service_filter(db, current_user.id, service.id)
+            filter_record = crud.get_user_service_filter(
+                db, current_user.id, service.id
+            )
             if filter_record:
                 # Convert model to dict for template
                 service_filters[str(service.id)] = {
