@@ -17,3 +17,4 @@ data
 ess_notify.egg-info
 .*key
 ess-ics-software.json
+app/_version.py

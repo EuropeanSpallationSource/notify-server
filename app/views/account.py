@@ -16,6 +16,7 @@ async def index(
     request: Request,
     current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
+    logger.info(f"Index page accessed by user: {current_user.username}, redirecting to /notifications")
     return RedirectResponse(url="/notifications")
 
 
@@ -72,24 +73,33 @@ async def login_post(
     return resp
 
 
-@router.get("/auth")
+@router.get("/oidc/auth", response_class=HTMLResponse, name="oidc_auth")
 async def oidc_auth(
     request: Request,
     db: Session = Depends(deps.get_db),
 ):
     try:
+        logger.info("OIDC auth callback started")
         token = await deps.oauth.keycloak.authorize_access_token(request)
+        logger.info("OIDC token obtained successfully")
     except OAuthError as e:
         logger.warning(f"OAuthError on OpenID Connect redirect: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     user_info = token["userinfo"]
     if user_info:
         username = user_info["preferred_username"].lower()
+        logger.info(f"OIDC login for username: {username}")
         db_user = crud.get_user_by_username(db, username)
         if db_user is None:
+            logger.info(f"Creating new user: {username}")
             db_user = crud.create_user(db, username)
+        else:
+            logger.info(f"Existing user found: {username} (id={db_user.id})")
         request.session["user_id"] = db_user.id
-        return RedirectResponse(url=request.session.pop("next", "/"))
+        next_url = request.session.pop("next", "/")
+        logger.info(f"Redirecting user {username} to: {next_url}")
+        return RedirectResponse(url=next_url)
+    logger.warning("OIDC auth completed but no user_info found")
     return RedirectResponse(url="/login")
 
 

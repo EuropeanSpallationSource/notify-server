@@ -15,44 +15,59 @@ async def settings_get(
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
-    services = crud.get_user_services(db, current_user)
+    logger.info(f"Settings page accessed by user: {current_user.username}")
+    
+    try:
+        services = crud.get_user_services(db, current_user)
+        logger.info(f"Retrieved {len(services)} services for user {current_user.username}")
 
-    # Get filters for each service
-    service_filters: dict[str, dict[str, str]] = {}
-    for service in services:
-        try:
-            filter_record = crud.get_user_service_filter(
-                db, current_user.id, service.id
-            )
-            if filter_record:
-                # Convert model to dict for template
-                service_filters[str(service.id)] = {
-                    "include_keywords": filter_record.include_keywords or "",
-                    "exclude_keywords": filter_record.exclude_keywords or "",
-                }
-            else:
-                # Create empty filter for services without filters
+        # Get filters for each service
+        service_filters: dict[str, dict[str, str]] = {}
+        for service in services:
+            try:
+                filter_record = crud.get_user_service_filter(
+                    db, current_user.id, service.id
+                )
+                if filter_record:
+                    # Convert model to dict for template
+                    service_filters[str(service.id)] = {
+                        "include_keywords": filter_record.include_keywords or "",
+                        "exclude_keywords": filter_record.exclude_keywords or "",
+                    }
+                    logger.debug(
+                        f"Loaded filter for service {service.id}: "
+                        f"include={filter_record.include_keywords}, "
+                        f"exclude={filter_record.exclude_keywords}"
+                    )
+                else:
+                    # Create empty filter for services without filters
+                    service_filters[str(service.id)] = {
+                        "include_keywords": "",
+                        "exclude_keywords": "",
+                    }
+            except Exception as e:
+                logger.error(
+                    f"Error getting filter for service {service.id}: {e}", exc_info=True
+                )
+                # Provide empty filter on error
                 service_filters[str(service.id)] = {
                     "include_keywords": "",
                     "exclude_keywords": "",
                 }
-        except Exception as e:
-            logger.error(f"Error getting filter for service {service.id}: {e}")
-            # Provide empty filter on error
-            service_filters[str(service.id)] = {
-                "include_keywords": "",
-                "exclude_keywords": "",
-            }
 
-    return templates.TemplateResponse(
-        "settings.html",
-        {
-            "request": request,
-            "current_user": current_user,
-            "services": services,
-            "service_filters": service_filters,
-        },
-    )
+        logger.info(f"Rendering settings template with {len(service_filters)} filters")
+        return templates.TemplateResponse(
+            "settings.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "services": services,
+                "service_filters": service_filters,
+            },
+        )
+    except Exception as e:
+        logger.error(f"CRITICAL: Settings page failed for user {current_user.username}: {e}", exc_info=True)
+        raise
 
 
 @router.post("/", response_class=HTMLResponse)

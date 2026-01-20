@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Form
+from fastapi.logger import logger
 from starlette.responses import HTMLResponse
 from starlette.requests import Request
 from sqlalchemy.orm import Session
@@ -14,35 +15,48 @@ async def notifications_get(
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
+    logger.info(f"Notifications page accessed by user: {current_user.username}")
     try:
-        notifications_limit = request.session["notifications_limit"]
-    except KeyError:
-        notifications_limit = 50
-        request.session["notifications_limit"] = notifications_limit
-    services = crud.get_user_services(db, current_user)
-    categories = {service.id: service.category for service in services}
-    selected_services = [
-        schemas.UserServiceForm.from_user_service(service)
-        for service in services
-        if service.is_subscribed
-    ]
-    notifications = crud.get_user_notifications(
-        db, current_user, limit=notifications_limit
-    )
-    request.session["selected_categories"] = [
-        service.category for service in selected_services
-    ]
-    return templates.TemplateResponse(
-        "notifications.html",
-        {
-            "request": request,
-            "current_user": current_user,
-            "services": selected_services,
-            "notifications_limit": notifications_limit,
-            "notifications": notifications,
-            "categories": categories,
-        },
-    )
+        try:
+            notifications_limit = request.session["notifications_limit"]
+        except KeyError:
+            notifications_limit = 50
+            request.session["notifications_limit"] = notifications_limit
+        
+        services = crud.get_user_services(db, current_user)
+        logger.info(f"Retrieved {len(services)} services for user {current_user.username}")
+        
+        categories = {service.id: service.category for service in services}
+        selected_services = [
+            schemas.UserServiceForm.from_user_service(service)
+            for service in services
+            if service.is_subscribed
+        ]
+        logger.info(f"User has {len(selected_services)} subscribed services")
+        
+        notifications = crud.get_user_notifications(
+            db, current_user, limit=notifications_limit
+        )
+        logger.info(f"Retrieved {len(notifications)} notifications")
+        
+        request.session["selected_categories"] = [
+            service.category for service in selected_services
+        ]
+        logger.info("Rendering notifications template")
+        return templates.TemplateResponse(
+            "notifications.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "services": selected_services,
+                "notifications_limit": notifications_limit,
+                "notifications": notifications,
+                "categories": categories,
+            },
+        )
+    except Exception as e:
+        logger.error(f"CRITICAL: Notifications page failed for user {current_user.username}: {e}", exc_info=True)
+        raise
 
 
 @router.post("/", response_class=HTMLResponse, name="notifications")
