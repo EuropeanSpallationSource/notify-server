@@ -16,10 +16,12 @@ async def settings_get(
     current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
     logger.info(f"Settings page accessed by user: {current_user.username}")
-    
+
     try:
         services = crud.get_user_services(db, current_user)
-        logger.info(f"Retrieved {len(services)} services for user {current_user.username}")
+        logger.info(
+            f"Retrieved {len(services)} services for user {current_user.username}"
+        )
 
         # Get filters for each service
         service_filters: dict[str, dict[str, str]] = {}
@@ -66,7 +68,10 @@ async def settings_get(
             },
         )
     except Exception as e:
-        logger.error(f"CRITICAL: Settings page failed for user {current_user.username}: {e}", exc_info=True)
+        logger.error(
+            f"CRITICAL: Settings page failed for user {current_user.username}: {e}",
+            exc_info=True,
+        )
         raise
 
 

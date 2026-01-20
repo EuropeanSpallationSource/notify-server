@@ -22,10 +22,12 @@ async def notifications_get(
         except KeyError:
             notifications_limit = 50
             request.session["notifications_limit"] = notifications_limit
-        
+
         services = crud.get_user_services(db, current_user)
-        logger.info(f"Retrieved {len(services)} services for user {current_user.username}")
-        
+        logger.info(
+            f"Retrieved {len(services)} services for user {current_user.username}"
+        )
+
         categories = {service.id: service.category for service in services}
         selected_services = [
             schemas.UserServiceForm.from_user_service(service)
@@ -33,12 +35,12 @@ async def notifications_get(
             if service.is_subscribed
         ]
         logger.info(f"User has {len(selected_services)} subscribed services")
-        
+
         notifications = crud.get_user_notifications(
             db, current_user, limit=notifications_limit
         )
         logger.info(f"Retrieved {len(notifications)} notifications")
-        
+
         request.session["selected_categories"] = [
             service.category for service in selected_services
         ]
@@ -55,7 +57,10 @@ async def notifications_get(
             },
         )
     except Exception as e:
-        logger.error(f"CRITICAL: Notifications page failed for user {current_user.username}: {e}", exc_info=True)
+        logger.error(
+            f"CRITICAL: Notifications page failed for user {current_user.username}: {e}",
+            exc_info=True,
+        )
         raise
 
 

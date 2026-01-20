@@ -16,7 +16,9 @@ async def index(
     request: Request,
     current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
-    logger.info(f"Index page accessed by user: {current_user.username}, redirecting to /notifications")
+    logger.info(
+        f"Index page accessed by user: {current_user.username}, redirecting to /notifications"
+    )
     return RedirectResponse(url="/notifications")
 
 
