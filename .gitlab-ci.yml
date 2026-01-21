@@ -49,6 +49,7 @@ deploy-staging:
     url: https://notify-test.esss.lu.se/docs
   only:
     - master
+    - develop
     - tags
 
 deploy-production:
