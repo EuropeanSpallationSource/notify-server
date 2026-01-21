@@ -396,3 +396,67 @@ def delete_user_service_filter(
         db.delete(filter_record)
         db.commit()
         logger.info(f"Filter deleted for user {user_id} on service {service_id}")
+
+
+def backfill_service_notifications(
+    db: Session, user: models.User, service: models.Service, days: int = 7
+) -> int:
+    """
+    Backfill notification history for a newly subscribed service.
+    Creates UserNotification records for all notifications from the service
+    within the specified number of days.
+
+    Returns the number of notifications backfilled.
+    """
+    from .settings import NOTIFICATION_RETENTION_DAYS
+
+    # Use the configured retention days or the specified days, whichever is smaller
+    backfill_days = min(days, NOTIFICATION_RETENTION_DAYS)
+    cutoff_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=backfill_days
+    )
+
+    # Get all notifications from this service within the timeframe
+    notifications = (
+        db.query(models.Notification)
+        .filter(
+            models.Notification.service_id == service.id,
+            models.Notification.timestamp >= cutoff_date,
+        )
+        .order_by(models.Notification.timestamp)
+        .all()
+    )
+
+    if not notifications:
+        logger.info(
+            f"No historical notifications to backfill for service {service.category}"
+        )
+        return 0
+
+    # Create UserNotification records for each
+    backfilled_count = 0
+    for notification in notifications:
+        # Check if user already has this notification (shouldn't happen, but be safe)
+        existing = (
+            db.query(models.UserNotification)
+            .filter(
+                models.UserNotification.user_id == user.id,
+                models.UserNotification.notification_id == notification.id,
+            )
+            .first()
+        )
+
+        if not existing:
+            user_notification = models.UserNotification(
+                user=user, notification=notification, is_read=False
+            )
+            db.add(user_notification)
+            backfilled_count += 1
+
+    db.commit()
+    logger.info(
+        f"Backfilled {backfilled_count} notifications for user {user.username} "
+        f"on service {service.category} (last {backfill_days} days)"
+    )
+
+    return backfilled_count

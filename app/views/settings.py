@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.requests import Request
 from sqlalchemy.orm import Session
 from fastapi.logger import logger
 from . import templates
-from .. import crud, deps, models, schemas
+from .. import crud, deps, models, schemas, utils
 
 router = APIRouter()
 
@@ -78,6 +78,7 @@ async def settings_get(
 @router.post("/", response_class=HTMLResponse)
 async def settings_post(
     request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
@@ -86,17 +87,22 @@ async def settings_post(
 
     services = crud.get_user_services(db, current_user)
     updated_services = []
+    newly_subscribed_services = []
 
     for service in services:
-        if service.category in selected_categories:
-            service.is_subscribed = True
-        else:
-            service.is_subscribed = False
+        was_subscribed = service.is_subscribed
+        is_now_subscribed = service.category in selected_categories
+
+        service.is_subscribed = is_now_subscribed
         updated_services.append(
             schemas.UserUpdateService(
                 id=service.id, is_subscribed=service.is_subscribed
             )
         )
+
+        # Track newly subscribed services for backfill
+        if not was_subscribed and is_now_subscribed:
+            newly_subscribed_services.append(service)
 
         # Update filters for this service
         service_id_str = str(service.id)
@@ -116,6 +122,14 @@ async def settings_post(
             )
 
     crud.update_user_services(db, updated_services, current_user)
+
+    # Backfill notifications for newly subscribed services
+    if newly_subscribed_services:
+        background_tasks.add_task(
+            utils.backfill_and_notify,
+            current_user.id,
+            [service.id for service in newly_subscribed_services],
+        )
 
     # Redirect to prevent form resubmission
     return RedirectResponse(url="/settings", status_code=303)

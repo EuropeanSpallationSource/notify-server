@@ -202,3 +202,114 @@ def validate_id_token(
         raise ValueError(
             f"at_hash value {payload['at_hash']} doesn't match computed {at_hash}"
         )
+
+
+async def backfill_and_notify(user_id: int, service_ids: List[uuid.UUID]) -> None:
+    """
+    Backfill notification history for newly subscribed services and send
+    a single summary push notification.
+
+    This is called as a background task when a user subscribes to new services.
+    """
+    db = SessionLocal()
+    try:
+        user = crud.get_user(db, user_id)
+        if not user or not user.is_logged_in or not user.is_active:
+            logger.warning(
+                f"Skipping backfill for user {user_id}: user not found or inactive"
+            )
+            return
+
+        total_backfilled = 0
+        service_names = []
+
+        for service_id in service_ids:
+            service = crud.get_service(db, service_id)
+            if not service:
+                logger.warning(f"Service {service_id} not found, skipping backfill")
+                continue
+
+            # Backfill notifications for this service
+            count = crud.backfill_service_notifications(db, user, service)
+            if count > 0:
+                total_backfilled += count
+                service_names.append(service.category)
+
+        # Send one summary push notification if any notifications were backfilled
+        if total_backfilled > 0:
+            await send_summary_notification(user, total_backfilled, service_names)
+            logger.info(
+                f"Backfilled {total_backfilled} notifications for user {user.username} "
+                f"across services: {', '.join(service_names)}"
+            )
+        else:
+            logger.info(f"No notifications to backfill for user {user.username}")
+
+    except Exception as e:
+        logger.error(f"Error during backfill for user {user_id}: {e}", exc_info=True)
+    finally:
+        db.close()
+
+
+async def send_summary_notification(
+    user, notification_count: int, service_names: List[str]
+) -> None:
+    """Send a single push notification summarizing the backfilled notifications"""
+    # Create summary message
+    if len(service_names) == 1:
+        title = f"Welcome to {service_names[0]}"
+        body = f"{notification_count} notification{'s' if notification_count > 1 else ''} available"
+    else:
+        title = "New subscriptions"
+        body = f"{notification_count} notifications from {len(service_names)} services"
+
+    # Prepare iOS and Android clients
+    ios_headers = ios.create_headers(datetime.now(timezone.utc))
+    ios_client = httpx.AsyncClient(http2=True, headers=ios_headers)
+    android_headers = await firebase.create_headers(str(uuid.uuid4()))
+    android_client = httpx.AsyncClient(headers=android_headers)
+
+    tasks = []
+
+    try:
+        # Send to iOS devices
+        ios_tokens = user.ios_tokens
+        if ios_tokens:
+            from . import schemas
+
+            apn_payload = schemas.ApnPayload(
+                aps=schemas.Aps(
+                    alert=schemas.Alert(title=title, body=body),
+                    badge=user.nb_unread_notifications,
+                )
+            )
+            for ios_token in ios_tokens:
+                tasks.append(
+                    ios.send_push(ios_client, ios_token, apn_payload, None, user)
+                )
+
+        # Send to Android devices
+        for android_token in user.android_tokens:
+            from . import schemas
+
+            android_payload = schemas.AndroidPayload(
+                message=schemas.AndroidMessage(
+                    token=android_token,
+                    data=schemas.AndroidData(
+                        title=title,
+                        body=body,
+                        category="summary",
+                        timestamp=str(int(datetime.now(timezone.utc).timestamp())),
+                    ),
+                )
+            )
+            tasks.append(
+                firebase.send_push(android_client, android_payload, None, user)
+            )
+
+        # Execute all push notifications
+        await gather_with_concurrency(NB_PARALLEL_PUSH, *tasks, return_exceptions=True)
+
+    finally:
+        await ios_client.aclose()
+        await android_client.aclose()
