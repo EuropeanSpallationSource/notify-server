@@ -76,7 +76,6 @@ async def gather_with_concurrency(n: int, *tasks, return_exceptions=True):
 
 async def send_notification(notification_id: int) -> None:
     """Send the notification to all subscribers"""
-    tasks = []
     ios_headers = ios.create_headers(datetime.now(timezone.utc))
     ios_client = httpx.AsyncClient(http2=True, headers=ios_headers)
     android_headers = await firebase.create_headers(str(uuid.uuid4()))
@@ -89,6 +88,10 @@ async def send_notification(notification_id: int) -> None:
                 f"Can't send notification! Notification {notification_id} not found."
             )
             return
+
+        # Build tasks, tracking which user owns each task
+        tasks = []
+        task_users = []
         for user_notification in notification.users_notification:
             user = user_notification.user
             if not user.is_logged_in or not user.is_active:
@@ -102,20 +105,28 @@ async def send_notification(notification_id: int) -> None:
                             ios_client,
                             ios_token,
                             apn_payload,
-                            db,
-                            user,
+                            user.username,
                         )
                     )
+                    task_users.append(user)
             for android_token in user.android_tokens:
                 tasks.append(
                     firebase.send_push(
                         android_client,
                         user_notification.to_android_payload(android_token),
-                        db,
-                        user,
+                        user.username,
                     )
                 )
-        await gather_with_concurrency(NB_PARALLEL_PUSH, *tasks, return_exceptions=True)
+                task_users.append(user)
+
+        results = await gather_with_concurrency(
+            NB_PARALLEL_PUSH, *tasks, return_exceptions=True
+        )
+
+        # Process token removals sequentially on a single session
+        for user, result in zip(task_users, results):
+            if isinstance(result, str):
+                crud.remove_user_device_token(db, user, result)
     finally:
         db.close()
         await ios_client.aclose()

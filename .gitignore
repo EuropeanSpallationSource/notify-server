@@ -17,6 +17,7 @@ data
 ess_notify.egg-info
 .*key
 ess-ics-software.json
+build
 
 # SCM version file
 _version.py
