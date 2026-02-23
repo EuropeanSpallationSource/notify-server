@@ -33,17 +33,17 @@ async def test_create_headers(mocker):
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_send_push_to_android_success(db, user, android_payload):
+async def test_send_push_to_android_success(android_payload):
     request = respx.post(
         "https://fcm.googleapis.com/v1/projects/my-project/messages:send",
     )
     request.side_effect = httpx.Response(200)
     async with httpx.AsyncClient() as client:
-        notification_sent = await firebase.send_push(client, android_payload, db, user)
+        token_to_remove = await firebase.send_push(client, android_payload, "testuser")
     assert request.called
     req, _ = respx.calls[0]
     assert json.loads(req._content.decode("utf-8")) == android_payload.model_dump()
-    assert notification_sent
+    assert token_to_remove is None
 
 
 @respx.mock
@@ -60,44 +60,28 @@ async def test_send_push_to_android_success(db, user, android_payload):
         httpx.Response(429, json={"error": "message"}),
     ],
 )
-async def test_send_push_to_android_error(
-    db, user_factory, android_payload, side_effect
-):
-    device_token = android_payload.message.token
-    user = user_factory(device_tokens=[device_token])
-    assert user.device_tokens == [device_token]
+async def test_send_push_to_android_error(android_payload, side_effect):
     # No exception raised in case of error
     request = respx.post(
         "https://fcm.googleapis.com/v1/projects/my-project/messages:send",
     )
     request.side_effect = side_effect
     async with httpx.AsyncClient() as client:
-        notification_sent = await firebase.send_push(client, android_payload, db, user)
+        token_to_remove = await firebase.send_push(client, android_payload, "testuser")
     assert request.called
-    assert not notification_sent
-    # Device token still present
-    db.refresh(user)
-    assert user.device_tokens == [device_token]
+    assert token_to_remove is None
 
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_send_push_to_android_404(
-    db,
-    user_factory,
-    android_payload,
-):
+async def test_send_push_to_android_404(android_payload):
     device_token = android_payload.message.token
-    user = user_factory(device_tokens=[device_token])
-    assert user.device_tokens == [device_token]
     request = respx.post(
         "https://fcm.googleapis.com/v1/projects/my-project/messages:send",
     )
     request.side_effect = httpx.Response(404, json={"error": "message"})
     async with httpx.AsyncClient() as client:
-        notification_sent = await firebase.send_push(client, android_payload, db, user)
+        token_to_remove = await firebase.send_push(client, android_payload, "testuser")
     assert request.called
-    assert not notification_sent
-    db.refresh(user)
-    # No longer active or invalid token deleted
-    assert user.device_tokens == []
+    # Returns the token that should be removed
+    assert token_to_remove == device_token
