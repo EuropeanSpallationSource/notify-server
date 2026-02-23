@@ -81,8 +81,8 @@ async def send_notification(notification_id: int) -> None:
     ios_client = httpx.AsyncClient(http2=True, headers=ios_headers)
     android_headers = await firebase.create_headers(str(uuid.uuid4()))
     android_client = httpx.AsyncClient(headers=android_headers)
+    db = SessionLocal()
     try:
-        db = SessionLocal()
         notification = crud.get_notification(db, notification_id)
         if notification is None:
             logger.warning(
