@@ -116,10 +116,10 @@ async def send_notification(notification_id: int) -> None:
                     )
                 )
         await gather_with_concurrency(NB_PARALLEL_PUSH, *tasks, return_exceptions=True)
-        await ios_client.aclose()
-        await android_client.aclose()
     finally:
         db.close()
+        await ios_client.aclose()
+        await android_client.aclose()
 
 
 def validate_id_token(
