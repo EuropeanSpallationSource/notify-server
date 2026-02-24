@@ -89,6 +89,14 @@ async def send_notification(notification_id: int) -> None:
             )
             return
 
+        # Fetch all unread counts in one GROUP BY query before the send loop
+        active_user_ids = [
+            un.user.id
+            for un in notification.users_notification
+            if un.user.is_logged_in and un.user.is_active
+        ]
+        unread_counts = crud.get_unread_counts(db, active_user_ids)
+
         # Build tasks, tracking which user owns each task
         tasks = []
         task_users = []
@@ -98,7 +106,7 @@ async def send_notification(notification_id: int) -> None:
                 continue
             ios_tokens = user.ios_tokens
             if ios_tokens:
-                apn_payload = user_notification.to_apn_payload()
+                apn_payload = user_notification.to_apn_payload(unread_counts[user.id])
                 for ios_token in ios_tokens:
                     tasks.append(
                         ios.send_push(

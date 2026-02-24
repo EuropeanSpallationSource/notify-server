@@ -256,10 +256,8 @@ class UserNotification(Base):
             is_read=self.is_read,
         )
 
-    def to_apn_payload(self) -> schemas.ApnPayload:
-        aps = schemas.Aps(
-            alert=self.notification.to_alert(), badge=self.user.nb_unread_notifications
-        )
+    def to_apn_payload(self, badge: int) -> schemas.ApnPayload:
+        aps = schemas.Aps(alert=self.notification.to_alert(), badge=badge)
         return schemas.ApnPayload(aps=aps)
 
     def to_android_payload(self, token) -> schemas.AndroidPayload:

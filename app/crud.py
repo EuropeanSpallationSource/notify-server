@@ -1,9 +1,9 @@
 import datetime
 import uuid
 from fastapi.logger import logger
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from sqlalchemy.orm import Session, subqueryload
-from typing import List, Optional
+from typing import Dict, List, Optional
 from . import models, schemas
 from .settings import ADMIN_USERS, DEMO_ACCOUNT_SERVICE, DEMO_ACCOUNT_USERNAME
 
@@ -178,6 +178,21 @@ def create_service_notification(
         f"New notification created for '{service.category}': {schemas.Notification.model_validate(db_notification).model_dump_json()}"
     )
     return db_notification
+
+
+def get_unread_counts(db: Session, user_ids: List[int]) -> Dict[int, int]:
+    """Return {user_id: unread_count} for the given users in a single GROUP BY query"""
+    rows = (
+        db.query(models.UserNotification.user_id, func.count().label("cnt"))
+        .filter(
+            models.UserNotification.user_id.in_(user_ids),
+            models.UserNotification.is_read.is_(False),
+        )
+        .group_by(models.UserNotification.user_id)
+        .all()
+    )
+    counts = {user_id: cnt for user_id, cnt in rows}
+    return {user_id: counts.get(user_id, 0) for user_id in user_ids}
 
 
 def get_notification(
