@@ -2,7 +2,7 @@ import datetime
 import uuid
 from fastapi.logger import logger
 from sqlalchemy import desc, func
-from sqlalchemy.orm import Session, subqueryload
+from sqlalchemy.orm import Session, subqueryload, contains_eager
 from typing import Dict, List, Optional
 from . import models, schemas
 from .settings import ADMIN_USERS, DEMO_ACCOUNT_SERVICE, DEMO_ACCOUNT_USERNAME
@@ -231,6 +231,7 @@ def get_user_notifications(
             models.UserNotification.user_id == user.id,
         )
         .join(models.Notification)
+        .options(contains_eager(models.UserNotification.notification))
     )
     if filter_services_id is not None:
         query = query.filter(models.Notification.service_id.in_(filter_services_id))
