@@ -2,7 +2,7 @@ import datetime
 import uuid
 from fastapi.logger import logger
 from sqlalchemy import desc
-from sqlalchemy.orm import Session, subqueryload, joinedload
+from sqlalchemy.orm import Session, subqueryload
 from typing import List, Optional
 from . import models, schemas
 from .settings import ADMIN_USERS, DEMO_ACCOUNT_SERVICE, DEMO_ACCOUNT_USERNAME
