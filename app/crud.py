@@ -2,7 +2,7 @@ import datetime
 import uuid
 from fastapi.logger import logger
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, subqueryload, joinedload
 from typing import List, Optional
 from . import models, schemas
 from .settings import ADMIN_USERS, DEMO_ACCOUNT_SERVICE, DEMO_ACCOUNT_USERNAME
@@ -185,6 +185,11 @@ def get_notification(
 ) -> Optional[models.Notification]:
     return (
         db.query(models.Notification)
+        .options(
+            subqueryload(models.Notification.users_notification).joinedload(
+                models.UserNotification.user
+            )
+        )
         .filter(models.Notification.id == notification_id)
         .first()
     )
