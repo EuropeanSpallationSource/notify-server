@@ -1,8 +1,25 @@
 import pytest
 from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
-from app import schemas, models, utils
+from sqlalchemy.orm import Session as SASession
+from sqlalchemy import func
+from app import crud, schemas, models, utils
 from ..utils import no_tz_isoformat
+
+
+def nb_unread_notifications(user: models.User) -> int:
+    """Count unread notifications for a user. Extracted from User model after
+    the property was removed; kept here to verify notification state in tests."""
+    session = SASession.object_session(user)
+    return (
+        session.query(models.UserNotification)
+        .filter(
+            models.UserNotification.user_id == user.id,
+            models.UserNotification.is_read.is_(False),
+        )
+        .with_entities(func.count())
+        .scalar()
+    )
 
 
 def user_authorization_headers(username):
@@ -286,7 +303,9 @@ def test_update_current_user_notifications(
     user.notifications.append(notification1)
     user.notifications.append(notification2)
     user.notifications.append(notification3)
-    assert user.nb_unread_notifications == 3
+    assert (
+        nb_unread_notifications(user) == crud.get_unread_counts(db, [user.id])[user.id]
+    )
     db.commit()
     response = client.patch(
         f"/api/{api_version}/users/user/notifications",
@@ -300,7 +319,10 @@ def test_update_current_user_notifications(
     assert response.status_code == 204
     db_user = db.query(models.User).get(user.id)
     assert db_user.notifications == [notification1, notification3]
-    assert db_user.nb_unread_notifications == 1
+    assert (
+        nb_unread_notifications(db_user)
+        == crud.get_unread_counts(db, [db_user.id])[db_user.id]
+    )
     assert db_user.user_notifications[0].is_read
     assert not db_user.user_notifications[1].is_read
 
