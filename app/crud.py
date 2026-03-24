@@ -5,7 +5,12 @@ from sqlalchemy import desc, func
 from sqlalchemy.orm import Session, subqueryload, contains_eager
 from typing import Dict, List, Optional
 from . import models, schemas
-from .settings import ADMIN_USERS, DEMO_ACCOUNT_SERVICE, DEMO_ACCOUNT_USERNAME
+from .settings import (
+    ADMIN_USERS,
+    DEMO_ACCOUNT_SERVICE,
+    DEMO_ACCOUNT_USERNAME,
+    MAX_NOTIFICATIONS_LIMIT,
+)
 
 
 def get_users(db: Session):
@@ -236,7 +241,7 @@ def get_user_notifications(
     if filter_services_id is not None:
         query = query.filter(models.Notification.service_id.in_(filter_services_id))
     query = query.order_by(desc(models.Notification.timestamp))
-    query = query.limit(limit) if limit > 0 else query.all()
+    query = query.limit(limit if limit > 0 else MAX_NOTIFICATIONS_LIMIT)
     notifications = [un.to_user_notification() for un in query]
     # Sorting in ascending order is mostly for backward compatibility
     if sort == schemas.SortOrder.asc:

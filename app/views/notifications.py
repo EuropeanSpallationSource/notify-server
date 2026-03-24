@@ -4,6 +4,7 @@ from starlette.requests import Request
 from sqlalchemy.orm import Session
 from . import templates
 from .. import deps, models, crud, schemas
+from ..settings import MAX_NOTIFICATIONS_LIMIT
 
 router = APIRouter()
 
@@ -39,6 +40,7 @@ async def notifications_get(
             "current_user": current_user,
             "services": selected_services,
             "notifications_limit": notifications_limit,
+            "max_notifications_limit": MAX_NOTIFICATIONS_LIMIT,
             "notifications": notifications,
             "categories": categories,
         },
@@ -85,6 +87,7 @@ async def notifications_post(
             "request": request,
             "services": selected_services,
             "notifications_limit": notifications_limit,
+            "max_notifications_limit": MAX_NOTIFICATIONS_LIMIT,
             "notifications": notifications,
             "categories": categories,
         },

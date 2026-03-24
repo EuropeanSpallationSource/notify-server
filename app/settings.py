@@ -88,6 +88,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = config(
     "ACCESS_TOKEN_EXPIRE_MINUTES", cast=int, default=43200
 )
 
+# Maximum number of notifications returned in a single query
+MAX_NOTIFICATIONS_LIMIT = config("MAX_NOTIFICATIONS_LIMIT", cast=int, default=1000)
+
 # Number of push notifications sent in parallel
 NB_PARALLEL_PUSH = config("NB_PARALLEL_PUSH", cast=int, default=50)
 
