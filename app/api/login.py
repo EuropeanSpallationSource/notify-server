@@ -14,7 +14,7 @@ from ..settings import (
 router = APIRouter()
 
 
-def create_access_token(db, username, response) -> dict[str, str]:
+def create_access_token(db, username, response) -> dict:
     db_user = crud.get_user_by_username(db, username)
     if db_user is None:
         db_user = crud.create_user(db, username)
@@ -23,7 +23,11 @@ def create_access_token(db, username, response) -> dict[str, str]:
     access_token = utils.create_access_token(db_user.username, expire=expire)
     crud.update_user_login_token_expire_date(db, db_user, expire)
     logger.info(f"User {username} successfully logged in")
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "expires_in": int(ACCESS_TOKEN_EXPIRE_MINUTES * 60),
+    }
 
 
 @router.post("/login", status_code=status.HTTP_200_OK)
