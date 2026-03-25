@@ -1,4 +1,5 @@
 import httpx
+import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, status, Query
 from fastapi.security import OAuth2PasswordRequestForm
@@ -140,6 +141,113 @@ async def open_id_connect(
     token_data = create_access_token(db, username, response)
     if keycloak_refresh_token:
         token_data["refresh_token"] = keycloak_refresh_token
+    return token_data
+
+
+@router.post("/refresh", status_code=status.HTTP_200_OK)
+async def refresh_token(
+    refresh_request: schemas.RefreshTokenRequest,
+    response: Response,
+    request: Request,
+    db: Session = Depends(deps.get_db),
+):
+    """Refresh an expired session using a Keycloak refresh token.
+
+    The mobile client sends its stored Keycloak refresh_token.
+    The server exchanges it with Keycloak (using the client_secret)
+    to get new tokens and issues a new local JWT.
+    """
+    realm = refresh_request.realm
+    oidc_config = request.state.oidc_config.get(realm)
+    if oidc_config is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"OIDC not configured for realm type '{realm.value}'",
+        )
+    client_config = deps.CLIENT_BY_REALM_TYPE[realm]
+    data = {
+        "client_id": client_config["client_id"],
+        "client_secret": client_config["client_secret"],
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_request.refresh_token,
+    }
+    logger.info(f"Refreshing OIDC token for realm type '{realm.value}'")
+    async with httpx.AsyncClient() as client:
+        try:
+            token_response = await client.post(
+                oidc_config["token_endpoint"],
+                data=data,
+            )
+            token_response.raise_for_status()
+        except httpx.RequestError as exc:
+            logger.error(
+                f"An error occurred while requesting {exc.request.url!r}: {exc}."
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Failed to refresh token",
+            )
+        except httpx.HTTPStatusError:
+            logger.error(f"Failed to refresh OIDC token: {token_response.content}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token is invalid or expired",
+            )
+        result = token_response.json()
+        access_token = result["access_token"]
+        id_token = result["id_token"]
+        new_refresh_token = result.get("refresh_token")
+
+        jwks_client = request.state.jwks_client[realm]
+        try:
+            utils.validate_id_token(
+                id_token,
+                access_token,
+                jwks_client,
+                oidc_config["id_token_signing_alg_values_supported"],
+                client_config["client_id"],
+            )
+        except Exception as e:
+            logger.warning(f"id_token validation failed during refresh: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="id_token validation failed",
+            )
+
+        # Extract username from id_token claims to avoid extra userinfo roundtrip
+        signing_key = jwks_client.get_signing_key_from_jwt(id_token)
+        id_claims = jwt.decode(
+            id_token,
+            key=signing_key,
+            audience=client_config["client_id"],
+            algorithms=oidc_config["id_token_signing_alg_values_supported"],
+        )
+        username = id_claims.get("preferred_username", "").lower()
+        if not username:
+            # Fallback: fetch from userinfo endpoint
+            headers = {"Authorization": f"Bearer {access_token}"}
+            userinfo_data = {
+                "client_id": client_config["client_id"],
+                "client_secret": client_config["client_secret"],
+                "scope": OIDC_SCOPE,
+            }
+            try:
+                userinfo_response = await client.post(
+                    oidc_config["userinfo_endpoint"],
+                    headers=headers,
+                    data=userinfo_data,
+                )
+                userinfo_response.raise_for_status()
+                username = userinfo_response.json()["preferred_username"].lower()
+            except Exception as e:
+                logger.error(f"Failed to get username during refresh: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Failed to identify user during refresh",
+                )
+    token_data = create_access_token(db, username, response)
+    if new_refresh_token:
+        token_data["refresh_token"] = new_refresh_token
     return token_data
 
 
