@@ -179,6 +179,11 @@ class RealmType(str, Enum):
     demo = "demo"
 
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+    realm: RealmType
+
+
 class RealmDiscoveryResponse(BaseModel):
     realm: str
     authorization_endpoint: str

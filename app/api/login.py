@@ -68,11 +68,11 @@ async def open_id_connect(
     )
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(
+            token_response = await client.post(
                 oidc_config["token_endpoint"],
                 data=data,
             )
-            response.raise_for_status()
+            token_response.raise_for_status()
         except httpx.RequestError as exc:
             logger.error(
                 f"An error occurred while requesting {exc.request.url!r}: {exc}."
@@ -82,13 +82,14 @@ async def open_id_connect(
                 detail=f"An error occurred while requesting {exc.request.url!r}",
             )
         except httpx.HTTPStatusError as exc:
-            logger.error(f"Failed to get OIDC token: {response.content}")
+            logger.error(f"Failed to get OIDC token: {token_response.content}")
             raise HTTPException(
                 status_code=exc.response.status_code, detail="Failed to get OIDC token"
             )
-        result = response.json()
+        result = token_response.json()
         access_token = result["access_token"]
         id_token = result["id_token"]
+        keycloak_refresh_token = result.get("refresh_token")
         logger.debug("Retrieved access and id tokens. Validating id_token.")
         try:
             utils.validate_id_token(
