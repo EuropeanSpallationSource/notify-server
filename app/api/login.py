@@ -113,12 +113,12 @@ async def open_id_connect(
         }
         logger.info("Retrieving user info.")
         try:
-            response = await client.post(
+            userinfo_response = await client.post(
                 oidc_config["userinfo_endpoint"],
                 headers=headers,
                 data=data,
             )
-            response.raise_for_status()
+            userinfo_response.raise_for_status()
         except httpx.RequestError as exc:
             logger.error(
                 f"An error occurred while requesting {exc.request.url!r}: {exc}."
@@ -128,12 +128,15 @@ async def open_id_connect(
                 detail=f"An error occurred while requesting {exc.request.url!r}",
             )
         except httpx.HTTPStatusError as exc:
-            logger.error(f"Failed to get user info: {response.content}")
+            logger.error(f"Failed to get user info: {userinfo_response.content}")
             raise HTTPException(
                 status_code=exc.response.status_code, detail="Failed to get user info"
             )
-        username = response.json()["preferred_username"].lower()
-    return create_access_token(db, username, response)
+        username = userinfo_response.json()["preferred_username"].lower()
+    token_data = create_access_token(db, username, response)
+    if keycloak_refresh_token:
+        token_data["refresh_token"] = keycloak_refresh_token
+    return token_data
 
 
 @router.get(
