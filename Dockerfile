@@ -1,8 +1,8 @@
-FROM docker.io/library/python:3.14-slim as base
+FROM docker.io/library/python:3.14-slim AS base
 
 # Install Python dependencies in an intermediate image
 # as some requires a compiler (psycopg2)
-FROM base as builder
+FROM base AS builder
 
 # Install dependencies required to compile some Python packages
 # Taken from https://github.com/docker-library/python/blob/master/3.11/slim-bullseye/Dockerfile
@@ -59,7 +59,9 @@ RUN apt-get update \
 COPY --chown=csi:csi . /app/
 WORKDIR /app
 
-ENV PATH /venv/bin:$PATH
+RUN git config --system --add safe.directory '*'
+
+ENV PATH=/venv/bin:$PATH
 
 USER 1000
 
