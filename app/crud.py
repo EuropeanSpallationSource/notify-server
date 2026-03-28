@@ -2,6 +2,8 @@ import datetime
 import uuid
 from fastapi.logger import logger
 from sqlalchemy import desc, func
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import StaleDataError
 from sqlalchemy.orm import Session, subqueryload, contains_eager
 from typing import Dict, List, Optional
 from . import models, schemas
@@ -175,7 +177,11 @@ def update_user_services(
         else:
             user.unsubscribe(service)
             logger.info(f"User {user.username} unsubscribed from '{service.category}'")
-    db.commit()
+    try:
+        db.commit()
+    except (IntegrityError, StaleDataError):
+        # Concurrent request already modified subscriptions for this user
+        db.rollback()
 
 
 def create_service_notification(
