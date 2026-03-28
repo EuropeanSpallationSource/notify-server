@@ -78,7 +78,11 @@ async def send_notification(notification_id: int) -> None:
     """Send the notification to all subscribers"""
     ios_headers = ios.create_headers(datetime.now(timezone.utc))
     ios_client = httpx.AsyncClient(http2=True, headers=ios_headers)
-    android_headers = await firebase.create_headers(str(uuid.uuid4()))
+    try:
+        android_headers = await firebase.create_headers(str(uuid.uuid4()))
+    except Exception:
+        logger.warning("Failed to create Firebase headers, skipping Android push")
+        android_headers = {}
     android_client = httpx.AsyncClient(headers=android_headers)
     db = SessionLocal()
     try:
