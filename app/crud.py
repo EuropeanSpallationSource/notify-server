@@ -145,7 +145,15 @@ def get_user_services(db: Session, user: models.User) -> List[schemas.UserServic
         services = get_services(db, demo=True)
     else:
         services = get_services(db)
-    return [service.to_user_service(user) for service in services]
+    # Fetch user's subscribed service IDs in a single query
+    subscribed_ids = {s.id for s in user.services}
+    return [
+        schemas.UserService(
+            **schemas.Service.model_validate(service).model_dump(),
+            is_subscribed=service.id in subscribed_ids,
+        )
+        for service in services
+    ]
 
 
 def update_user_services(
