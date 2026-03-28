@@ -21,3 +21,7 @@ build
 
 # SCM version file
 _version.py
+
+# Generated test data
+test_tokens.json
+test.db
