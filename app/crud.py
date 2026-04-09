@@ -255,7 +255,9 @@ def get_user_notifications(
     if filter_services_id is not None:
         query = query.filter(models.Notification.service_id.in_(filter_services_id))
     query = query.order_by(desc(models.Notification.timestamp))
-    query = query.limit(limit if limit > 0 else MAX_NOTIFICATIONS_LIMIT)
+    query = query.limit(
+        min(limit, MAX_NOTIFICATIONS_LIMIT) if limit > 0 else MAX_NOTIFICATIONS_LIMIT
+    )
     notifications = [un.to_user_notification() for un in query]
     # Sorting in ascending order is mostly for backward compatibility
     if sort == schemas.SortOrder.asc:
