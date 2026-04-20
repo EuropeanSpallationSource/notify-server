@@ -31,18 +31,18 @@ def test_create_headers():
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_send_push_to_ios_success(db, user, apn_payload):
+async def test_send_push_to_ios_success(apn_payload):
     apn = "apn-token"
     request = respx.post(
         f"https://api.development.push.apple.com/3/device/{apn}",
     )
     request.side_effect = httpx.Response(200)
     async with httpx.AsyncClient(http2=True) as client:
-        notification_sent = await ios.send_push(client, apn, apn_payload, db, user)
+        token_to_remove = await ios.send_push(client, apn, apn_payload, "testuser")
     assert request.called
     req, _ = respx.calls[0]
     assert json.loads(req._content.decode("utf-8")) == apn_payload.model_dump()
-    assert notification_sent
+    assert token_to_remove is None
 
 
 @respx.mock
@@ -59,41 +59,33 @@ async def test_send_push_to_ios_success(db, user, apn_payload):
         httpx.Response(429),
     ],
 )
-async def test_send_push_to_ios_error(db, user_factory, apn_payload, side_effect):
+async def test_send_push_to_ios_error(apn_payload, side_effect):
     # No exception raised in case of error
     device_token = "my-token"
-    user = user_factory(device_tokens=[device_token])
-    assert user.device_tokens == [device_token]
     request = respx.post(
         f"https://api.development.push.apple.com/3/device/{device_token}",
     )
     request.side_effect = side_effect
     async with httpx.AsyncClient(http2=True) as client:
-        notification_sent = await ios.send_push(
-            client, device_token, apn_payload, db, user
+        token_to_remove = await ios.send_push(
+            client, device_token, apn_payload, "testuser"
         )
     assert request.called
-    assert not notification_sent
-    db.refresh(user)
-    assert user.device_tokens == [device_token]
+    assert token_to_remove is None
 
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_send_push_to_ios_410(db, user_factory, apn_payload):
+async def test_send_push_to_ios_410(apn_payload):
     device_token = "my-token"
-    user = user_factory(device_tokens=[device_token])
-    assert user.device_tokens == [device_token]
     request = respx.post(
         f"https://api.development.push.apple.com/3/device/{device_token}",
     )
     request.side_effect = httpx.Response(410)
     async with httpx.AsyncClient(http2=True) as client:
-        notification_sent = await ios.send_push(
-            client, device_token, apn_payload, db, user
+        token_to_remove = await ios.send_push(
+            client, device_token, apn_payload, "testuser"
         )
     assert request.called
-    assert not notification_sent
-    db.refresh(user)
-    # No longer active token deleted
-    assert user.device_tokens == []
+    # Returns the token that should be removed
+    assert token_to_remove == device_token

@@ -3,6 +3,7 @@ from .._vendor.fastapi_versioning import version
 from sqlalchemy.orm import Session
 from typing import List
 from .. import deps, crud, models, schemas
+from ..settings import MAX_NOTIFICATIONS_LIMIT
 
 router = APIRouter()
 
@@ -159,12 +160,12 @@ def update_current_user_services(
 
 @router.get("/user/notifications", response_model=List[schemas.UserNotification])
 def read_current_user_notifications(
-    limit: int = 50,
+    limit: int = MAX_NOTIFICATIONS_LIMIT,
     sort: schemas.SortOrder = schemas.SortOrder.asc,
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user),
 ):
-    """Return the current user's notifications (limited to 50 by default)
+    """Return the current user's notifications
 
     Notifications are sorted in ascending order by default
     """

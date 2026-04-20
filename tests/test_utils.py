@@ -111,7 +111,7 @@ async def test_send_notification(
         )
     )
     # Only keep second and third arguments (token and payload)
-    # first arg is httpx client and others (db and user) are internal
+    # first arg is httpx client and fourth is username
     calls = [call.args[1:3] for call in mock_send_push_to_ios.call_args_list]
     expected_calls_args = [
         (ios_token1, user1_payload),
@@ -157,7 +157,7 @@ async def test_send_notification(
         )
     )
     # Only keep second argument (payload)
-    # first arg is httpx client and others (db and user) are internal
+    # first arg is httpx client and third is username
     calls = [(call.args[1],) for call in mock_send_push_to_android.call_args_list]
     expected_calls_args = [
         (user2_payload1,),

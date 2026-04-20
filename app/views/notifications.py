@@ -4,6 +4,7 @@ from starlette.requests import Request
 from sqlalchemy.orm import Session
 from . import templates
 from .. import deps, models, crud, schemas
+from ..settings import MAX_NOTIFICATIONS_LIMIT
 
 router = APIRouter()
 
@@ -17,7 +18,7 @@ async def notifications_get(
     try:
         notifications_limit = request.session["notifications_limit"]
     except KeyError:
-        notifications_limit = 50
+        notifications_limit = MAX_NOTIFICATIONS_LIMIT
         request.session["notifications_limit"] = notifications_limit
     services = crud.get_user_services(db, current_user)
     categories = {service.id: service.category for service in services}
@@ -39,6 +40,7 @@ async def notifications_get(
             "current_user": current_user,
             "services": selected_services,
             "notifications_limit": notifications_limit,
+            "max_notifications_limit": MAX_NOTIFICATIONS_LIMIT,
             "notifications": notifications,
             "categories": categories,
         },
@@ -48,7 +50,7 @@ async def notifications_get(
 @router.post("/", response_class=HTMLResponse, name="notifications")
 async def notifications_post(
     request: Request,
-    notifications_limit: int = Form(50),
+    notifications_limit: int = Form(MAX_NOTIFICATIONS_LIMIT),
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user_from_session),
 ):
@@ -85,6 +87,7 @@ async def notifications_post(
             "request": request,
             "services": selected_services,
             "notifications_limit": notifications_limit,
+            "max_notifications_limit": MAX_NOTIFICATIONS_LIMIT,
             "notifications": notifications,
             "categories": categories,
         },

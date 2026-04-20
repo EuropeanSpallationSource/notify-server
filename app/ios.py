@@ -1,10 +1,9 @@
 import httpx
 import jwt
 from datetime import datetime
-from typing import Dict
-from sqlalchemy.orm import Session
+from typing import Dict, Optional
 from fastapi.logger import logger
-from . import models, schemas, crud
+from . import schemas
 from .settings import (
     APNS_ALGORITHM,
     APNS_AUTH_KEY,
@@ -35,14 +34,13 @@ async def send_push(
     client: httpx.AsyncClient,
     apn: str,
     payload: schemas.ApnPayload,
-    db: Session,
-    user: models.User,
-) -> bool:
+    username: str,
+) -> Optional[str]:
     """Send a push notification to iOS
 
-    Return True in case of success
+    Return the device token to remove if no longer valid, None otherwise
     """
-    logger.info(f"Send notification to {user.username} (apn: {apn[:10]}...)")
+    logger.info(f"Send notification to {username} (apn: {apn[:10]}...)")
     try:
         response = await client.post(
             f"https://{APPLE_SERVER}/3/device/{apn}", json=payload.model_dump()
@@ -50,7 +48,7 @@ async def send_push(
         response.raise_for_status()
     except httpx.RequestError as exc:
         logger.error(f"HTTP Exception for {exc.request.url} - {exc}")
-        return False
+        return None
     except httpx.HTTPStatusError as exc:
         logger.warning(f"{exc}")
         try:
@@ -60,9 +58,9 @@ async def send_push(
         # See https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/handling_notification_responses_from_apns
         if response.status_code == 410:
             logger.info(
-                f"Device token no longer active. Delete {apn} for user {user.username}"
+                f"Device token no longer active. Delete {apn} for user {username}"
             )
-            crud.remove_user_device_token(db, user, apn)
-        return False
-    logger.info(f"Notification sent to user {user.username}")
-    return True
+            return apn
+        return None
+    logger.info(f"Notification sent to user {username}")
+    return None

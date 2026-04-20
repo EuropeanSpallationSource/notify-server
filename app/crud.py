@@ -1,11 +1,18 @@
 import datetime
 import uuid
 from fastapi.logger import logger
-from sqlalchemy import desc
-from sqlalchemy.orm import Session
-from typing import List, Optional
+from sqlalchemy import desc, func
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import StaleDataError
+from sqlalchemy.orm import Session, subqueryload, contains_eager
+from typing import Dict, List, Optional
 from . import models, schemas
-from .settings import ADMIN_USERS, DEMO_ACCOUNT_SERVICE, DEMO_ACCOUNT_USERNAME
+from .settings import (
+    ADMIN_USERS,
+    DEMO_ACCOUNT_SERVICE,
+    DEMO_ACCOUNT_USERNAME,
+    MAX_NOTIFICATIONS_LIMIT,
+)
 
 
 def get_users(db: Session):
@@ -140,7 +147,15 @@ def get_user_services(db: Session, user: models.User) -> List[schemas.UserServic
         services = get_services(db, demo=True)
     else:
         services = get_services(db)
-    return [service.to_user_service(user) for service in services]
+    # Fetch user's subscribed service IDs in a single query
+    subscribed_ids = {s.id for s in user.services}
+    return [
+        schemas.UserService(
+            **schemas.Service.model_validate(service).model_dump(),
+            is_subscribed=service.id in subscribed_ids,
+        )
+        for service in services
+    ]
 
 
 def update_user_services(
@@ -162,7 +177,11 @@ def update_user_services(
         else:
             user.unsubscribe(service)
             logger.info(f"User {user.username} unsubscribed from '{service.category}'")
-    db.commit()
+    try:
+        db.commit()
+    except (IntegrityError, StaleDataError):
+        # Concurrent request already modified subscriptions for this user
+        db.rollback()
 
 
 def create_service_notification(
@@ -180,11 +199,31 @@ def create_service_notification(
     return db_notification
 
 
+def get_unread_counts(db: Session, user_ids: List[int]) -> Dict[int, int]:
+    """Return {user_id: unread_count} for the given users in a single GROUP BY query"""
+    rows = (
+        db.query(models.UserNotification.user_id, func.count().label("cnt"))
+        .filter(
+            models.UserNotification.user_id.in_(user_ids),
+            models.UserNotification.is_read.is_(False),
+        )
+        .group_by(models.UserNotification.user_id)
+        .all()
+    )
+    counts = {user_id: cnt for user_id, cnt in rows}
+    return {user_id: counts.get(user_id, 0) for user_id in user_ids}
+
+
 def get_notification(
     db: Session, notification_id: int
 ) -> Optional[models.Notification]:
     return (
         db.query(models.Notification)
+        .options(
+            subqueryload(models.Notification.users_notification).joinedload(
+                models.UserNotification.user
+            )
+        )
         .filter(models.Notification.id == notification_id)
         .first()
     )
@@ -211,11 +250,14 @@ def get_user_notifications(
             models.UserNotification.user_id == user.id,
         )
         .join(models.Notification)
+        .options(contains_eager(models.UserNotification.notification))
     )
     if filter_services_id is not None:
         query = query.filter(models.Notification.service_id.in_(filter_services_id))
     query = query.order_by(desc(models.Notification.timestamp))
-    query = query.limit(limit) if limit > 0 else query.all()
+    query = query.limit(
+        min(limit, MAX_NOTIFICATIONS_LIMIT) if limit > 0 else MAX_NOTIFICATIONS_LIMIT
+    )
     notifications = [un.to_user_notification() for un in query]
     # Sorting in ascending order is mostly for backward compatibility
     if sort == schemas.SortOrder.asc:

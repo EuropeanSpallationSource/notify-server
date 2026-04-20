@@ -76,50 +76,73 @@ async def gather_with_concurrency(n: int, *tasks, return_exceptions=True):
 
 async def send_notification(notification_id: int) -> None:
     """Send the notification to all subscribers"""
-    tasks = []
     ios_headers = ios.create_headers(datetime.now(timezone.utc))
     ios_client = httpx.AsyncClient(http2=True, headers=ios_headers)
-    android_headers = await firebase.create_headers(str(uuid.uuid4()))
-    android_client = httpx.AsyncClient(headers=android_headers)
     try:
-        db = SessionLocal()
+        android_headers = await firebase.create_headers(str(uuid.uuid4()))
+    except Exception:
+        logger.warning("Failed to create Firebase headers, skipping Android push")
+        android_headers = {}
+    android_client = httpx.AsyncClient(headers=android_headers)
+    db = SessionLocal()
+    try:
         notification = crud.get_notification(db, notification_id)
         if notification is None:
             logger.warning(
                 f"Can't send notification! Notification {notification_id} not found."
             )
             return
+
+        # Fetch all unread counts in one GROUP BY query before the send loop
+        active_user_ids = [
+            un.user.id
+            for un in notification.users_notification
+            if un.user.is_logged_in and un.user.is_active
+        ]
+        unread_counts = crud.get_unread_counts(db, active_user_ids)
+
+        # Build tasks, tracking which user owns each task
+        tasks = []
+        task_users = []
         for user_notification in notification.users_notification:
             user = user_notification.user
             if not user.is_logged_in or not user.is_active:
                 continue
             ios_tokens = user.ios_tokens
             if ios_tokens:
-                apn_payload = user_notification.to_apn_payload()
+                apn_payload = user_notification.to_apn_payload(unread_counts[user.id])
                 for ios_token in ios_tokens:
                     tasks.append(
                         ios.send_push(
                             ios_client,
                             ios_token,
                             apn_payload,
-                            db,
-                            user,
+                            user.username,
                         )
                     )
+                    task_users.append(user)
             for android_token in user.android_tokens:
                 tasks.append(
                     firebase.send_push(
                         android_client,
                         user_notification.to_android_payload(android_token),
-                        db,
-                        user,
+                        user.username,
                     )
                 )
-        await gather_with_concurrency(NB_PARALLEL_PUSH, *tasks, return_exceptions=True)
-        await ios_client.aclose()
-        await android_client.aclose()
+                task_users.append(user)
+
+        results = await gather_with_concurrency(
+            NB_PARALLEL_PUSH, *tasks, return_exceptions=True
+        )
+
+        # Process token removals sequentially on a single session
+        for user, result in zip(task_users, results):
+            if isinstance(result, str):
+                crud.remove_user_device_token(db, user, result)
     finally:
         db.close()
+        await ios_client.aclose()
+        await android_client.aclose()
 
 
 def validate_id_token(

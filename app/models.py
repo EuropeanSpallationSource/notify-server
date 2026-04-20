@@ -10,9 +10,8 @@ from sqlalchemy import (
     Integer,
     String,
     DateTime,
-    func,
 )
-from sqlalchemy.orm import relationship, backref, Session
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -117,15 +116,6 @@ class User(Base):
         "user_notifications",
         "notification",
     )
-
-    @property
-    def nb_unread_notifications(self) -> int:
-        session = Session.object_session(self)
-        query = session.query(UserNotification).filter(
-            UserNotification.user_id == self.id,
-            UserNotification.is_read.is_(False),
-        )
-        return query.with_entities(func.count()).scalar()
 
     @property
     def device_tokens(self):
@@ -256,10 +246,8 @@ class UserNotification(Base):
             is_read=self.is_read,
         )
 
-    def to_apn_payload(self) -> schemas.ApnPayload:
-        aps = schemas.Aps(
-            alert=self.notification.to_alert(), badge=self.user.nb_unread_notifications
-        )
+    def to_apn_payload(self, badge: int) -> schemas.ApnPayload:
+        aps = schemas.Aps(alert=self.notification.to_alert(), badge=badge)
         return schemas.ApnPayload(aps=aps)
 
     def to_android_payload(self, token) -> schemas.AndroidPayload:
