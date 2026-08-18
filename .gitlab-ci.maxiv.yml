@@ -63,6 +63,9 @@ test-docker-image:
   tags:
     - kubernetes
   image: "$REGISTRY_IMAGE_NAME:$REGISTRY_IMAGE_TAG"
+  variables:
+    # Variable needed as git not installed in the prod image
+    SETUPTOOLS_SCM_PRETEND_VERSION: 0.0.0
   before_script:
     - pip install --no-cache-dir .[tests]
   script:
