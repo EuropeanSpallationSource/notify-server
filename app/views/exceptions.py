@@ -11,28 +11,25 @@ async def not_authenticated(request: Request, exc: HTTPException):
 
 async def bad_request(request: Request, exc: HTTPException):
     return templates.TemplateResponse(
+        request,
         "400.html",
-        {"request": request, "detail": exc.detail},
+        {"detail": exc.detail},
         status_code=exc.status_code,
     )
 
 
 async def forbidden(request: Request, exc: HTTPException):
-    return templates.TemplateResponse(
-        "403.html", {"request": request}, status_code=exc.status_code
-    )
+    return templates.TemplateResponse(request, "403.html", status_code=exc.status_code)
 
 
 async def not_found(request: Request, exc: HTTPException):
-    return templates.TemplateResponse(
-        "404.html", {"request": request}, status_code=exc.status_code
-    )
+    return templates.TemplateResponse(request, "404.html", status_code=exc.status_code)
 
 
 async def server_error(request: Request, exc: HTTPException):
     return templates.TemplateResponse(
+        request,
         "500.html",
-        {"request": request},
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 

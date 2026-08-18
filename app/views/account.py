@@ -26,9 +26,9 @@ async def login_get(request: Request):
         return await deps.oauth.keycloak.authorize_redirect(request, redirect_uri)
     else:
         return templates.TemplateResponse(
+            request,
             "login.html",
             {
-                "request": request,
                 "username": "",
                 "password": "",
                 "error": "",
@@ -49,7 +49,6 @@ async def login_post(
     username = form.get("username", "").lower().strip()
     password = form.get("password", "").strip()
     result = {
-        "request": request,
         "username": username,
         "password": password,
         "error": "",
@@ -57,11 +56,11 @@ async def login_post(
 
     if not username or not password:
         result["error"] = "You must specify a username and password"
-        return templates.TemplateResponse("login.html", result)
+        return templates.TemplateResponse(request, "login.html", result)
     if not auth.authenticate_user(username, password):
         logger.warning(f"Authentication failed for {username}")
         result["error"] = "Invalid Username/Password"
-        return templates.TemplateResponse("login.html", result)
+        return templates.TemplateResponse(request, "login.html", result)
     logger.info(f"User {username} successfully logged in")
     db_user = crud.get_user_by_username(db, username.lower())
     if db_user is None:
@@ -105,5 +104,5 @@ async def privacy(
     request: Request,
 ):
     return templates.TemplateResponse(
-        "privacy_policy.html", {"request": request, "app_name": APP_NAME}
+        request, "privacy_policy.html", {"app_name": APP_NAME}
     )

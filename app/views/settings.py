@@ -16,8 +16,9 @@ async def settings_get(
 ):
     services = crud.get_user_services(db, current_user)
     return templates.TemplateResponse(
+        request,
         "settings.html",
-        {"request": request, "current_user": current_user, "services": services},
+        {"current_user": current_user, "services": services},
     )
 
 
@@ -43,6 +44,7 @@ async def settings_post(
         )
     crud.update_user_services(db, updated_services, current_user)
     return templates.TemplateResponse(
+        request,
         "settings.html",
-        {"request": request, "current_user": current_user, "services": services},
+        {"current_user": current_user, "services": services},
     )

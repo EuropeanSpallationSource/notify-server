@@ -34,9 +34,9 @@ async def notifications_get(
         service.category for service in selected_services
     ]
     return templates.TemplateResponse(
+        request,
         "notifications.html",
         {
-            "request": request,
             "current_user": current_user,
             "services": selected_services,
             "notifications_limit": notifications_limit,
@@ -82,9 +82,9 @@ async def notifications_post(
         filter_services_id=selected_services_id,
     )
     return templates.TemplateResponse(
+        request,
         "notifications_table_form.html",
         {
-            "request": request,
             "services": selected_services,
             "notifications_limit": notifications_limit,
             "max_notifications_limit": MAX_NOTIFICATIONS_LIMIT,
@@ -115,9 +115,9 @@ async def notifications_update(
         filter_services_id=selected_services_id,
     )
     return templates.TemplateResponse(
+        request,
         "notifications_table.html",
         {
-            "request": request,
             "notifications": notifications,
             "categories": categories,
         },
