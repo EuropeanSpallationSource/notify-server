@@ -35,7 +35,7 @@ cryptography==50.0.0
     #   authlib
     #   google-auth
     #   joserfc
-fastapi==0.141.1
+fastapi==0.136.3
     # via ess-notify (pyproject.toml)
 google-auth==2.56.3
     # via ess-notify (pyproject.toml)
@@ -118,8 +118,10 @@ sqlalchemy==1.3.24
     # via
     #   ess-notify (pyproject.toml)
     #   alembic
-starlette==1.6.0
-    # via fastapi
+starlette==1.3.0
+    # via
+    #   ess-notify (pyproject.toml)
+    #   fastapi
 typer==0.27.1
     # via ess-notify (pyproject.toml)
 typing-extensions==4.16.0
