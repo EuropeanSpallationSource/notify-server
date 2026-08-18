@@ -52,7 +52,6 @@ RUN apt-get update \
   && apt-get install -yq --no-install-recommends \
   libpq5 \
   git \
-  vim \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -67,6 +66,12 @@ USER 1000
 
 # Install the app so it can be found by alembic
 RUN pip install --no-cache-dir .
+
+# Remove git as it's only needed by setuptools-scm during pip install
+# Keep the image more secure
+USER root
+RUN apt-get purge -y git && apt-get autoremove -y
+USER 1000
 
 # Running uvicorn is for testing
 # For production, run using Gunicorn using the uvicorn worker class
